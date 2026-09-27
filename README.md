@@ -21,6 +21,8 @@ replaces the remaining assembly, with emulator checks to confirm game behavior.
 The main percentage measures C/C++ that compiles to the original ARM9 code,
 byte for byte. Assembly coverage is tracked separately.
 
+⚠️ This percentage does not reflect the completion of the project. Even with a fully matching codebase there are still many tasks, the most important one being the field/battle scripts.
+
 ## Build the European version
 
 You will need:
