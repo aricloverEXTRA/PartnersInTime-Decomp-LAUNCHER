@@ -140,3 +140,6 @@ src/title_ov006/credits_text_strip.c:
 
 src/title_ov006/credits_particles.c:
     .text start:0x02079158 end:0x02079620
+
+src/title_ov006/credits_texture_upload.c:
+    .text start:0x02078990 end:0x020789f4

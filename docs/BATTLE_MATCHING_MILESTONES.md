@@ -11036,3 +11036,13 @@ object, golden ROM, native relink and 107 tests pass. Runtime evidence covers
 observation in the replay and stubbed in isolation. All 104 saves are unchanged.
 Matching C/C++: 868428/1563700 (55.5367%).
 Private evidence: xhigh_from_55/three_part_draw_validation.json.
+
+
+## Credits illustration texture uploads (2026-09-28)
+
+Linked the exact C texture-chunk callback. The 176-call replay checks every chunk
+in both slots and compares complete mapped texture banks at DMA completion;
+360,448 transferred bytes match. Palette uploads remain outside this batch.
+Actual callback and loader objects match; golden ROM, native relink and 107 tests
+pass. All 104 saves are intact. Matching C/C++: 868528/1563700 (55.5431%).
+Private evidence: xhigh_from_55/credits_texture_validation.json.

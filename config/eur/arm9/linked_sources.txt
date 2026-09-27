@@ -1045,3 +1045,5 @@ src/attack_smash_egg_ov015/reward_message.cpp
 src/battle/battle_window_close.cpp
 
 src/battle/battle_three_part_draw.cpp
+
+src/title_ov006/credits_texture_upload.c

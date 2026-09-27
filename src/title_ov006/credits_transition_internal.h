@@ -24,7 +24,7 @@ void CreditsImage_LoadNext(MenuElement *element);
 void CreditsMusic_Update(MenuElement *element);
 void CreditsMusic_StopAfterDelay(MenuElement *element);
 void func_ov006_02078938(MenuElement *element);
-void func_ov006_02078990(MenuElement *element);
+void CreditsImage_UploadTextureChunk(MenuElement *element);
 void func_ov005_0206650c(MenuElement *element);
 u32 func_ov005_02066ed4(Overlay5Archive *, u8, u16, void **, int);
 int func_ov005_02067238(Overlay5Archive *, u32, u32);

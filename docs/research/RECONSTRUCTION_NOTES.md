@@ -9450,3 +9450,36 @@ Full RAM, scratch storage, DTCM outside the observed stack, ordered stores and
 the call ABI are checked. These cases add no live allocation-lifetime, renderer,
 IRQ-timing or hardware coverage. The entire linked function matches without ASM;
 the complete ROM and native relink pass, as do all 107 tests.
+
+
+## Credits illustration texture uploads
+
+[`credits_texture_upload.c`](../../src/title_ov006/credits_texture_upload.c)
+uploads one 2,048-byte chunk from the credits' 32,768-byte staging buffer into
+the inactive texture slot. The chunk index is task argument 0; workspace
+`variant` selects which slot is already visible. Source and destination offsets
+advance by 2,048 per chunk, and the inactive slot adds either 0 or 32,768 bytes.
+The callback flushes the source cache range, begins texture loading, requests
+the transfer, waits for completion while restoring texture-bank mappings, and
+marks its task for removal. Marking does not establish actual pool release.
+
+Private `build/runtime/eur_xhigh_credits_texture/live_v1.json` checks 176 calls
+over 6,000 frames: 96 for variant 0 and 80 for variant 1, covering every chunk
+0 through 15 in both slots. The established save-86 credits-entry fixture changes
+one decoded command and restores its 72 bytes at the guarded scene request.
+Each transfer is checked at `0x020387D0`, after the DMA wait and before bank
+restoration. The entire mapped texture banks must match the preceding contents
+with only the intended chunk replaced. All 360,448 uploaded bytes matched.
+
+Checks also cover the full 72-byte task, 52-byte workspace prefix, 32,768-byte
+staging buffer, GX state and bank registers, helper order and arguments, removal
+flag and preserved registers. Bank mapping and loader globals follow the native
+table and established bank contracts. Captures at frames 1,500 and 6,000 show the
+credits illustrations and were inspected. Full RAM and DTCM were restored from
+the checkpoint, and all 104 original saves remain unchanged. Palette uploads,
+cache hardware timing, IRQ scheduling, pool release and independent pixel
+rendering are outside these checks.
+
+The complete callback and its existing loader caller compile exactly. The full
+ROM rebuild, zero-difference native relink and 107 tests pass. The nearby palette
+upload callback remains native and is not counted as reconstructed C.

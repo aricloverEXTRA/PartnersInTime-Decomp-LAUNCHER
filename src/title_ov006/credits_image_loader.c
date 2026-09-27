@@ -28,7 +28,7 @@ void CreditsImage_LoadNext(MenuElement *element)
         }
         break;
     case 2:
-        func_ov005_0206659c(func_ov006_02078990, 11, 1)->arguments[0] = element->arguments[0];
+        func_ov005_0206659c(CreditsImage_UploadTextureChunk, 11, 1)->arguments[0] = element->arguments[0];
         ++element->arguments[0];
         if (element->arguments[0] >= 16)
             ++element->state;
