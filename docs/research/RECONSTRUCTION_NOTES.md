@@ -8848,3 +8848,42 @@ three high-word patterns. They execute the real byte-fill helper, check every
 mapped byte outside the 16-byte stack frame and verify ordered clear/type/error
 stores. This establishes configuration behavior, not backup hardware timing.
 Private reports: `build/runtime/eur_xhigh_backup_spec/{boot55_v1,isolated_v1}.json`.
+
+## Copy Flower hit resolution
+
+[Hit resolution](../../src/attack_copy_flower_ov017/hit_resolution.cpp) reconstructs
+all 704 bytes at overlay 17 `0x020C4994..0x020C4C54` in C++. Input code 1 rolls
+the hit bonus and requests rumble; the other codes select the failed-input row.
+Three 16-byte effect rows choose sprite/model effects, reaction and sound. The
+routine calculates damage, updates the enemy snapshot and rating, replaces an
+unusable target and stops the other participants if none remains. The successful
+hit count increases after the rating call, so that call sees the previous score.
+
+The shared work prefix now names score `+0xCC`, target `+0x102`, power parameters
+`+0x104/+0x108`, selection-mode bit 0 at `+0xA84` and four party pointers at
+`+0xA98`. Its recovered size is `0xAA8`; the full allocation remains 16,356 bytes.
+A cached `u16` target preserves the caller's native zero extension. Once instruction
+flow matched, the remaining register/stack differences were resolved by one
+explicit declaration-order change derived from the native assignments. In this
+function, the competing long-lived locals followed reverse declaration order;
+this is an observed MWCC behavior, not a general register-allocation guarantee.
+
+A Save 83 checkpoint replay uses ten timed button inputs and then lets input fail.
+It checks 11 calls (ten ordinary hits, one failed input), 162 direct helper calls,
+full attack/party/enemy/object records, own stores, snapshot/rating/variant updates
+and register/stack restoration. Damage/reaction writes are observed within the
+target enemy/object records; the feedback factory's handle choice is observed in
+the work area's four-byte owner slot. Bonus/damage/selection return values and
+external effect/graphics allocation remain observational. The final battle menu
+was inspected, the attack work pointer was cleared and all 104 saves remain unchanged.
+This established checkpoint descends from a controlled encounter.
+
+Another 264 ARM946 cases execute the compiled caller with explicitly modeled
+children: 32 ordinary, 40 bonus and 192 failed hits, including 136 target
+replacements and 64 stop requests. They cover all input codes/formations, both
+selectors, zero/65/66 choices and signed coordinate/damage boundaries. Full mapped
+memory outside the 64-byte stack is checked. These cases verify caller behavior,
+not the real children or natural reachability. The initial live probe missed the
+feedback owner write; the initial isolated hook treated unexecuted conditional
+instructions as executed. Both failures and corrected passing producers are kept.
+Private reports: `build/runtime/eur_xhigh_copy_hit/{copy83_v2,isolated_v2}.json`.

@@ -16,16 +16,26 @@ enum Overlay17BattleStateConstant {
 };
 
 typedef struct Overlay17BattleStateView {
-    u8 unknown_000[0x130];
+    u8 unknown_000[0xCC];
+    int successful_hits;
+    u8 unknown_0d0[0x32];
+    u16 target;
+    int power[2];
+    u8 unknown_10c[0x24];
     u8 attack_states[OVERLAY17_ATTACK_STATE_COUNT][OVERLAY17_ATTACK_STATE_SIZE];
     Overlay17Participant *last_participant, *head;
     int tuning, spawn_timer;
     u16 input_mask, pressed_mask;
-    u8 setup_flags;
+    union {
+        u8 setup_flags;
+        struct { u8 random_target : 1, unknown_1_7 : 7; } setup_bits;
+    };
     u8 control_flags;
     s8 active_attack_slot;
     u8 unknown_a87;
     int party_animation_components[OVERLAY17_PARTY_ANIMATION_COMPONENT_COUNT];
+    u8 unknown_a90[8];
+    struct BattlePartyActor *party[4];
 } Overlay17BattleStateView;
 
 typedef struct Overlay17AttackObject {
@@ -48,7 +58,8 @@ typedef struct Overlay17AttackObject {
     };
 } Overlay17AttackObject;
 
-typedef char Overlay17BattleStateView_SizeCheck[sizeof(Overlay17BattleStateView) == 0xA90 ? 1 : -1];
+/* Recovered prefix; the complete attack allocation is larger. */
+typedef char Overlay17BattleStateView_SizeCheck[sizeof(Overlay17BattleStateView) == 0xAA8 ? 1 : -1];
 typedef char Overlay17AttackObject_SizeCheck[sizeof(Overlay17AttackObject) == 0x154 ? 1 : -1];
 
 #ifdef __cplusplus

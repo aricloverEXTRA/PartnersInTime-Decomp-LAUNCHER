@@ -10875,3 +10875,17 @@ ARM946 cases cover all table entries and unsupported combinations within the
 defined shift domain, using the real byte-fill helper. Full work/command records,
 ordered stores and ABI were checked; all 104 saves are unchanged. See the
 [backup-specification evidence](research/RECONSTRUCTION_NOTES.md#cartridge-backup-specification).
+
+
+## Copy Flower hit resolution (2026-09-27)
+
+Added 704 matching C++ bytes for participant hit resolution, without assembly.
+The shared work prefix now exposes its hit count, target, power and party slots.
+Matching C/C++ reaches 862,616/1,563,700 bytes (55.17%). The actual source object
+matches; full build/native relink remain byte-identical and 107 tests pass.
+
+A Save 83 checkpoint replay checks 11 hits and 162 direct helper calls before
+returning to the battle menu. Another 264 isolated ARM946 cases cover bonus/miss,
+target replacement and signed boundaries with modeled children. All 104 saves
+remain unchanged. The [hit-resolution notes](research/RECONSTRUCTION_NOTES.md#copy-flower-hit-resolution)
+record exact coverage, observations, corrected probe failures and private reports.

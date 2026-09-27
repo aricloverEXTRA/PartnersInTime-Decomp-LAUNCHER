@@ -45,6 +45,7 @@ typedef char Overlay17Participant_SizeCheck[sizeof(Overlay17Participant) == 296 
 extern "C" {
 #endif
 void Overlay17Participant_ConsumeInput(Overlay17Participant *participant);
+void Overlay17Participant_ResolveHit(Overlay17Participant *participant);
 int Overlay17Participant_FindIdleSlot(void);
 void Overlay17Participant_RemoveIdleFromList(void);
 void Overlay17Participant_BeginEntry(Overlay17Participant *participant, int formation);
