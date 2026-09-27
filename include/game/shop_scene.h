@@ -26,6 +26,7 @@ void ShopScene_LoadBackgrounds(ShopSceneTask *task);
 void ShopScene_UploadFrame(void);
 int ShopScene_CanSelectMember(int column, int row);
 void ShopScene_GetMemberGridPosition(int member, int *column, int *row);
+u32 ShopScene_GetSellBonus(ShopSceneTask *scene, u8 factor);
 #ifdef __cplusplus
 }
 #endif

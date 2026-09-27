@@ -11055,3 +11055,12 @@ draw-list submissions, one close request, four child-removal flags and a visible
 field return. Actual objects match; golden ROM, native relink and 107 tests pass.
 All 104 saves are intact. Matching C/C++: 868644/1563700 (55.5506%).
 Private evidence: xhigh_from_55/shop_owned_validation.json.
+
+
+## Shop selling-price bonus (2026-09-28)
+
+Linked the exact Stache-based selling-bonus wrapper. Runtime checks cover 3,349
+ordinary sell-menu calls after controlled entry and 224 copied-RAM boundary
+cases, including the 99% cap. Actual object, golden ROM, native relink and all
+107 tests pass; all 104 saves are intact. Matching C/C++: 868700/1563700 (55.5541%).
+Private evidence: xhigh_from_55/shop_price_bonus_validation.json.

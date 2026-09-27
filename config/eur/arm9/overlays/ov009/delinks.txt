@@ -168,3 +168,6 @@ src/shop_ov009/shop_owned_count_close.c:
 
 src/shop_ov009/shop_owned_count_label.cpp:
     .text start:0x02079c08 end:0x02079c68
+
+src/shop_ov009/shop_sell_bonus.c:
+    .text start:0x0206d084 end:0x0206d0bc

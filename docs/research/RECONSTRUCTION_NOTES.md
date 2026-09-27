@@ -9510,3 +9510,36 @@ were restored, and all 104 original saves remain unchanged.
 Both complete compiled functions match without ASM. The golden ROM, native
 relink and 107 tests pass. The intervening setup, digit renderer and parent
 motion callback remain native; they are not included in this coverage increase.
+
+
+## Shop selling-price bonus
+
+[`shop_sell_bonus.c`](../../src/shop_ov009/shop_sell_bonus.c) supplies the selling
+bonus percentage to the inventory-price calculation and its percentage display.
+The native discount helper sums Stache for consecutive displayed party members,
+stopping at the first absent member. It computes `ceil(((sum + 100) / 8) *
+factor / 100)` with the division by eight truncated first, then clamps to 5..50.
+The reconstructed wrapper doubles that discount and caps the bonus at 99%.
+The price caller applies this bonus to the item's base selling price; the
+wrapper itself neither changes inventory nor transfers coins.
+
+Private `build/runtime/eur_xhigh_shop_price_bonus/live_v1.json` checks 3,349
+calls across seven item factors during 1,091 frames of selling-menu navigation.
+Entry uses the previously verified save-65 shop command fixture, restored at the
+scene request before navigation. The oracle independently predicts the native
+discount and wrapper result, checks helper arguments and preserved registers,
+and verifies unchanged scene allocation, workspace and live-save prefix. The
+sell panel and final field return were visually inspected. All live calls use
+four displayed party members and take the uncapped branch.
+
+`isolated_v1.json` supplements that route with 224 ARM946 cases on copied RAM:
+eight presence patterns, seven factors and four Stache values. These execute the
+actual compiled wrapper and native discount with no stubs; 66 cases reach the
+99% cap. Full main RAM remains unchanged, as does DTCM outside the 16-byte stack
+frame; both ordered stack stores, helper inputs/results and preserved registers
+are checked. Synthetic inputs do not establish live gameplay or IRQ behavior.
+Checkpoint RAM/DTCM were restored and all 104 original saves are unchanged.
+
+The 56-byte source object and complete ROM match exactly; native relinking and
+107 tests pass. The discount helper remains native and contributes no new C
+coverage in this batch.

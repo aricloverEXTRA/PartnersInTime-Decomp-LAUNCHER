@@ -1051,3 +1051,5 @@ src/title_ov006/credits_texture_upload.c
 src/shop_ov009/shop_owned_count_close.c
 
 src/shop_ov009/shop_owned_count_label.cpp
+
+src/shop_ov009/shop_sell_bonus.c
