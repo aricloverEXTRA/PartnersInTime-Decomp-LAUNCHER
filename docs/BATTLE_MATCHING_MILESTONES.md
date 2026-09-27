@@ -10950,3 +10950,14 @@ area starts and 14 entity scripts; 52 isolated ARM946 cases cover the missing
 branches. The full gate passes 107 tests, the golden ROM and native relinking.
 All 104 original saves remain unchanged.
 [Evidence and limits](research/RECONSTRUCTION_NOTES.md#field-area-and-entity-script-startup).
+
+
+## NitroSDK cartridge signature classification (2026-09-27)
+
+Reconstructed the 212-byte cartridge signature classifier in pure C and unified
+its shared lock declarations. Matching C/C++ reaches 865,032/1,563,700 (55.32%).
+All 26 functions in the affected console/cartridge/rumble units remain exact.
+An ordinary cold boot and 216 isolated ARM946 cases with real native helpers
+pass, together with 107 tests, the golden ROM and native relinking. All 104 saves
+remain unchanged.
+[Evidence and limits](research/RECONSTRUCTION_NOTES.md#nitrosdk-cartridge-signature-classification).

@@ -6,7 +6,7 @@
  * handling its removal.
  */
 
-#include <nitro/os_sync.h>
+#include <nitro/os_lock.h>
 
 typedef int (*CtrdgCallback)(int event);
 typedef struct CtrdgLockState { volatile u32 already_locked; u32 interrupts; } CtrdgLockState;
@@ -46,11 +46,8 @@ void CTRDG_Init(void);
 
 extern void WaitByLoop(u32 cycles);
 extern void CpuSet(const void *source, void *destination, u32 mode);
-extern int OS_GetLockID(void);
 extern void OS_Terminate(void);
 extern void func_02038e34(u16 lock_id);
-extern u32 OS_ReadOwnerOfLockWord(const void *lock);
-extern int OS_TryLockCartridge(u16 lock_id);
 extern void PXI_Init(void);
 extern int PXI_IsCallbackReady(u32 tag, int processor);
 extern int PXI_SendWordByFifo(u32 tag, u32 data, int error);

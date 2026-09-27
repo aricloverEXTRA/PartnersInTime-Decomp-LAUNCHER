@@ -9153,3 +9153,47 @@ the independent model. These cases do not establish live lifetimes, rendering
 or IRQ behavior. The private `field_script_start_validation.json` records the
 versioned producers, artifacts, actual source-object comparisons and full build
 gate; 107 tests, the original ROM hash and zero-difference native relinking pass.
+
+
+## NitroSDK cartridge signature classification
+
+`OSi_ReadCartridgeSignatureType` (`0x02039A60..0x02039B34`) adds 212 bytes of
+pure C to [os_console_type.c](../../src/nitro/os/os_console_type.c). It allocates
+a lock ID, masks ARM9 IRQs and checks the cartridge lock at `0x027FFFE8`. If
+bit 6 of the owner is set, or its own lock attempt succeeds, it reads the GBA
+bus at `0x08000000` and conditionally `0x08000004`, using 32-bit accesses. The
+little-endian words spelling "NINTENDO" select `0x01000000`; any mismatch
+selects `0x02000000`. It restores IRQ state after each iteration. Reading under
+an existing ARM9 owner does not finish the loop: it exits only after acquiring
+and releasing the lock itself. The allocated ID is retained.
+
+This is a concrete PiT difference from the cross-game manual's fixed
+`OS_GetConsoleType` result. PiT's already reconstructed caller caches a result
+assembled from this signature class and other hardware flags. The cartridge
+and rumble interfaces now use the shared lock declarations, including the
+native halfword return of `OS_ReadOwnerOfLockWord`. All 26 functions in the
+three affected source objects remain exact. The full gate passes 107 tests,
+the original ROM hash and zero-difference native relinking. The first gate
+exposed old void lock declarations in the rumble driver; removing those
+duplicates resolved it.
+
+Private `build/runtime/eur_xhigh_os_cartridge_type/boot65_v1.json` checks one
+ordinary boot call at frame 5 during a 1200-frame cold boot. It acquires lock ID
+66, reads `0xFFFFFFFF` from the accessible GBA bus, returns `0x02000000`, and
+releases the lock. Bitmap, lock-word and bus-control effects, helper arguments,
+results, IRQ/FIQ control bits and ABI preservation match independent expectations.
+The title screen was inspected and all 104 original saves remain unchanged.
+The bus value is checked at the actual load, after access is acquired; an earlier
+snapshot taken while ARM7 owns the bus can read a different value.
+
+`isolated_v1.json` adds 216 ARM946 cases with the actual compiled caller and all
+native helpers, without function stubs. They cover both signature words,
+lock-ID bitmap selection, four IRQ/FIQ mask combinations, an existing ARM9 owner
+and failed lock attempts followed by explicit owner transitions. All 2880 ordered
+helper calls, 540 word reads and 1692 stores match the model. Full mapped RAM,
+DTCM, I/O, GBA and return pages are checked outside a 128-byte stack allowance;
+the shared-memory page aliases the last main-RAM page. These deterministic
+fixtures do not prove physical cartridge behavior, asynchronous ARM7 races or
+IRQ scheduling. Versioned probes, immutable actual-object copies, failed and
+successful build logs and artifact hashes are recorded in private
+`build/analysis/xhigh_from_55/os_cartridge_type_validation.json`.

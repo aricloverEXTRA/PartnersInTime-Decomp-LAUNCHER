@@ -15,6 +15,7 @@ typedef struct OsLockWord {
 typedef void (*OsLockCallback)(void);
 
 void OSi_SpinWaitLock(void);
+int OS_GetLockID(void);
 u16 OS_ReadOwnerOfLockWord(const OsLockWord *lock);
 void OSi_ReleaseCardBus(void);
 void OSi_AllocateCardBus(void);

@@ -16,8 +16,6 @@ extern u32 data_02060e5c[6];
 extern u16 data_02060e84;
 extern const volatile char data_0204b7ec[19];
 extern void MIi_CpuClearFast(u32 value, void *destination, u32 size);
-extern void OS_LockCartridge(u16 lock);
-extern void OS_UnlockCartridge(u16 lock);
 
 static inline u32 GameRumble_ToTicks(u32 milliseconds)
 {

@@ -569,7 +569,7 @@ src/nitro/mi/mi_card_dma.c:
     .text start:0x0203bcbc end:0x0203bd48
 
 src/nitro/os/os_console_type.c:
-    .text start:0x02039b34 end:0x02039bac
+    .text start:0x02039a60 end:0x02039bac
 
 src/nitro/os/os_arena_low.c:
     .text start:0x0203a0b4 end:0x0203a1c4
