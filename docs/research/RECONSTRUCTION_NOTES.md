@@ -9635,3 +9635,51 @@ establish animation, IRQ timing or subsequent object lifetime.
 The new setup adds 168 matching C bytes. The adjacent rotation functions remain
 exact in the renamed, contiguous 448-byte unit, as does the 9,196-byte dispatcher.
 The complete ROM, native relink and 107 tests pass.
+
+
+## Pause text-panel motion and strips
+
+[`pause_text_panel.cpp`](../../src/scene_menu_ov007/pause_text_panel.cpp) owns
+overlay 7 `0x0207B658..0x0207B864`: the 76-byte child-strip callback and the
+448-byte panel updater. Both use 72-byte task-pool slots. The parent owns a
+336-byte model; strips own 64-byte sprites and follow their parent's Q12 position.
+
+The shared activity flag is the 32-bit word at pause workspace `+0x2B8`.
+It is distinct from the equipment flag at `+0x2C0`. A visible empty list clears
+the panel flag. Phase 0 applies acceleration, velocity and position in that order,
+then decrements the timer. Reaching zero snaps to signed halfword pixel targets;
+an initial zero instead becomes -1. Closing starts at phase 1000 with vertical
+velocity of eight pixels per update, reversed for the upper panel. Phase 1001
+marks the parent only after it passes -48 or 240 pixels; equality still draws.
+Strips mark themselves when the parent's closing halfword becomes nonzero.
+
+Both pixel conversions are evaluated before the model's halfword stores.
+This source data flow explains the six instruction differences in the inherited
+draft; the resulting functions are pure C++ and match in the actual build object.
+Multiplying signed targets by 4096 preserves the native scale without shifting
+negative signed values.
+
+Private `build/runtime/eur_xhigh_pause_text_panel/clothing_v2.json` records a
+1,970-frame ordinary save-65 clothing-menu route: 1,359 panel updates and 13,468
+strip updates. Six panels arrive and later exit, three at each screen edge;
+49 child strips mark themselves. All 55 task creations and removal returns are
+tracked. The oracle checks complete task, parent, model/sprite, 90,600-byte pause
+workspace, 4,428-byte party allocation and header, save prefix and display
+records, plus draw-pool/list changes and helper ABI. Submitted draw entries are
+verified independently; this is not an independent rasterization proof.
+
+The first route (`clothing_v1`) ended after Start reopened the pause menu and
+failed its final lifetime check. The corrected producer retains that exact
+prefix, whose screenshots and graphics hashes agree, and closes the menu with
+one additional Start/wait pair. The clothing screen and final field screen were
+visually inspected. Both runs restore checkpoint RAM/DTCM; all 104 saves remain
+unchanged. Removal returns are observed, without claiming an independent proof
+of the allocator's cleanup internals.
+
+`isolated_v1.json` adds 116 ARM946 cases on copied RAM: visible/hidden and empty
+lists, independent activity flags, timer 0/1/2, both exit thresholds just below,
+equal and above, signed coordinate truncation and full-width child positions.
+The actual compiled callbacks and native get/count/mark/draw/pool helpers run
+without stubs. Full RAM and DTCM outside the observed stack (at most 32 bytes),
+1,297 ordered nonstack stores, helper results and preserved registers are checked.
+These synthetic cases do not establish additional live lifetimes or IRQ timing.

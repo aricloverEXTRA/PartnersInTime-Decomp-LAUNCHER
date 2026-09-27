@@ -11086,3 +11086,21 @@ match. The complete 448-byte unit and Scene dispatcher remain exact; golden ROM,
 native relink and 107 tests pass. All 104 saves are intact.
 Matching C/C++: 869148/1563700 (55.5828%).
 Private evidence: xhigh_from_55/scene_sine_validation.json.
+
+
+### Pause text-panel motion and strips
+
+- Reconstructed the shared panel updater and following child strips as pure
+  C++ (overlay 7, `0x0207B658..0x0207B864`, 524 bytes). Named the separate
+  panel-active workspace field; evaluating both coordinate conversions before
+  their stores explains the inherited draft's final scheduling differences.
+- Actual compiled functions, complete ROM and native relink match. All 107
+  tests pass. Matching C/C++ is 869,672 / 1,563,700 bytes (55.6163%).
+- Ordinary clothing-menu replay: 1,359 parent and 13,468 child calls, both
+  exit directions, all 55 task lifetimes and visible field return. A failed
+  route prefix is retained; its correction adds the missing final menu close.
+  Another 116 copied-RAM cases check boundaries and 1,297 ordered stores using
+  actual callbacks and native helpers, without stubs. All 104 saves preserved.
+- Evidence: private `eur_xhigh_pause_text_panel/{clothing_v1,clothing_v2,isolated_v1}.json`
+  and `xhigh_from_55/pause_text_panel_validation.json`; see the reconstruction
+  reference for checked allocations, restored state and coverage limits.

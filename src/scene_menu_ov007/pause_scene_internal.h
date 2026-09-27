@@ -55,7 +55,8 @@ struct PauseSceneWork {
     u8 special_available, abilities[6];
     u8 unknown127[11];
     s16 label_origin_x, label_origin_y;
-    u8 unknown136[0x186];
+    u8 unknown136[0x182];
+    int text_panel_active;
     void *renderer;
     int equipment_active;
     s8 selected[4];

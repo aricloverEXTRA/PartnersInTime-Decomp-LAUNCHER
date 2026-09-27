@@ -237,3 +237,6 @@ src/scene_menu_ov007/scene_text.cpp:
 
 src/scene_menu_ov007/scene_axis_motion.c:
     .text start:0x02085998 end:0x02085b58
+
+src/scene_menu_ov007/pause_text_panel.cpp:
+    .text start:0x0207b658 end:0x0207b864
