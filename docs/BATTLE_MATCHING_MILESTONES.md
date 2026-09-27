@@ -10995,3 +10995,20 @@ and corrected results are retained; see the projectile-recall reconstruction
 notes and private xhigh_from_55/ov25_recall_validation.json.
 
 Matching C/C++: 866468/1563700 (55.41%). Symbolic ASM remains separate.
+
+## Elder Princess Shroob staggered projectile launches
+
+Reconstructed the 648-byte launcher in C++, preserving countdown fallthrough,
+inactive-slot skipping, signed coordinate scaling, target selection and hit
+descriptor setup. Native X/Y/Z declaration order resolves the initial register
+differences. All three functions in the extended unit match 924 bytes.
+
+Runtime: 240 checked calls over 1001 neutral frames from the existing controlled
+projectile checkpoint, with no new RAM edits; 360 isolated ARM946 cases cover
+the remaining branches with native math/motion/hit helpers. Animation/audio
+stubs and modeled hardware are explicitly limited to isolated checks. Full
+RAM/DTCM restoration and 104 unchanged saves verified. Full gate: 107 tests,
+golden ROM and zero differing native-relink bytes. Evidence and limits are in
+the reconstruction notes and xhigh_from_55/ov25_sequential_validation.json.
+
+Matching C/C++: 867116/1563700 (55.45%). Symbolic ASM remains separate.

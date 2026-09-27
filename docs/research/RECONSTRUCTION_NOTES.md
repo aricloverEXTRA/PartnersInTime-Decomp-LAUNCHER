@@ -9329,3 +9329,43 @@ Two failed oracle versions incorrectly assumed a heap allocation and omitted
 the motion wrapper's Q8 scaling. Preserved reports and corrected runs distinguish
 those probe errors from the matching game code. The final five-function build
 object matches all 1660 bytes; the full gate passes 107 tests and both ROM checks.
+
+### Staggered projectile launches
+
+[`Overlay25Projectile_LaunchNext`](../../src/elder_princess_shroob_ov025/ov25_projectile_update_trail.cpp)
+reconstructs `0x020C4FD8..0x020C5260` (648 bytes) in C++. After the initial
+120-update delay set by `WaitSpin`, it skips inactive entries and launches each
+remaining projectile 60 updates apart. Reaching index 6 switches to `WaitAll`.
+The target's stored coordinates at actor offsets 24/26/28 determine the motion;
+horizontal deltas use the signed division `(-4096*z)/(dz + 24)` and then
+truncate toward zero after multiplication. Motion uses initial velocity 256
+and acceleration 13 through the existing Q8 wrapper. Runtime flag bit 16 can
+retarget the child to Mario or Luigi based on Mario's status eligibility.
+The hit descriptor targets the party pair, retains the spawning enemy's ID,
+and receives status 2 with chance/magnitude 5.
+
+Private `eur_xhigh_ov25_sequential/live_v1.json` records 1001 neutral frames
+from `eur_ov25_projectile_prepare/prepare103.dst` (SHA-1
+`c2c8c46bf017c3f5a9b048ecfbf536dc68170d17`). That checkpoint has a controlled
+origin: at the earlier guarded dispatcher, the mode-0 native initializer was
+selected and the shared preparation table was set to actor IDs 56/57 plus
+four empty slots. The new replay makes no RAM edits. All 240 calls are checked:
+237 waits, launches at frames 150/210, and completion at frame 270 after skipping
+slots 2–5. Battle continues through later boss callbacks. Full work/slot/scene
+records, party records, motion/list outputs, angle and division results, hit
+descriptor/list links and callee-saved registers match independent expectations.
+Animation effects in receiving object/model records are bounded observations;
+audio and graphics internals remain outside the oracle. The two common captures
+and graphics dumps equal discovery; projectile and final battle images were
+inspected. Checkpoint reload restores main RAM/DTCM, and 104 saves are unchanged.
+
+`isolated_v1.json` adds 360 ARM946 cases, including skipped/all-empty masks,
+indices -1/0/1/3/4/5, positive/zero/negative timers, both target variants,
+retargeting with positive/zero Mario HP, and empty/already-active hit lists.
+The compiled caller and native lookup, eligibility, division, atan, motion,
+hit configuration and status helpers execute. Animation/audio are guarded stubs;
+square-root/divider MMIO uses immediate modeled results. Full main RAM and DTCM
+outside the observed stack are checked. The cases comprise 144 waits, 99 launches
+and 117 completions; they do not establish normal gameplay entry or IRQ timing.
+All three functions in the final source object match 924 native bytes. The full
+gate passes 107 tests and both exact ROM checks.
