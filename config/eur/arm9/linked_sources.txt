@@ -341,7 +341,6 @@ src/field/field_bounds_resources.cpp
 src/field/field_archive_lifecycle.c
 src/field/field_archive_lookup.c
 src/field/field_script_manager.cpp
-src/field/field_script_auxiliary.cpp
 src/field/field_script_interaction.cpp
 src/field/field_script_entity_controls.cpp
 src/field/field_effect_lookup.cpp
@@ -759,7 +758,7 @@ src/field/field_message_window_queries.c
 src/field/field_frame_tasks.c
 src/field/field_projection.c
 src/field/field_camera_position.c
-src/field/field_script_update_gate.c
+src/field/field_area_scripts.c
 src/field/field_party_action_update.c
 src/field/field_planar_script_stop.cpp
 src/field/field_spatial_script_control.cpp

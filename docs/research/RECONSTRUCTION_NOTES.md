@@ -9120,6 +9120,10 @@ when applicable. It then calls `FieldScriptManager_StartEntityScripts`
 (`0x02089188..0x02089280`). These overlay-0 functions add 300 bytes of matching
 C/C++ without inline assembly.
 
+The area entry points are in [field_area_scripts.c](../../src/field/field_area_scripts.c).
+The now-contiguous startup and auxiliary functions share
+[field_script_manager.cpp](../../src/field/field_script_manager.cpp).
+
 The entity loop caches the count at area `+0x2B32`, but reads each pointer from
 the 32-slot table at `+0x29D8` as it proceeds. The following words hold linked-list
 heads and other area state; the older 86-pointer script-context view was too

@@ -1,7 +1,7 @@
 /*
  * Area script startup and update gate (overlay 0, 0x0207EB28-0x0207EBC4).
  *
- * Runs the area's scripts only while nothing else holds control.
+ * Starts scripts when the room is ready and updates them while control is free.
  */
 
 #include <game/field_area.h>

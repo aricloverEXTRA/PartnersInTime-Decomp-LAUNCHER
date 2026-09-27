@@ -1,14 +1,10 @@
-extern "C" {
-
 /*
- * Field script manager (overlay 0, 0x02089188-0x020894B4).
+ * Field script manager (overlay 0, 0x0208911C-0x020894B4).
  *
- * Constructs the field's script manager and its VM instance, and copies it for a
- * snapshot.
+ * Initializes the two VM banks, starts room/entity/auxiliary scripts, and copies
+ * the manager's state for a snapshot.
  */
 
-#include <nitro/fx.h>
-}
 #include <game/field_script_context.h>
 extern "C" {
 extern FieldScriptManager *data_ov000_020c1660[];
@@ -99,5 +95,13 @@ void FieldScriptManager_StartEntityScripts(FieldScriptManager *manager)
         --remaining;
         ++cursor;
     } while (remaining);
+}
+/* The auxiliary slot may start only after its previous script has finished. */
+void FieldScriptManager_StartAuxiliary(FieldScriptManager *manager, FieldScriptState *parent, int slot)
+{
+    if (!manager->states[3].flag_bits.active) {
+        FieldScriptContext *field = (FieldScriptContext *)manager->runtimes[0].field_context;
+        FieldScript_Begin(&manager->states[3], parent, 0, FieldScript_Lookup(field, 0, slot));
+    }
 }
 }
