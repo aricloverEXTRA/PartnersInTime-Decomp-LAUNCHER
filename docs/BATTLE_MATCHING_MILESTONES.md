@@ -11026,3 +11026,13 @@ Matching C/C++: 867116/1563700 (55.45%). Symbolic ASM remains separate.
   `build/runtime/eur_xhigh_ov25_emission/`,
   `build/analysis/xhigh_from_55/ov25_emission_validation.json` and
   [the reconstruction reference](research/RECONSTRUCTION_NOTES.md#spinning-orb-and-projectile-emission).
+
+
+## Three-part sub-screen drawing adapter (2026-09-27)
+
+Recovered and linked the exact C++ transform/OAM adapter. The actual source
+object, golden ROM, native relink and 107 tests pass. Runtime evidence covers
+8,766 live calls and 216 isolated cases; virtual drawing is explicitly bounded
+observation in the replay and stubbed in isolation. All 104 saves are unchanged.
+Matching C/C++: 868428/1563700 (55.5367%).
+Private evidence: xhigh_from_55/three_part_draw_validation.json.

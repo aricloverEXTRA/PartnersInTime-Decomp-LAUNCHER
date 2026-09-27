@@ -1043,3 +1043,5 @@ src/battle/battle_auxiliary_pause.c
 src/attack_smash_egg_ov015/reward_message.cpp
 
 src/battle/battle_window_close.cpp
+
+src/battle/battle_three_part_draw.cpp

@@ -9417,3 +9417,36 @@ uses the orb's valid primary model and slot 50's valid alternate model.
 The final actual unit contains five exact functions totaling 2608 bytes.
 The complete build gate passes 107 tests, the golden ROM hash and zero native
 relink differences. No inline assembly was added.
+
+
+## Three-part sub-screen drawing adapter
+
+[`battle_three_part_draw.cpp`](../../src/battle/battle_three_part_draw.cpp)
+converts a three-part effect's matrix into the alternate model's sprite position
+and affine coefficients, invokes its virtual renderer, then registers the OAM
+group. Translation divides by 256 and coefficients by 16, truncating toward zero
+before halfword stores. The Y offset is a full-width argument. Depth remains a
+full word and is reloaded after drawing for the sort key. Local byte counters
+capture the renderer's output; their promoted differences go to `GameOam_AddGroup`.
+That helper leaves all global counters unchanged when no objects were emitted,
+even if the local affine counter advanced.
+
+Private `build/runtime/eur_xhigh_three_part_draw/live_v1.json` checks 8,766 calls
+over 8,820 frames using the established controlled Princess Shroob encounter:
+6,058 empty draws, 752 first groups and 1,956 subsequent groups. No new RAM edits
+were needed. Checks cover the complete 304-byte receiving model allocation,
+64-byte transform, OAM counters and groups, 1,024-byte OAM output, helper arguments
+and preserved registers. Virtual-renderer writes within the model, OAM buffer
+and two stack counters are bounded observations; the adapter's conversions and
+group bookkeeping are independently checked. The effect and final battle-menu
+captures were inspected, without claiming an independent rasterization check.
+The full checkpoint RAM and DTCM were restored; all 104 original saves are intact.
+
+`isolated_v1.json` adds 216 ARM946 cases using the compiled adapter and native
+group helper. They cover signed matrix extremes, halfword truncation, three Y
+offsets, four counter results and first/subsequent groups. The virtual renderer
+is an explicit stub, including a depth-alias case to test the post-call reload.
+Full RAM, scratch storage, DTCM outside the observed stack, ordered stores and
+the call ABI are checked. These cases add no live allocation-lifetime, renderer,
+IRQ-timing or hardware coverage. The entire linked function matches without ASM;
+the complete ROM and native relink pass, as do all 107 tests.

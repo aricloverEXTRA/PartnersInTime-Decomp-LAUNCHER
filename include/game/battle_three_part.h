@@ -7,6 +7,9 @@
 extern "C" {
 #endif
 
+void BattleThreePart_DrawSubscreen(BattleModel *model,
+    const MtxFx44 *transform, int y_offset);
+
 /* Channels are 0..2; the object must own an initialized three-part override. */
 int BattleThreePart_GetStatus(BattleSceneObject *object, int channel);
 void BattleThreePart_BindActor(BattleSceneObject *object, u16 actor_id, int channel);
