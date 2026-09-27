@@ -81,7 +81,7 @@ src/field/field_archive_lookup.c:
     .text       start:0x020894b4 end:0x020895f0
 
 src/field/field_script_manager.cpp:
-    .text       start:0x02089280 end:0x020894b4
+    .text       start:0x02089188 end:0x020894b4
 
 src/field/field_script_auxiliary.cpp:
     .text       start:0x0208911c end:0x02089188
@@ -286,7 +286,7 @@ src/field/field_camera_position.c:
     .text start:0x020736a4 end:0x02073740
 
 src/field/field_script_update_gate.c:
-    .text start:0x0207eb28 end:0x0207eb90
+    .text start:0x0207eb28 end:0x0207ebc4
 
 src/field/field_party_action_update.c:
     .text start:0x020a04e4 end:0x020a0544

@@ -15,10 +15,17 @@ typedef struct FieldScriptContext {
     u8 unknown_23fa[0xE6];
     const u8 *scripts[2];
     u8 unknown_24e8[0x4F0];
-    FieldEntity *entities[86];
+    /* The following words are list heads and other area state, not slots. */
+    FieldEntity *entities[32];
+    u8 unknown_2a58[0xD8];
     u8 unknown_2b30[2];
     u8 entity_count;
 } FieldScriptContext;
+
+typedef char FieldScriptContext_EntitiesOffsetCheck[
+    (u32)&((FieldScriptContext *)0)->entities == 0x29D8 ? 1 : -1];
+typedef char FieldScriptContext_CountOffsetCheck[
+    (u32)&((FieldScriptContext *)0)->entity_count == 0x2B32 ? 1 : -1];
 
 static inline const u16 *FieldScript_Lookup(FieldScriptContext *field, unsigned resource_set, int slot)
 {

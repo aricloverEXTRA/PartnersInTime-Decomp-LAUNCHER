@@ -9108,3 +9108,44 @@ behavior. All 104 original saves are unchanged. Versioned producers and artifact
 validation are in `build/analysis/xhigh_from_55/`, named
 `probe_auxiliary_pause_live_v1.py`, `check_auxiliary_pause_isolated_v1.py` and
 `auxiliary_pause_validation.json`.
+
+
+## Field area and entity script startup
+
+`FieldArea_StartScripts` (`0x0207EB90..0x0207EBC4`) initializes the embedded
+manager at area `+0x2570`, using the signed startup-script halfword at `+0x28`.
+A value of -1 selects the room header's default entry. The native area state
+machine resets this field to -1 and copies a queued transition's script into it
+when applicable. It then calls `FieldScriptManager_StartEntityScripts`
+(`0x02089188..0x02089280`). These overlay-0 functions add 300 bytes of matching
+C/C++ without inline assembly.
+
+The entity loop caches the count at area `+0x2B32`, but reads each pointer from
+the 32-slot table at `+0x29D8` as it proceeds. The following words hold linked-list
+heads and other area state; the older 86-pointer script-context view was too
+broad. An entity's signed halfword at `+0x0C` selects its startup script; -1
+skips it. The unsigned halfword at `+0x08` identifies a suppression variable:
+0xFFFF bypasses the lookup, otherwise a nonzero value suppresses startup. Bit 6
+of `+0x0A` selects one of the two script banks. The loop begins the embedded
+204-byte state at `+0x20` with context type 3, then immediately runs it.
+
+Private `build/runtime/eur_xhigh_field_script_start/cold65_v1.json` records an
+ordinary 2233-frame cold boot and load of save 65, with no RAM edits. Two area
+starts examined 31 entities: 14 scripts started, 13 entities had no script and
+four were suppressed. Full native guards, manager initialization, global
+registration, helper arguments, script-state outputs, current entity/area
+preservation and ABI checks passed. Entity table ownership and heap bounds were
+checked. The final Thwomp Volcano screen was inspected; all 104 original saves
+are unchanged. Execution of the started scripts' wider game effects remains
+observational.
+
+`isolated_v1.json` adds 52 ARM946 cases using the actual compiled wrapper and
+loop, native initializer, script-begin helper, variable reader and memory clears.
+Only script execution is stubbed. Synthetic cases cover empty and 32-entity
+tables, both banks, signed script indices, disabled/active states, suppression
+outcomes and mutations to the count and subsequent entities. All 1014 ordered
+helper calls and full mapped memory outside a 128-byte stack allowance match
+the independent model. These cases do not establish live lifetimes, rendering
+or IRQ behavior. The private `field_script_start_validation.json` records the
+versioned producers, artifacts, actual source-object comparisons and full build
+gate; 107 tests, the original ROM hash and zero-difference native relinking pass.

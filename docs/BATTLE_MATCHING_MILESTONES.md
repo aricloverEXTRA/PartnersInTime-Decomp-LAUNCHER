@@ -10939,3 +10939,14 @@ the full gate, 107 tests, golden ROM and native relink pass. Four restored live
 calls verify all sixteen objects and their active renderers. Forty-eight isolated
 ARM946 cases use the real setter and lookup, without stubs. All 104 saves remain
 unchanged. [Evidence and limits](research/RECONSTRUCTION_NOTES.md#battle-auxiliary-object-pause-control).
+
+
+## Field area and entity script startup (2026-09-27)
+
+Reconstructed the area startup wrapper and entity script-start loop, adding 300
+bytes of pure C/C++. Matching coverage reaches 864,820/1,563,700 (55.31%).
+The actual updated units match throughout. A normal save-65 load checks two
+area starts and 14 entity scripts; 52 isolated ARM946 cases cover the missing
+branches. The full gate passes 107 tests, the golden ROM and native relinking.
+All 104 original saves remain unchanged.
+[Evidence and limits](research/RECONSTRUCTION_NOTES.md#field-area-and-entity-script-startup).

@@ -1,7 +1,7 @@
 extern "C" {
 
 /*
- * Field script manager (overlay 0, 0x02089280-0x020894B4).
+ * Field script manager (overlay 0, 0x02089188-0x020894B4).
  *
  * Constructs the field's script manager and its VM instance, and copies it for a
  * snapshot.
@@ -16,6 +16,7 @@ extern const u32 data_ov000_020c00d0[];
 extern void func_0202cbd4(void *, int, u32);
 extern void func_0202cc58(const void *, void *, u32);
 extern void func_0202cd2c(const void *, void *, u32);
+extern int func_ov000_02088008(FieldVmRuntime *, FieldScriptState *);
 static inline void FieldScript_InitVm(FieldVmRuntime *runtime, const u8 *scripts, u32 variables)
 {
     runtime->vm.unknown_00 = (u32)scripts;
@@ -72,5 +73,31 @@ FieldScriptManager *FieldScriptManager_Copy(FieldScriptManager *destination, con
     else
         func_0202cc58(source->states, destination->states, sizeof(destination->states));
     return destination;
+}
+
+/* Start each eligible entity once, then run it immediately. The count is
+ * cached, while entity slots and script fields remain live between calls. */
+void FieldScriptManager_StartEntityScripts(FieldScriptManager *manager)
+{
+    FieldScriptContext *field = (FieldScriptContext *)manager->runtimes[0].field_context;
+    FieldEntity **cursor = field->entities;
+    int remaining = field->entity_count;
+    if (!remaining)
+        return;
+
+    do {
+        FieldEntity *entity = *cursor;
+        if (entity->startup_script != -1 &&
+            (entity->script_suppression_variable == 0xFFFF ||
+             VM_ReadVariable(entity->script_suppression_variable, 0, 0) == 0)) {
+            FieldScript_Begin((FieldScriptState *)entity->state_payload, 0, 3,
+                             FieldScript_Lookup(field, entity->property_00a_bits.resource_set,
+                                                entity->startup_script));
+            func_ov000_02088008(&manager->runtimes[entity->property_00a_bits.resource_set],
+                              (FieldScriptState *)entity->state_payload);
+        }
+        --remaining;
+        ++cursor;
+    } while (remaining);
 }
 }

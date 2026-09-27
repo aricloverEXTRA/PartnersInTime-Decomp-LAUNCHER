@@ -1,5 +1,5 @@
 /*
- * Script update gate (overlay 0, 0x0207EB28-0x0207EB90).
+ * Area script startup and update gate (overlay 0, 0x0207EB28-0x0207EBC4).
  *
  * Runs the area's scripts only while nothing else holds control.
  */
@@ -10,6 +10,12 @@ typedef struct FieldOwnerModeView {
     u8 prefix[600];
     u16 mode : 4, reserved : 12;
 } FieldOwnerModeView;
+
+void FieldArea_StartScripts(FieldAreaContext *area)
+{
+    FieldScriptManager_Init(&area->scripts, area, area->startup_script);
+    FieldScriptManager_StartEntityScripts(&area->scripts);
+}
 
 void FieldArea_UpdateScriptsWhenIdle(FieldAreaContext *area) {
     if ((!area->auxiliary || !((FieldOwnerModeView *)area->auxiliary)->mode) &&

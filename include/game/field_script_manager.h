@@ -36,6 +36,7 @@ extern "C" {
 #endif
 FieldScriptManager *FieldScriptManager_Construct(FieldScriptManager *manager);
 void FieldScriptManager_Init(FieldScriptManager *manager, void *field_context, int slot);
+void FieldScriptManager_StartEntityScripts(FieldScriptManager *manager);
 void FieldScriptManager_Destroy(FieldScriptManager *manager);
 FieldScriptManager *FieldScriptManager_Copy(FieldScriptManager *destination,
                                             const FieldScriptManager *source);

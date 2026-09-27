@@ -357,7 +357,7 @@ typedef struct FieldEntity {
             union { u8 unknown_006[2]; struct { u8 render_order, unknown_007; }; };
         };
     };
-    u16 unknown_008;
+    union { u16 unknown_008; u16 script_suppression_variable; };
     union {
         u16 property_00a;
         struct {
@@ -373,7 +373,10 @@ typedef struct FieldEntity {
         struct { u16 unknown_00_06 : 7, unknown_07 : 1, unknown_08 : 1, unknown_09_15 : 7; } visibility_bits;
     };
     union {
-        struct { s16 unknown_00c; u8 unknown_00e[0x12]; };
+        struct {
+            union { s16 unknown_00c; s16 startup_script; };
+            u8 unknown_00e[0x12];
+        };
         struct {
             u8 unknown_00c_prefix[4];
             FieldRuntimeEntity *update_previous, *update_next;

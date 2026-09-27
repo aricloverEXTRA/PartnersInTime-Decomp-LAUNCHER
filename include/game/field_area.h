@@ -54,7 +54,13 @@ typedef char FieldNotification_SizeCheck[sizeof(FieldNotification) == 68 ? 1 : -
 typedef struct FieldAreaContext {
     const void *vtable;
     void *owner;
-    u8 unknown_0008[34];
+    union {
+        u8 unknown_0008[34];
+        struct {
+            u8 unknown_0008_prefix[32];
+            s16 startup_script; /* -1 selects the room header's default. */
+        };
+    };
     union {
         struct { s8 unknown_2a; u8 unknown_002b[8913]; };
         struct {
@@ -186,6 +192,8 @@ typedef struct FieldAreaContext {
     struct FieldPaletteCrossfade *palette_crossfade;
 } FieldAreaContext;
 typedef char FieldAreaContext_SizeCheck[sizeof(FieldAreaContext) == 11216 ? 1 : -1];
+typedef char FieldAreaContext_StartupScriptOffsetCheck[
+    (u32)&((FieldAreaContext *)0)->startup_script == 40 ? 1 : -1];
 typedef struct FieldAreaSnapshot {
     u16 room_id;
     struct {
@@ -219,6 +227,7 @@ void FieldArea_CloseMessageWindows(FieldAreaContext *area, int window);
 void FieldArea_CenterCameraOnEntity(FieldAreaContext *area, struct FieldRuntimeEntity *entity, fx32 x, fx32 y);
 void FieldArea_SetCameraPosition(FieldAreaContext *area, fx32 x, fx32 y);
 void FieldArea_UpdateScriptsWhenIdle(FieldAreaContext *area);
+void FieldArea_StartScripts(FieldAreaContext *area);
 void FieldArea_SaveQuadRegionState(FieldAreaContext *area);
 void FieldArea_InitializeQuadRegions(FieldAreaContext *field);
 void FieldArea_CreateVariableEntities(FieldAreaContext *field);
