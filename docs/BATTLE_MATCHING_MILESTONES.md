@@ -11104,3 +11104,17 @@ Private evidence: xhigh_from_55/scene_sine_validation.json.
 - Evidence: private `eur_xhigh_pause_text_panel/{clothing_v1,clothing_v2,isolated_v1}.json`
   and `xhigh_from_55/pause_text_panel_validation.json`; see the reconstruction
   reference for checked allocations, restored state and coverage limits.
+
+
+### Pause bean visibility and dismissal helpers
+
+- Reconstructed bean-digit visibility, cursor dismissal and text-panel close
+  requests (144 pure C++ bytes). Migrated the menu/page callers to named APIs.
+- The ordinary save-65 route checks 1,989 bean callbacks (1,263 drawn and 726
+  hidden), three digit task lifetimes, seven marked cursor tasks, palette reset
+  and four panel-close requests. Visible return to the field, restored checkpoint
+  RAM/DTCM and all 104 original saves preserved; no RAM fixtures.
+- Actual source objects and migrated callers match. Golden ROM, zero native
+  differences and 107 tests passed. Matching C/C++: 869816/1563700 (55.6255%).
+- Private evidence: `eur_xhigh_pause_menu_tails/keys_v1.json` and
+  `xhigh_from_55/pause_menu_tails_validation.json`.

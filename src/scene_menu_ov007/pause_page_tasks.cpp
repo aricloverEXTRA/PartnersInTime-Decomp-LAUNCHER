@@ -7,6 +7,7 @@
  */
 
 #include "pause_scene_internal.h"
+#include <game/pause_menu_cursor.h>
 #include <game/pause_selection_sprites.h>
 #include <game/pause_navigation.h>
 #include <game/pause_transition.h>
@@ -36,7 +37,6 @@ void func_ov005_02066358(PauseMenuElement *, void (*)(PauseMenuElement *), int);
 void func_ov007_0206faf4(int, int, int);
 void func_ov007_0206f754(int);
 void func_ov007_0206f8f8(int, int);
-void func_ov007_0207fe60(void);
 void func_ov007_0207b2dc(int, int);
 void func_ov007_0207ae0c(void);
 void func_ov007_020784a0(void);
@@ -90,7 +90,7 @@ extern "C" void PausePage_OpenTask(PausePageTask *task)
         break;
     case 1:
         Overlay5Display_EnablePlanes(DISPLAY_ENGINE_MAIN, 4);
-        func_ov007_0207fe60();
+        PauseMenuCursor_Close();
         ++task->phase;
         break;
     case 2:

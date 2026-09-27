@@ -39,6 +39,7 @@ extern "C" {
 #endif
 void PauseMenuCursor_UpdateIcon(PauseMenuCursorTask *task);
 void PauseMenuCursor_UpdateShadow(PauseMenuCursorTask *task);
+void PauseMenuCursor_Close(void);
 #ifdef __cplusplus
 }
 #endif

@@ -240,3 +240,12 @@ src/scene_menu_ov007/scene_axis_motion.c:
 
 src/scene_menu_ov007/pause_text_panel.cpp:
     .text start:0x0207b658 end:0x0207b864
+
+src/scene_menu_ov007/pause_bean_digit.cpp:
+    .text start:0x02073708 end:0x02073754
+
+src/scene_menu_ov007/pause_menu_cursor_close.cpp:
+    .text start:0x0207fe60 end:0x0207fe90
+
+src/scene_menu_ov007/pause_text_panel_close.cpp:
+    .text start:0x0207b2c8 end:0x0207b2dc

@@ -9683,3 +9683,42 @@ The actual compiled callbacks and native get/count/mark/draw/pool helpers run
 without stubs. Full RAM and DTCM outside the observed stack (at most 32 bytes),
 1,297 ordered nonstack stores, helper results and preserved registers are checked.
 These synthetic cases do not establish additional live lifetimes or IRQ timing.
+
+
+## Pause bean digits and dismissal helpers
+
+[`pause_bean_digit.cpp`](../../src/scene_menu_ov007/pause_bean_digit.cpp),
+[`pause_menu_cursor_close.cpp`](../../src/scene_menu_ov007/pause_menu_cursor_close.cpp)
+and [`pause_text_panel_close.cpp`](../../src/scene_menu_ov007/pause_text_panel_close.cpp)
+reconstruct three small overlay-7 helpers: `0x02073708` (76 bytes), `0x0207FE60`
+(48 bytes) and `0x0207B2C8` (20 bytes). All are pure C++.
+
+The bean callback obtains its 64-byte sprite, reads the selected row, resolves
+the item through the party's circular list and submits the sprite at priority 41
+only for item 0. Selecting another key item hides the pre-existing digits.
+Cursor dismissal marks every task in group 3 and resets palette-effect entry 0
+to the native default: zero fields except Q8 speed 256 and paused flag 1.
+The text-panel close request clears the workspace word at `+0x2B8`; the existing
+panel callback consumes it on a later update.
+
+Private `build/runtime/eur_xhigh_pause_menu_tails/keys_v1.json` is an ordinary
+1,404-frame save-65 route. It checks 1,989 bean callbacks: 1,263 submissions while
+Beans is selected and 726 hidden calls for Toadbert's Drawing. All three digit
+task creations and removal returns are observed. One cursor dismissal marks
+seven group-3 tasks and resets the palette entry; four panel-close requests
+clear an active flag. No RAM fixtures are used.
+
+The oracle checks full task/sprite records, the 90,600-byte pause workspace,
+the 4,428-byte party allocation and header, save prefix, display records,
+selected-row/item helper results and independently derived draw-list changes.
+Cursor checks include all marked task records and list roots, the complete
+12-byte palette-controller allocation and header, and its entries. The default
+entry's 20 expected bytes are independently specified and checked against ROM.
+Stack and callee-saved registers are preserved. Task removal returns are observed;
+allocator cleanup internals, rasterization and IRQ timing are outside this probe.
+
+The Beans screen, hidden digits on Toadbert's Drawing and final field screen were
+visually inspected. Eight screenshot/graphics captures are retained. Checkpoint
+RAM/DTCM is restored and all 104 saves remain unchanged. All three actual source
+objects and every function in the three migrated caller units match; the full
+ROM, native relink and 107 tests pass. The bean-digit creator remains native.

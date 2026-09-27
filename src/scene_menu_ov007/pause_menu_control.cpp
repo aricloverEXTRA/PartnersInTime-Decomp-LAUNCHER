@@ -6,6 +6,7 @@
  */
 
 #include "pause_scene_internal.h"
+#include <game/pause_text_panel.h>
 #include <game/pause_navigation.h>
 #include <game/pause_background.h>
 #include <game/pause_menu_label.h>
@@ -13,7 +14,6 @@
 extern "C" {
 extern const int data_ov007_0208d964[2][2];
 void func_ov007_0207b2dc(int, int);
-void func_ov007_0207b2c8(void);
 void func_ov007_0206e27c(PauseMenuElement *);
 void func_ov005_02066358(PauseMenuElement *, void (*)(PauseMenuElement *), int);
 void func_ov005_0206650c(void *);
@@ -58,7 +58,7 @@ extern "C" void PauseMenu_UpdateTask(PauseMainMenuTask *task)
             WORK.initialized = 1;
             task->queued_action = 0;
             task->queued_movement = 0;
-            func_ov007_0207b2c8();
+            PauseTextPanel_RequestClose();
             PauseBackground_Upload(0);
             PauseBackground_StartPageLoad((PauseBackgroundTask *)task);
             GamePaletteEffects_ResetEntry(WORK.palette_controller, 0);
@@ -67,7 +67,7 @@ extern "C" void PauseMenu_UpdateTask(PauseMainMenuTask *task)
             WORK.initialized = 1;
             task->queued_action = 0;
             task->queued_movement = 0;
-            func_ov007_0207b2c8();
+            PauseTextPanel_RequestClose();
             data_ov007_0208e1e0->phase = 5;
             func_ov005_02066358((PauseMenuElement *)task, func_ov007_0206e27c, 0);
         } else {

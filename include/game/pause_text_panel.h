@@ -23,6 +23,7 @@ extern "C" {
 #endif
 void PauseTextPanel_Update(PauseTextPanelTask *task);
 void PauseTextPanel_UpdateStrip(PauseTextPanelTask *task);
+void PauseTextPanel_RequestClose(void);
 #ifdef __cplusplus
 }
 #endif
