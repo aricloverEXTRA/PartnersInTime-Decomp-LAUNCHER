@@ -1030,3 +1030,4 @@ src/battle/battle_wheel_targets.cpp
 src/scene_menu_ov007/scene_text.cpp
 src/attack_cannonball_ov012/landing_bounce.cpp
 src/nitro/fs/fs_archive_tables.c
+src/battle/battle_command_availability.c

@@ -8786,3 +8786,38 @@ the return to the command menu was visually checked. All 104 saves are unchanged
 Private reports: `build/runtime/eur_high_cannonball_landing/cannon83_v1.json`
 (no target coverage) and `cannon83_trait_v2.json` (passed), each with its preserved
 probe version under `build/analysis/high_effort_50_to_55/`.
+
+## Battle command availability
+
+[Command availability](../../src/battle/battle_command_availability.c) reconstructs
+all 1,028 bytes at overlay 2 `0x02099A74..0x02099E78` in C. Basic commands pass;
+Bros Items require a current descriptor and the selected inventory-mask bit.
+Item checks also rewrite flag bit 13 in each party actor. HP, full-health status,
+the seven-bit item mode, the saved party form and adult/baby relationships decide
+which targets remain eligible. Revive checks can exclude a baby because its adult
+is down or has a positive transition state. Status items inspect five signed
+channels. Retreat checks the context's bit 10 and both adult transition states.
+
+The previous public draft needed native branch order, four explicit HP checks
+and the existing actor/runtime bitfield views to match. The vertical-menu and
+wheel-selection neighbors remain separate, unlinked drafts. The selected-item
+bit expression uses an unsigned one; valid inventory indices are 0..31.
+
+Live input replays from Save 55 and Save 83 battle checkpoints verified one basic
+command and one full-health healing-item rejection, including all four exclusion
+flags. These checkpoints descend from the previously restored room-306 encounter
+fixture; this is normal menu input within a controlled encounter, not a natural
+story encounter. At each return, the checks cover the full 401,416-byte context,
+a 1,380-byte save prefix, roots, item-descriptor prefix, real party-getter calls
+and preserved registers. Both final screens were inspected; all 104 saves remain
+unchanged. A failed reader API call was fixed before the successful replays.
+
+A separate 1,314-case ARM946 run on copied RAM executes the compiled routine and
+real party getter without stubs. It covers all 32 inventory bits, null states,
+HP and signed-status boundaries, revive relationships, item modes 0..4/63/64/127,
+retreat guards and invalid commands. Full mapped memory outside the 32-byte stack
+frame is checked; every other store must target a party exclusion halfword.
+These cases supplement live coverage and do not establish gameplay reachability
+of every synthetic combination. Private reports are
+`build/runtime/eur_xhigh_command_available/{natural55_v2,menu83_v1,isolated_v1}.json`;
+each records its producer hashes. The full build remains byte-identical.

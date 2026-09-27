@@ -10845,3 +10845,19 @@ All 104 original saves unchanged. Details and external SDK reference caveats:
 [archive-table evidence](research/RECONSTRUCTION_NOTES.md#archive-table-caching).
 Private reports: `build/runtime/eur_xhigh_fs_tables/{boot55_v1,isolated_v1}.json`.
 Matching C/C++ now 860412/1563700 (55.0241%); symbolic ASM remains separate.
+
+
+## Battle command availability (2026-09-27)
+
+Reconstructed the 1,028-byte command-availability routine in pure C, including
+item-target exclusion flags and adult/baby revive rules. Split its two still
+unlinked menu neighbors into separate units. Matching C/C++ is now
+861,440/1,563,700 bytes (55.09%). The actual source object matches, the ROM and
+native relink are byte-identical, and all 107 tests pass.
+
+Save 55/83 checkpoint input replays verified basic-command acceptance and
+full-health healing-item rejection; both checkpoints came from earlier controlled
+encounters. An additional 1,314 isolated ARM946 cases execute the real party
+getter and check full memory outside the stack, returns and ABI. All 104 saves
+are unchanged. Runtime scope and private report paths are in the
+[command-availability notes](research/RECONSTRUCTION_NOTES.md#battle-command-availability).
