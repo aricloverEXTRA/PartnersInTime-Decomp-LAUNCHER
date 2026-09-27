@@ -52,6 +52,10 @@ int SceneObject_StartAcceleratedMotionForDuration(SceneObject *object, int chann
 void SceneObject_UpdateMoveToObject(SceneObject *object, SceneMotionChannel *channel);
 void SceneObject_MoveToObject(SceneObject *object, int channel, int offset_x, int offset_y, int offset_z,
                               int duration, SceneObject *target);
+void SceneObject_StartAxisRotation(SceneObject *object, int channel,
+    s16 origin_x, s16 origin_y, s16 origin_z,
+    s16 axis_end_x, s16 axis_end_y, s16 axis_end_z, s16 angular_speed, s16 angle);
+void SceneObject_UpdateAxisRotation(SceneObject *object, SceneMotionChannel *channel);
 #ifdef __cplusplus
 }
 #endif

@@ -9543,3 +9543,49 @@ Checkpoint RAM/DTCM were restored and all 104 original saves are unchanged.
 The 56-byte source object and complete ROM match exactly; native relinking and
 107 tests pass. The discount helper remains native and contributes no new C
 coverage in this batch.
+
+
+## Scene axis-rotation channels
+
+[`scene_axis_rotation.c`](../../src/scene_menu_ov007/scene_axis_rotation.c)
+reconstructs the two functions behind Scene opcode `0x068`. Setup takes a channel
+and eight signed halfword parameters: two axis endpoints, angular speed and
+angle. It computes signed `angle * 256 / speed`, begins the channel and stores
+all sixteen parameter bytes. Multiplication avoids shifting a negative signed
+angle. The update copies the object's three coordinates to a six-byte local,
+calls the native rotation helper with `speed * elapsed_q8 / 256` and copies the
+result back. Division truncates toward zero. The 1,132-byte geometry helper
+remains native and contributes no C coverage in this batch.
+
+The fresh, byte-identical export of all three MenuAI scene archives contains
+6,585 reachable commands and no `0x068` uses. That does not rule out uses in
+unexported data. Consequently the runtime evidence is a controlled call fixture,
+not a claimed ordinary script route. Private
+`build/runtime/eur_xhigh_scene_axis/controlled_v1.json` enters the Bros. tutorial
+through the pause menu, then invokes setup and update for each of the four
+channels on embedded object 16 at a fully guarded Scene-VM boundary. The four
+pairs execute at frame 245, with positive/negative speeds and elapsed values
+0, 128, 256 and 384. Checks cover the full 43,056-byte manager allocation and its
+heap header, all 56 object slots, motion-list state, channel initialization,
+parameter stores, helper arguments, coordinate copying and preserved registers.
+The geometry helper's six-byte output is a bounded observation; its mathematics
+and hardware square-root timing are not independently checked.
+
+Each pair restores the manager, list root and 544 bytes of caller stack before
+the original VM command resumes. All four original commands return normally.
+Five screenshots and twenty graphics captures match the unmodified 1,030-frame
+baseline, including the tutorial and visible field return. Both replays restore
+the complete checkpoint RAM/DTCM, and all 104 original saves remain unchanged.
+
+`isolated_v1.json` adds 240 ARM946 cases on copied RAM: 128 setup cases covering
+all channels, list insertion/reuse, active-channel replacement and deferred
+deltas; and 112 updates covering signed inputs and fractional elapsed values.
+The actual compiled functions and native division/channel helpers execute.
+The update's geometry helper is explicitly stubbed to write three halfwords.
+Checks cover full main RAM, DTCM outside the observed stack (at most 64 bytes),
+3,016 ordered non-stack stores, helper inputs/results and preserved registers.
+These cases use nonzero setup speeds and update products within signed 32-bit
+range; they do not establish geometry, IRQ or object-lifetime behavior.
+
+Both functions (280 bytes) and the updated 9,196-byte Scene dispatcher match
+their native ranges exactly. The complete ROM, native relink and 107 tests pass.

@@ -11064,3 +11064,14 @@ ordinary sell-menu calls after controlled entry and 224 copied-RAM boundary
 cases, including the 99% cap. Actual object, golden ROM, native relink and all
 107 tests pass; all 104 saves are intact. Matching C/C++: 868700/1563700 (55.5541%).
 Private evidence: xhigh_from_55/shop_price_bonus_validation.json.
+
+
+## Scene axis-rotation channels (2026-09-28)
+
+Linked the exact setup and coordinate-update functions. Four controlled live
+call pairs restore the scene before normal script execution, with all five
+screenshots and twenty graphics captures equal to baseline. Another 240 isolated
+cases verify channel boundaries and adapter stores; native geometry is outside
+the reconstruction. Actual objects, golden ROM, native relink and 107 tests pass.
+All 104 saves are intact. Matching C/C++: 868980/1563700 (55.5720%).
+Private evidence: xhigh_from_55/scene_axis_validation.json.

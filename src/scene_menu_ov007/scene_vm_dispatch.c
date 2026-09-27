@@ -166,7 +166,6 @@ extern void func_ov007_02087fdc();
 extern void func_ov007_02087ebc();
 extern void func_ov007_02087d6c();
 extern void func_ov007_02087c4c();
-extern void func_ov007_02085998();
 extern int SceneObject_IsMotionActiveById();
 /* The shipped path command targets this interior overlay-7 entry. */
 extern void func_ov007_020724b0(
@@ -661,7 +660,7 @@ int SceneVm_DispatchCommand(
 
     case SCENE_OP_PARAMETRIC_MOTION:
         object = SceneObject_GetById(ARG_U16(0));
-        func_ov007_02085998(
+        SceneObject_StartAxisRotation(
             object,
             ARG_U16(1),
             ARG_S16(2),
