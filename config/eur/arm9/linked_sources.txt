@@ -1047,3 +1047,7 @@ src/battle/battle_window_close.cpp
 src/battle/battle_three_part_draw.cpp
 
 src/title_ov006/credits_texture_upload.c
+
+src/shop_ov009/shop_owned_count_close.c
+
+src/shop_ov009/shop_owned_count_label.cpp

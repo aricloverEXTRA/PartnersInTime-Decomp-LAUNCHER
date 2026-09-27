@@ -9483,3 +9483,30 @@ rendering are outside these checks.
 The complete callback and its existing loader caller compile exactly. The full
 ROM rebuild, zero-difference native relink and 107 tests pass. The nearby palette
 upload callback remains native and is not counted as reconstructed C.
+
+
+## Shop current-item count labels
+
+[`shop_owned_count_label.cpp`](../../src/shop_ov009/shop_owned_count_label.cpp)
+keeps the four label strips beside the moving current-item count panel. Each
+child copies its parent's Q12 position from task offsets 48/52 to its 64-byte
+sprite and submits it at draw order 59. Workspace byte `+0xAE` is 1 while open;
+[`shop_owned_count_close.c`](../../src/shop_ov009/shop_owned_count_close.c)
+clears it to request the exit. The native parent eventually sets it to 2, when
+the label callbacks mark their tasks for removal. Both callers discard the
+close helper's return register; the C interface takes no arguments and is void.
+
+Private `build/runtime/eur_xhigh_shop_owned/live_v1.json` checks 5,252 draws,
+one close request and all four child-removal calls over 2,041 frames. Draws cover
+the open and closing phases; the final capture confirms a visible field return.
+The controlled save-65 shop-entry command is restored before ordinary navigation.
+Checks include task and resource pool membership, complete 72-byte parent/child
+tasks, 64-byte sprites, 2,492-byte workspace and touched draw-pool/list records.
+Coordinates, helper arguments, list appends and removal/close flags are checked
+independently. Marking tasks does not establish their subsequent pool release;
+screenshots observe rendering without a pixel oracle. Full checkpoint RAM/DTCM
+were restored, and all 104 original saves remain unchanged.
+
+Both complete compiled functions match without ASM. The golden ROM, native
+relink and 107 tests pass. The intervening setup, digit renderer and parent
+motion callback remain native; they are not included in this coverage increase.

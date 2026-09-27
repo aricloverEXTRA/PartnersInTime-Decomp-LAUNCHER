@@ -162,3 +162,9 @@ src/shop_ov009/shop_buy_marker.cpp:
 
 src/shop_ov009/shop_member_selection.cpp:
     .text start:0x0206c1d8 end:0x0206c2c4
+
+src/shop_ov009/shop_owned_count_close.c:
+    .text start:0x02079808 end:0x0207981c
+
+src/shop_ov009/shop_owned_count_label.cpp:
+    .text start:0x02079c08 end:0x02079c68

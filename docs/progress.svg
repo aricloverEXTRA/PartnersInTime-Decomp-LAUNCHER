@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
 <title id="title">Mario &amp; Luigi: Partners in Time decompilation progress</title>
-<desc id="desc">A treemap of mapped ARM9 code. 55.54 percent is matching C/C++ and 55.80 percent has matching C/C++ or maintained symbolic assembly.</desc>
+<desc id="desc">A treemap of mapped ARM9 code. 55.55 percent is matching C/C++ and 55.81 percent has matching C/C++ or maintained symbolic assembly.</desc>
 <style>
 .bg{fill:#0d1117}.title{fill:#f0f6fc;font:700 27px system-ui,sans-serif}
 .eyebrow{fill:#8b949e;font:600 12px system-ui,sans-serif;letter-spacing:1.5px}
@@ -13,19 +13,19 @@
 <rect class="bg" width="1200" height="760" rx="12"/>
 <text x="28.0" y="34.0" class="eyebrow">DECOMPILATION PROGRESS · EUROPEAN ROM</text>
 <text x="28.0" y="68.0" class="title">Mario &amp; Luigi: Partners in Time</text>
-<text x="28.0" y="113.0" class="percent">55.5%</text>
+<text x="28.0" y="113.0" class="percent">55.6%</text>
 <text x="145.0" y="110.0" class="subtitle">matching C/C++</text>
-<text x="1172.0" y="63.0" class="subtitle" text-anchor="end">55.80% source-understood</text>
+<text x="1172.0" y="63.0" class="subtitle" text-anchor="end">55.81% source-understood</text>
 <text x="1172.0" y="88.0" class="subtitle" text-anchor="end">1.49 MiB mapped ARM9 code</text>
 <rect x="28" y="130" width="1144" height="22" rx="5" fill="#263244"/>
-<rect x="28" y="130" width="635.413" height="22" rx="5" fill="#2dd4a0"/>
-<rect x="663.413" y="130" width="2.956" height="22" fill="#38bdf8"/>
+<rect x="28" y="130" width="635.498" height="22" rx="5" fill="#2dd4a0"/>
+<rect x="663.498" y="130" width="2.956" height="22" fill="#38bdf8"/>
 <rect x="28" y="170" width="12" height="12" rx="2" fill="#2dd4a0"/>
-<text x="47.0" y="181.0" class="legend">Matching C/C++  848.2 KiB</text>
+<text x="47.0" y="181.0" class="legend">Matching C/C++  848.3 KiB</text>
 <rect x="248" y="170" width="12" height="12" rx="2" fill="#38bdf8"/>
 <text x="267.0" y="181.0" class="legend">Symbolic ASM  3.9 KiB</text>
 <rect x="468" y="170" width="12" height="12" rx="2" fill="#263244"/>
-<text x="487.0" y="181.0" class="legend">Remaining  674.9 KiB</text>
+<text x="487.0" y="181.0" class="legend">Remaining  674.8 KiB</text>
 <text x="1172.0" y="181.0" class="legend" text-anchor="end">Rectangle area = code bytes</text>
 <rect class="cell" x="30.00" y="226.00" width="119.37" height="80.75" fill="#263244"><title>Overlay 00 · func_ov000_0209418c · 27.8 KiB · remaining</title></rect>
 <rect class="cell" x="149.37" y="226.00" width="98.54" height="80.75" fill="#2dd4a0"><title>Overlay 00 · field_vm_dispatch · 22.9 KiB · matching C/C++</title></rect>
@@ -3780,7 +3780,7 @@
 <rect class="cell" x="998.16" y="355.62" width="5.46" height="5.81" fill="#2dd4a0"><title>Overlay 09 · shop_member_selection · 96 B · matching C/C++</title></rect>
 <rect class="cell" x="998.16" y="361.42" width="5.46" height="5.81" fill="#2dd4a0"><title>Overlay 09 · shop_stock_rows · 96 B · matching C/C++</title></rect>
 <rect class="cell" x="998.16" y="367.23" width="5.46" height="5.81" fill="#2dd4a0"><title>Overlay 09 · shop_inventory_panel · 96 B · matching C/C++</title></rect>
-<rect class="cell" x="998.16" y="373.04" width="5.46" height="5.81" fill="#263244"><title>Overlay 09 · func_ov009_02079c08 · 96 B · remaining</title></rect>
+<rect class="cell" x="998.16" y="373.04" width="5.46" height="5.81" fill="#2dd4a0"><title>Overlay 09 · shop_owned_count_label · 96 B · matching C/C++</title></rect>
 <rect class="cell" x="998.16" y="378.85" width="5.46" height="5.81" fill="#2dd4a0"><title>Overlay 09 · shop_display_control · 96 B · matching C/C++</title></rect>
 <rect class="cell" x="998.16" y="384.65" width="5.46" height="5.57" fill="#2dd4a0"><title>Overlay 09 · shop_inventory_panel · 92 B · matching C/C++</title></rect>
 <rect class="cell" x="1003.62" y="355.62" width="5.27" height="5.77" fill="#2dd4a0"><title>Overlay 09 · shop_help_text · 92 B · matching C/C++</title></rect>
@@ -3837,7 +3837,7 @@
 <rect class="cell" x="1019.99" y="382.72" width="2.82" height="2.81" fill="#2dd4a0"><title>Overlay 09 · shop_list_lifecycle · 24 B · matching C/C++</title></rect>
 <rect class="cell" x="1019.99" y="385.53" width="2.82" height="2.34" fill="#2dd4a0"><title>Overlay 09 · shop_item_panel_queries · 20 B · matching C/C++</title></rect>
 <rect class="cell" x="1019.99" y="387.88" width="2.82" height="2.34" fill="#2dd4a0"><title>Overlay 09 · shop_equipment_highlight · 20 B · matching C/C++</title></rect>
-<rect class="cell" x="1022.81" y="379.91" width="2.53" height="2.61" fill="#263244"><title>Overlay 09 · func_ov009_02079808 · 20 B · remaining</title></rect>
+<rect class="cell" x="1022.81" y="379.91" width="2.53" height="2.61" fill="#2dd4a0"><title>Overlay 09 · shop_owned_count_close · 20 B · matching C/C++</title></rect>
 <rect class="cell" x="1025.34" y="379.91" width="2.53" height="2.61" fill="#2dd4a0"><title>Overlay 09 · shop_list_positions · 20 B · matching C/C++</title></rect>
 <rect class="cell" x="1027.87" y="379.91" width="2.53" height="2.61" fill="#2dd4a0"><title>Overlay 09 · shop_list_positions · 20 B · matching C/C++</title></rect>
 <rect class="cell" x="1030.40" y="379.91" width="2.53" height="2.61" fill="#2dd4a0"><title>Overlay 09 · shop_stock · 20 B · matching C/C++</title></rect>

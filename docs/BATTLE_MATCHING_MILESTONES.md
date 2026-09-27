@@ -11046,3 +11046,12 @@ in both slots and compares complete mapped texture banks at DMA completion;
 Actual callback and loader objects match; golden ROM, native relink and 107 tests
 pass. All 104 saves are intact. Matching C/C++: 868528/1563700 (55.5431%).
 Private evidence: xhigh_from_55/credits_texture_validation.json.
+
+
+## Shop current-item count labels (2026-09-28)
+
+Linked the exact label callback and close signal. Runtime checks cover 5,252
+draw-list submissions, one close request, four child-removal flags and a visible
+field return. Actual objects match; golden ROM, native relink and 107 tests pass.
+All 104 saves are intact. Matching C/C++: 868644/1563700 (55.5506%).
+Private evidence: xhigh_from_55/shop_owned_validation.json.
