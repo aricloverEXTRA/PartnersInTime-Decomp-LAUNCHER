@@ -398,6 +398,9 @@ src/battle/battle_hit_bonus.c:
 src/battle/battle_scheduler_queues.c:
     .text start:0x020724c8 end:0x020729d4
 
+src/battle/battle_scheduler_frame.cpp:
+    .text start:0x020729d4 end:0x02072d90
+
 src/battle/battle_scheduler_lifecycle.cpp:
     .text start:0x02072d90 end:0x02073068
 

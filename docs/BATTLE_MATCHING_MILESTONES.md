@@ -10889,3 +10889,18 @@ returning to the battle menu. Another 264 isolated ARM946 cases cover bonus/miss
 target replacement and signed boundaries with modeled children. All 104 saves
 remain unchanged. The [hit-resolution notes](research/RECONSTRUCTION_NOTES.md#copy-flower-hit-resolution)
 record exact coverage, observations, corrected probe failures and private reports.
+
+
+## Battle frame scheduling (2026-09-27)
+
+Added 956 matching C++ bytes for the main battle scheduler, without assembly.
+Deferred transfers, node updates, scanline-limited active work and prioritized
+archive/audio/task processing now have a readable frame driver. Matching C/C++
+reaches 863,572/1,563,700 bytes (55.23%). Actual object matching, the original ROM
+hash, native relinking and all 107 tests pass.
+
+A 381-frame Save 83 checkpoint replay checks 380 driver calls alongside the
+existing queue and VBlank models. Another 146 isolated ARM946 cases cover
+missed branches with explicit helper stubs; all 104 saves remain unchanged.
+The [frame-driver evidence](research/RECONSTRUCTION_NOTES.md#battle-scheduler-frame-driver)
+distinguishes the checks, observations and corrected probe failure.

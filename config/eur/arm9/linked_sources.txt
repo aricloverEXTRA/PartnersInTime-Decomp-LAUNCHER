@@ -710,6 +710,7 @@ src/battle/battle_relative_effects.c
 src/battle/battle_hit_bonus.c
 src/battle/battle_scheduler_queues.c
 
+src/battle/battle_scheduler_frame.cpp
 src/battle/battle_scheduler_lifecycle.cpp
 src/battle/battle_model_animation.c
 src/battle/battle_alternate_model_effects.cpp

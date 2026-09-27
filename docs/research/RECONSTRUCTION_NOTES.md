@@ -2093,7 +2093,8 @@ and constructor at `0x02072FB0`. `BattleMain_Create` allocates 3,584 bytes for t
 scheduler; its constructor clears 2,492 bytes starting at offset 1,088. The final
 four padding bytes therefore remain outside that clearing operation.
 The VBlank consumer and [scheduler lifecycle](#battle-scheduler-lifecycle) are
-also reconstructed. The main frame driver at `0x020729D4` remains native code.
+also reconstructed, along with the [main frame driver](#battle-scheduler-frame-driver)
+at `0x020729D4`.
 
 All offsets below are from `read32(0x020C0714)` in ARM9 main RAM:
 
@@ -8887,3 +8888,64 @@ not the real children or natural reachability. The initial live probe missed the
 feedback owner write; the initial isolated hook treated unexecuted conditional
 instructions as executed. Both failures and corrected passing producers are kept.
 Private reports: `build/runtime/eur_xhigh_copy_hit/{copy83_v2,isolated_v2}.json`.
+
+
+## Battle scheduler frame driver
+
+`BattleScheduler_Update`, overlay 2 `0x020729D4..0x02072D90`, is 956 bytes of
+matching C++ in [battle_scheduler_frame.cpp](../../src/battle/battle_scheduler_frame.cpp).
+It requeues deferred transfers before updating the node list, then services the
+promoted task while at least 15 visible scanlines remain. It submits the buffer
+swap and enables VBlank processing before using spare time for archive opens,
+compressed reads, overlays, audio loading and finally queued battle tasks, in
+that order. A promoted queued task forces a VBlank wait. A cleared callback
+advances the ring head, including wrap from 31 to zero.
+
+The node successor is read after its update callback. An empty list invokes the
+scheduler's deleting virtual method when the archive argument is non-null.
+The driver can observe VBlank between work items; its count is cleared at the
+native boundaries. Expressing the work loop with an explicit early return
+recovered the native control flow: the first draft's condition at both loop ends
+added 16 bytes. No assembly was needed. The actual source object matches the
+complete range, including its literal pool; the full gate passes 107 tests,
+the original ROM hash and a native relink with zero differing bytes.
+
+The private live producer is `build/analysis/xhigh_from_55/probe_battle_frame.py`;
+its successful version and oracle are also preserved with `_live_v2` suffixes.
+`build/runtime/eur_xhigh_battle_frame/evidence_flower83_v2.json` replays the
+established Save 83 Bro Flower setup checkpoint for 381 frames, including one
+frame to finish pending calls. Checkpoint provenance remains the earlier
+controlled encounter; this replay adds only keypad input, without RAM edits.
+It checks 380 complete driver calls, 3,170 direct helper calls and 3,080 caller
+stores. Branch coverage includes 380 deferred before-mapping transfers,
+278 queued-task callbacks, 301 compressed-read steps, 42 overlay steps, eight
+promoted-task callbacks, seven promotion waits and one ring wrap.
+
+Driver checks cover call order and arguments, branch decisions from guarded
+live reads, ordered own RAM/GPU stores and the register/stack ABI. Arbitrary
+callback/archive/audio effects and interrupt arrival remain observations.
+Alongside these checks, the existing independent queue model verifies 1,016
+leaf calls and the VBlank model verifies 380 consumers, with their full-record
+checks and bounded callback observations. These are nested measurements, not
+additional frame-driver calls. Eight screenshots and four graphics dumps were
+validated; the final attack-setup screen was visually inspected. Rendering is
+observed rather than independently rasterized.
+
+`isolated_v1.json` adds 146 ARM946 cases with an independent high-level driver
+model. Every called helper is an explicit stub. Cases include zero/one/32
+deferred records, node-link mutation, null callbacks, an empty list with either
+argument, callback retention, task promotion, queue wrap and all combinations
+of pending archive/audio work. The clock fixtures distinguish elapsed scanline
+177 (accepted) from 178 (deferred), plus negative and later values. Full copied
+4 MiB RAM, 16 KiB DTCM, 64 KiB scratch and the modeled I/O page are checked,
+except the 40-byte CPU stack; ordered calls/stores and ABI are checked too.
+The deleting-method stub clears the root and does not establish real heap cleanup.
+These fixtures do not simulate asynchronous IRQ timing or graphics hardware.
+
+The first live probe stopped at frame 11 because it expected the instruction
+immediately after a conditional wrap store; DeSmuME skipped two instructions
+whose condition was false. `flower83_v1` and its producer/oracle are retained.
+The correction checks the actual next executed instruction; matching game code
+was unchanged. Both successful producers exited zero, no calls remained pending,
+and all 104 original saves are unchanged. Artifact hashes and coverage totals
+are checked in `build/analysis/xhigh_from_55/battle_frame_validation.json`.
