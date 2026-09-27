@@ -50,10 +50,8 @@ int SceneWindow_Open(int text, int screen, int x, int y, int skin, int mode, int
     properties.position.bits.x = x;
     properties.position.bits.y = y;
     properties.position.bits.reserved18 = flag18;
-    /* The scene-specific virtual open method interprets these two payload
-       pointers as its font slots and text archive. */
-    properties.string = data_ov007_020a6b90 + 12;
-    properties.fonts = *(const u32 *const **)(data_ov007_020a6b90 + 8);
+    properties.fonts = (const u32 *const *)(data_ov007_020a6b90 + 12);
+    properties.string = *(const u8 **)(data_ov007_020a6b90 + 8);
     properties.reserved18 = unknown18;
     return INTERFACE->open(&properties, (s16)index);
 }

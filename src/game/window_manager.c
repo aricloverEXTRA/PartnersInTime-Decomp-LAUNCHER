@@ -29,8 +29,8 @@ void GameWindow_ResetProperties(GameWindowManager *manager, GameWindowProperties
     properties->position.bits.y = 0;
     properties->position.bits.reserved18 = 0;
     properties->value = 0;
-    properties->string = 0;
     properties->fonts = 0;
+    properties->string = 0;
     properties->reserved18 = 0;
 }
 

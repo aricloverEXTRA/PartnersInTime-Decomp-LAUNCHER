@@ -9,6 +9,17 @@
 #include <game/window.h>
 #include <game/texture_allocation.h>
 
+#ifdef __cplusplus
+/* Prefix of the virtual interface shared by the battle window managers. */
+struct BattleWindowInterface {
+    virtual void unknown_00();
+    virtual void unknown_04();
+    virtual void unknown_08();
+    virtual void unknown_0c();
+    virtual int open(GameWindowProperties *, s16);
+};
+#endif
+
 typedef struct BattleWindowState {
     u8 unknown_00[196];
     const void *upload_source;

@@ -40,6 +40,10 @@ typedef char Overlay15AttackContext_SizeCheck[
     sizeof(Overlay15AttackContext) == 584 ? 1 : -1];
 typedef char Overlay15AttackContext_PowerOffsetCheck[
     (u32)&((Overlay15AttackContext *)0)->power == 260 ? 1 : -1];
+typedef char Overlay15AttackContext_MessageWidthOffsetCheck[
+    (u32)&((Overlay15AttackContext *)0)->message_width == 454 ? 1 : -1];
+typedef char Overlay15AttackContext_MessageOffsetCheck[
+    (u32)&((Overlay15AttackContext *)0)->message == 456 ? 1 : -1];
 
 #ifdef __cplusplus
 extern "C" {

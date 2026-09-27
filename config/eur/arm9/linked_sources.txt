@@ -1039,3 +1039,5 @@ src/save_menu_ov008/save_panel_fade.c
 src/field/field_corner_correction.c
 
 src/battle/battle_auxiliary_pause.c
+
+src/attack_smash_egg_ov015/reward_message.cpp

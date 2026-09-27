@@ -10961,3 +10961,13 @@ An ordinary cold boot and 216 isolated ARM946 cases with real native helpers
 pass, together with 107 tests, the golden ROM and native relinking. All 104 saves
 remain unchanged.
 [Evidence and limits](research/RECONSTRUCTION_NOTES.md#nitrosdk-cartridge-signature-classification).
+
+
+## Smash Eggs reward message (2026-09-27)
+
+Reconstructed the 704-byte reward-message constructor in C++ and corrected the
+shared window font/text field names. Matching C/C++ reaches 865,736/1,563,700
+(55.36%). The full build, 107 tests, controlled reward replay and 174 isolated
+ARM946 cases pass. The native backward-copy carry was checked separately in
+DeSmuME; all original saves remain unchanged.
+[Evidence and limits](research/RECONSTRUCTION_NOTES.md#smash-eggs-reward-message).

@@ -9197,3 +9197,55 @@ fixtures do not prove physical cartridge behavior, asynchronous ARM7 races or
 IRQ scheduling. Versioned probes, immutable actual-object copies, failed and
 successful build logs and artifact hashes are recorded in private
 `build/analysis/xhigh_from_55/os_cartridge_type_validation.json`.
+
+
+## Smash Eggs reward message
+
+[Reward-message construction](../../src/attack_smash_egg_ov015/reward_message.cpp)
+recovers overlay 15 `0x020C2BB8..0x020C2E78`: 704 bytes of C++ without assembly.
+The item's high nibble selects localized text table 2, 6, 9 or 11. A 15-byte
+control prefix reserves the icon gap, followed by a 32-byte slice of the name.
+The measured width is saved at attack-context `+454`; the 128-byte message
+starts at `+456`. The window X coordinate is `114 - round_up(width, 8) / 2`,
+with the native nine-bit truncation. The battle opener subsequently rounds
+main-screen coordinates down to whole tiles.
+
+Tracing that opener into resident `0x0201D320` showed that the shared
+[window properties](../../include/game/window.h) had reversed pointer names:
+fonts are at `+16`, text at `+20`. Extent 1023 selects a direct string; other
+values index a text archive. The declarations and scene/reset callers now use
+the correct names and offset checks. All 19 functions in the three affected
+source objects remain exact (6304 bytes). Both full gates pass 107 tests, the
+original ROM hash and zero-difference native relinking.
+
+The engine's backward copy at `0x02015EF4` is not a standard `memmove`. Its
+initial destination-end load constructs a carry from two adjacent words; it
+writes one to four carry bytes beyond the requested span, depending on source
+alignment. The reward buffer has room for them. Preserve that native helper
+instead of replacing it with a library copy. All 16 source/destination alignment
+combinations were checked in DeSmuME against a model derived from those loads;
+each call restores the full attack context, stack scratch, general registers,
+SP/LR and CPSR before the ordinary forward-copy call resumes.
+
+Private `build/runtime/eur_xhigh_egg_reward_message/reward83_v4.json` records
+a 2110-frame restored-encounter replay. Two declared fixtures advance the
+initialized launch counter and select one reward roll. The constructor executes
+once at frame 572: text table 2, name 18, width 79 and handle 0. The frame-596
+capture shows the Mix Flower message. Full context/header, item prefix, stack
+records, helper arguments, localized lookup, clears, copy, text initialization
+and ABI checks pass. Text measurement's eight-byte output is observed; the
+caller independently uses it to construct the request. Window allocation and
+rendering internals remain observational. Common captures and graphics dumps
+match the earlier replay without the copy-boundary calls. Reloading the initial
+checkpoint restores all main RAM and DTCM; all 104 original saves are unchanged.
+
+`isolated_v3.json` adds 174 ARM946 cases: four categories, six languages, tile
+rounding boundaries through width 65535, overlap in both directions and varied
+window results. It executes the compiled caller and native lookup, clears, copy,
+text initialization and reset. Measurement and window opening are explicit
+stubs. All 1392 helper calls and complete main RAM/DTCM outside 256 stack bytes
+match the model. These cases do not establish live allocation, measurement,
+rendering or IRQ behavior. Private `egg_reward_message_validation.json` records
+immutable objects, versioned probes and artifacts. The first isolated attempt
+exposed the copy-oracle assumption; the second missed Unicorn's terminal-return
+notification. Their failed logs are retained separately from the passing run.

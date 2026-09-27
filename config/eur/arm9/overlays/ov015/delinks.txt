@@ -38,3 +38,6 @@ src/attack_smash_egg_ov015/smash_eggs_sequence.cpp:
 
 src/attack_smash_egg_ov015/smash_eggs_initialize.cpp:
     .text start:0x020c5b4c end:0x020c5e4c
+
+src/attack_smash_egg_ov015/reward_message.cpp:
+    .text start:0x020c2bb8 end:0x020c2e78

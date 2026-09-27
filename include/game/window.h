@@ -28,8 +28,9 @@ typedef struct GameWindowProperties {
     union { u32 raw; struct { u32 mode:4, flag4:1, style:4, flag9:1, width:8, extent:10, reserved28:4; } bits; } layout;
     union { u32 raw; struct { u32 x:9, y:9, reserved18:1, tile_pitch:6, tile_height:6, reserved31:1; } bits; } position;
     s32 value;
-    const u8 *string;
     const u32 *const *fonts;
+    /* Direct string for extent 1023; otherwise an indexed text archive. */
+    const u8 *string;
     u32 reserved18;
 } GameWindowProperties;
 
@@ -128,6 +129,10 @@ typedef char GameWindowTilemapsSizeCheck[sizeof(GameWindowTilemaps) == 12 ? 1 : 
 extern const GameWindowSkin *data_0205671c[];
 typedef char GameWindow_SizeCheck[sizeof(GameWindow) == 204 ? 1 : -1];
 typedef char GameWindowProperties_SizeCheck[sizeof(GameWindowProperties) == 28 ? 1 : -1];
+typedef char GameWindowProperties_FontsOffsetCheck[
+    (u32)&((GameWindowProperties *)0)->fonts == 16 ? 1 : -1];
+typedef char GameWindowProperties_StringOffsetCheck[
+    (u32)&((GameWindowProperties *)0)->string == 20 ? 1 : -1];
 typedef char GameWindowLink_SizeCheck[sizeof(GameWindowLink) == 24 ? 1 : -1];
 typedef char GameWindowTextCache_SizeCheck[sizeof(GameWindowTextCache) == 212 ? 1 : -1];
 #ifdef __cplusplus

@@ -129,6 +129,7 @@ void Overlay15Attack_BeginPairRetreat(Overlay15AttackObjectPairState *state,
 void Overlay15Attack_HideAttackObjects(Overlay15AttackObjectPairState *state);
 void Overlay15Attack_BeginPairLaunch(Overlay15AttackObjectPairState *state,
     int target_id, int damage, int alternate, int index_offset);
+int Overlay15Attack_OpenRewardMessage(const Overlay15AttackRewardItemPrefix *item);
 void Overlay15Attack_ShowRewardItem(const Overlay15AttackRewardItemPrefix *item,
     int message_width);
 #ifdef __cplusplus

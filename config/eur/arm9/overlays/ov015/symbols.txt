@@ -1,6 +1,6 @@
 Overlay15Attack_ApplyBadgeMotionAdjustments kind:function(arm,size=0x60) addr:0x020c2ae0
 Overlay15Attack_SelectRandomEnemy kind:function(arm,size=0x78) addr:0x020c2b40
-func_ov015_020c2bb8 kind:function(arm,size=0x2c0) addr:0x020c2bb8
+Overlay15Attack_OpenRewardMessage kind:function(arm,size=0x2c0) addr:0x020c2bb8
 Overlay15Attack_ShowRewardItem kind:function(arm,size=0xa8) addr:0x020c2e78
 func_ov015_020c2f20 kind:function(arm,size=0x18c) addr:0x020c2f20
 Overlay15Attack_ConfigureModelFlags kind:function(arm,size=0x84) addr:0x020c30ac
