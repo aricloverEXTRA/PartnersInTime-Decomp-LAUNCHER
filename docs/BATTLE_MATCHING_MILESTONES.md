@@ -10861,3 +10861,17 @@ encounters. An additional 1,314 isolated ARM946 cases execute the real party
 getter and check full memory outside the stack, returns and ABI. All 104 saves
 are unchanged. Runtime scope and private report paths are in the
 [command-availability notes](research/RECONSTRUCTION_NOTES.md#battle-command-availability).
+
+
+## Cartridge backup geometry (2026-09-27)
+
+Linked the 472-byte backup-specification routine, including a documented
+seven-instruction failure-path assembly fragment. Matching C/C++ reaches
+861,912/1,563,700 bytes (55.12%). The actual object matches; the full build and
+native relink remain byte-identical, with 107 tests passing.
+
+Ordinary cold boot verified the 8 KiB device configuration. Another 576 isolated
+ARM946 cases cover all table entries and unsupported combinations within the
+defined shift domain, using the real byte-fill helper. Full work/command records,
+ordered stores and ABI were checked; all 104 saves are unchanged. See the
+[backup-specification evidence](research/RECONSTRUCTION_NOTES.md#cartridge-backup-specification).

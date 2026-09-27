@@ -119,6 +119,9 @@ src/nitro/rtc/rtc_convert.c:
 src/nitro/card/card_common.c:
     .text       start:0x02042584 end:0x02042a44
 
+src/nitro/card/card_backup_spec.c:
+    .text       start:0x02042a44 end:0x02042c1c
+
 src/nitro/card/card_backup.c:
     .text       start:0x02042c1c end:0x0204326c
 

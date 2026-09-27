@@ -8821,3 +8821,30 @@ These cases supplement live coverage and do not establish gameplay reachability
 of every synthetic combination. Private reports are
 `build/runtime/eur_xhigh_command_available/{natural55_v2,menu83_v1,isolated_v1}.json`;
 each records its producer hashes. The full build remains byte-identical.
+
+## Cartridge backup specification
+
+[Backup geometry](../../src/nitro/card/card_backup_spec.c) reconstructs
+`CARDi_SetBackupSpec`, resident `0x02042A44..0x02042C1C` (472 bytes). The low
+byte of the type selects a device family; the next byte is the capacity exponent.
+A native table selects page/sector sizes, address width and operation delays.
+It clears the 40-byte geometry suffix of the shared 64-byte command while keeping
+unrelated request fields. Type zero leaves the previous result untouched;
+unsupported combinations clear the type/capacity and set result 3.
+
+The inherited C draft differed only in the final failure-path scheduling.
+A seven-instruction inline-assembly fragment keeps its two clears, shared-command
+reload and error store in native order. The remaining table logic is C; the
+whole actual source object matches. Supported type constants have exponents
+below 32, which is the defined C shift domain used by the tests.
+
+Ordinary Save 55 cold boot called this routine once at frame 5 with type `0x0D01`,
+selecting an 8 KiB device, 32-byte pages, two-byte addressing and delay 79.
+The replay checks the complete 480-byte work record and 64-byte command, real
+40-byte fill output and helper/return ABI. The title screen was inspected and
+all 104 original saves are unchanged. Separately, 576 copied-RAM ARM946 cases
+cover every table entry, zero/unsupported types, all 32 defined exponents and
+three high-word patterns. They execute the real byte-fill helper, check every
+mapped byte outside the 16-byte stack frame and verify ordered clear/type/error
+stores. This establishes configuration behavior, not backup hardware timing.
+Private reports: `build/runtime/eur_xhigh_backup_spec/{boot55_v1,isolated_v1}.json`.
