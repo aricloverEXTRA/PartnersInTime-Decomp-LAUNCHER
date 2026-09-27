@@ -10971,3 +10971,11 @@ shared window font/text field names. Matching C/C++ reaches 865,736/1,563,700
 ARM946 cases pass. The native backward-copy carry was checked separately in
 DeSmuME; all original saves remain unchanged.
 [Evidence and limits](research/RECONSTRUCTION_NOTES.md#smash-eggs-reward-message).
+
+
+## Battle window close (2026-09-27)
+
+Reconstructed motion detachment, visual-state clearing and resident close
+forwarding in C++ (136 bytes). Matching C/C++ reaches 865,872/1,563,700 (55.37%).
+The complete build, 107 tests, controlled reward replay and 200 isolated ARM946
+cases pass. [Evidence and limits](research/RECONSTRUCTION_NOTES.md#battle-window-close).

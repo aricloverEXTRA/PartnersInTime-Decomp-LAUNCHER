@@ -9249,3 +9249,36 @@ rendering or IRQ behavior. Private `egg_reward_message_validation.json` records
 immutable objects, versioned probes and artifacts. The first isolated attempt
 exposed the copy-oracle assumption; the second missed Unicorn's terminal-return
 notification. Their failed logs are retained separately from the passing run.
+
+
+## Battle window close
+
+[BattleWindow_Close](../../src/battle/battle_window_close.cpp) reconstructs
+`0x02070558..0x020705E0` in pure C++ (136 bytes). The four visual records begin
+at manager `+0x1198`, each 276 bytes; the motion prefix starts eight bytes into
+each record. It is embedded, not a separate scene-object allocation. Closing a
+sub-screen window sets the manager's pending-upload bit, then detaches motion,
+clears the complete visual record and calls the resident window close routine.
+The live manager allocation is 5612 bytes, including four bytes beyond its
+5608-byte structure; checks preserve that padding.
+
+Private `build/runtime/eur_xhigh_battle_window_close/reward83_v2.json` verifies
+one main-screen close at frame 605 of the established 2110-frame Smash Eggs
+reward route. It models motion unlink, resident release, scroll-list removal
+and tilemap rebuilding, checking the complete manager/window allocations and
+separate tilemaps. The reward closes and battle continues. Five common captures
+and their graphics dumps equal the earlier reward replay. The existing launch
+counter/RNG fixtures remain declared; reloading the checkpoint restores all
+main RAM and DTCM, and all 104 original saves retain their hashes.
+
+`isolated_v1.json` adds 200 ARM946 cases for both screens, all four slots,
+empty/absent/head/interior/tail motion lists, empty slots, scroll attachments
+and remaining windows. The compiled caller and all executed helpers run without
+stubs. Full main RAM and DTCM outside 256 active stack bytes, helper arguments
+and callee-saved registers match the independent model. These cases supplement
+the live main-screen route; sound-engine effects and asynchronous IRQ behavior
+are not covered. The first live probe failed because it assumed allocation size
+equaled structure size; its corrected successor checks the actual allocation.
+`battle_window_close_validation.json` records source versions and artifacts.
+All 23 functions in the affected window/reward objects remain exact (2896 bytes);
+the full gate passes 107 tests, the original ROM hash and native relinking.

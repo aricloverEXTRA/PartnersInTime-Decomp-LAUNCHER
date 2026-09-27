@@ -1041,3 +1041,5 @@ src/field/field_corner_correction.c
 src/battle/battle_auxiliary_pause.c
 
 src/attack_smash_egg_ov015/reward_message.cpp
+
+src/battle/battle_window_close.cpp

@@ -601,3 +601,6 @@ src/battle/battle_wheel_targets.cpp:
 
 src/battle/battle_auxiliary_pause.c:
     .text start:0x02076c38 end:0x02076c74
+
+src/battle/battle_window_close.cpp:
+    .text start:0x02070558 end:0x020705e0

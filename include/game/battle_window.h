@@ -17,11 +17,14 @@ struct BattleWindowInterface {
     virtual void unknown_08();
     virtual void unknown_0c();
     virtual int open(GameWindowProperties *, s16);
+    virtual void close(s16);
 };
 #endif
 
 typedef struct BattleWindowState {
-    u8 unknown_00[196];
+    u8 unknown_00[8];
+    /* Embedded motion prefix, not a separately allocated scene object. */
+    u8 motion_state[188];
     const void *upload_source;
     void *upload_destination;
     u8 upload_columns, upload_rows, upload_pitch;
@@ -63,11 +66,16 @@ typedef struct BattleWindowAnimator {
 typedef char BattleWindowManagerSizeCheck[sizeof(BattleWindowManager) == 5608 ? 1 : -1];
 typedef char BattleWindowAnimatorSizeCheck[sizeof(BattleWindowAnimator) == 132 ? 1 : -1];
 typedef char BattleWindowStateSizeCheck[sizeof(BattleWindowState) == 276 ? 1 : -1];
+typedef char BattleWindowState_MotionOffsetCheck[
+    (u32)&((BattleWindowState *)0)->motion_state == 8 ? 1 : -1];
+typedef char BattleWindowManager_WindowsOffsetCheck[
+    (u32)&((BattleWindowManager *)0)->windows == 4504 ? 1 : -1];
 typedef char BattleWindowTransferTaskSizeCheck[sizeof(BattleWindowTransferTask) == 16 ? 1 : -1];
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+void BattleWindow_Close(BattleWindowManager *manager, s16 index);
 void BattleWindow_AllocatePool(BattleWindowManager *manager, int heap);
 void BattleWindow_AllocateSpritePalette(BattleWindowManager *manager);
 void BattleWindow_AllocateTexturePalettes(BattleWindowManager *manager);
