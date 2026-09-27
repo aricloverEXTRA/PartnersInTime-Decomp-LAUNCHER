@@ -1036,3 +1036,5 @@ src/nitro/card/card_backup_spec.c
 src/attack_copy_flower_ov017/hit_resolution.cpp
 
 src/save_menu_ov008/save_panel_fade.c
+
+src/field/field_corner_correction.c

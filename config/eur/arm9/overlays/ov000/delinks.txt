@@ -534,3 +534,6 @@ src/field/field_battle_transition.cpp:
 
 src/field/field_time_hole_arrival.cpp:
     .text start:0x02069b24 end:0x02069d38
+
+src/field/field_corner_correction.c:
+    .text start:0x020aa30c end:0x020aa5b0

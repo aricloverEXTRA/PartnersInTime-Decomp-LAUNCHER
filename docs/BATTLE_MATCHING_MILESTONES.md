@@ -10918,3 +10918,14 @@ distinguishes the checks, observations and corrected probe failure.
   real mark helper, ordered writes, full memory outside the CPU stack and ABI.
 - Evidence and limits: [panel fades](research/RECONSTRUCTION_NOTES.md#save-menu-panel-column-fades).
   Private artifacts: `build/runtime/eur_xhigh_save_panel_fade/`; all 104 saves unchanged.
+
+
+## Field corner-overlap correction (2026-09-27)
+
+Added 676 matching C bytes for direction selection, repeated corner displacement
+and navigation-bound refresh. Matching C/C++ reaches 864,460/1,563,700 (55.28%).
+Actual source objects, the full build, 107 tests, golden ROM and native relink pass.
+A 465-frame castle replay checks the ordinary no-correction path; a restored
+one-step fixture checks all sixteen writes. Another 349 isolated ARM946 cases
+cover direction, iteration and scan boundaries with an explicit geometry stub.
+All 104 saves are unchanged. [Evidence and limits](research/RECONSTRUCTION_NOTES.md#field-corner-overlap-correction).

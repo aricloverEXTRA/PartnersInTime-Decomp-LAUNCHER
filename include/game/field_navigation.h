@@ -83,6 +83,10 @@ typedef char FieldNavigationChangeManager_SizeCheck[sizeof(FieldNavigationChange
 #ifdef __cplusplus
 extern "C" {
 #endif
+void FieldNavigation_ResolveCornerOverlap(FieldRuntimeEntity *entity, fx32 *corner_x,
+                                          fx32 *corner_y, int iterations);
+/* Native query combines blocked corners with corners outside all surfaces. */
+int func_ov000_020aa5b0(FieldRuntimeEntity *entity, fx32 *corner_x, fx32 *corner_y);
 fx32 FieldNavigation_GetMaximumHeight(const FieldRuntimeEntity *entity, const FieldNavigationSurface *surface);
 /* Native height sampler: only the low byte of the attribute-check flag is read. */
 void func_ov000_020bdc88(const FieldNavigationSurface *surface, fx32 x, fx32 y,

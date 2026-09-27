@@ -7,6 +7,7 @@
  */
 
 #include "field_party_internal.h"
+#include <game/field_navigation.h>
 
 extern "C" {
 
@@ -144,7 +145,6 @@ extern "C" {
 
 extern "C" {
 void func_ov000_020b86ec(FieldPartyEntity *);
-int func_ov000_020aa5b0(FieldPartyEntity *, fx32 *, fx32 *);
 }
 
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
@@ -197,7 +197,7 @@ extern "C" void FieldParty_BeginAirborneTransfer(FieldPartyController *party, in
     corner_x[2] = corner_x[3] = current->entity.position_x + current->entity.navigation_max_x;
     corner_y[0] = corner_y[3] = current->entity.position_y + current->entity.navigation_min_y;
     corner_y[1] = corner_y[2] = current->entity.position_y + current->entity.navigation_max_y;
-    if (func_ov000_020aa5b0(current, corner_x, corner_y)) {
+    if (func_ov000_020aa5b0(&current->entity, corner_x, corner_y)) {
         FieldParty_FinishAirborneTransfer(party, member);
         return;
     }

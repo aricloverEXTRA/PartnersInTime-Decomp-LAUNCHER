@@ -9005,3 +9005,58 @@ IRQ or raster coverage. The first isolated harness set SP before switching ARM
 mode and failed on an unmapped write; setting the mode before the banked SP
 fixed the harness. Failed producers and logs are preserved. Artifact hashes
 and totals are recorded in the private `save_panel_fade_validation.json`.
+
+
+## Field corner-overlap correction
+
+`FieldNavigation_ResolveCornerOverlap` (overlay 0, `0x020AA30C..0x020AA5B0`)
+reconstructs 676 bytes as [readable C](../../src/field/field_corner_correction.c).
+The native query at `0x020AA5B0` combines obstructed corners with corners outside
+all scanned surfaces. A partial mask selects an XY step of one world unit
+(4096 in Q12). The caller shifts the four corner coordinates and entity position,
+then refreshes the navigation cursor and swept bounds before querying again.
+Masks 0 and 15 stop immediately; opposite-corner masks 5 and 10 have no step.
+Positive iteration limits bound the corrections; zero and negative limits do not.
+The two native callers use 16 and 8. Their return register is not consumed.
+
+The shared query declaration takes `FieldRuntimeEntity *`; the party caller now
+passes its embedded entity explicitly. All eight functions in that existing
+unit, as well as the new actual build object, remain exact. Initialization and
+switch-block order account for the draft's differences; no assembly is needed.
+The full gate passes 107 tests, the original EUR ROM hash and native relinking
+with zero differing bytes.
+
+Private reports are under `build/runtime/eur_xhigh_corner_correction/`:
+
+- `walk43_v1.json`: 465 frames from the initialized checkpoint-43 castle state,
+  using movement and a jump. One ordinary call returns the native query's zero
+  mask without correction. The complete 1440-byte member, 11216-byte area,
+  corner arrays, navigation records and SP/r4-r11 are checked. Ownership follows
+  the live area list and allocation header; the query's geometry is observed.
+- `fixture43_v3.json`: the same route, with one guarded correction at frame 429.
+  At the complete native entry, the iteration argument is changed from 8 to 1.
+  At its SP-matched query return, the ordinary zero mask is checked and replaced
+  with 1. The independent model verifies all sixteen stores, including the XY
+  step, corner arrays, cursor and swept bounds. At the outer return, the original
+  member and arrays are restored and read back before the caller resumes. The
+  query's observed scratch registers and the flags of the ordinary `cmp r0,#0`
+  return are restored too. This is a controlled mask fixture, not a naturally
+  encountered obstruction. All eight screenshot hashes and six final graphics
+  dumps equal the ordinary replay; its final visible castle image was inspected.
+- `isolated_v1.json`: 349 ARM946 cases run the compiled caller on copied RAM and
+  DTCM, with an explicit stub for the mask query and synthetic entity/corner/
+  surface inputs. They cover every direction, immediate stops, repeated masks,
+  mixed sequences, positive/zero/negative iteration limits, both orderings of
+  current/previous coordinates, null surfaces, scan equality, skipped surfaces
+  and the end sentinel. All 693 query calls and 6712 ordered stores agree with
+  the independent model. Full 4 MiB RAM, 16 KiB DTCM and 4 KiB scratch memory
+  match outside the 32-byte callee stack, with SP/LR and r4-r11 preserved. These
+  checks do not validate the stubbed geometry, live lifetimes, IRQs or rendering.
+
+The first controlled producer (`fixture43_v2`) failed because its register reader
+did not translate Capstone's `sb` alias to `r9`. Its report/source/log are retained;
+only the probe was corrected. Successful producer versions are
+`build/analysis/xhigh_from_55/probe_corner_correction_live_v1.py` and `_live_v3.py`;
+the isolated producer is `check_corner_correction_isolated_v1.py`. Artifact hashes,
+extents and counts are checked in `corner_correction_validation.json` there.
+All 104 original save files remain unchanged.
