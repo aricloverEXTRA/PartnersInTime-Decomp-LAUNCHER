@@ -10979,3 +10979,19 @@ Reconstructed motion detachment, visual-state clearing and resident close
 forwarding in C++ (136 bytes). Matching C/C++ reaches 865,872/1,563,700 (55.37%).
 The complete build, 107 tests, controlled reward replay and 200 isolated ARM946
 cases pass. [Evidence and limits](research/RECONSTRUCTION_NOTES.md#battle-window-close).
+
+## Elder Princess Shroob projectile recall
+
+Reconstructed the 596-byte recall callback in readable C++, extending the
+existing sprite-sequence unit. All five actual functions match 1660 native
+bytes. Full build gate: 107 tests, golden ROM hash, zero native-relink differences.
+
+Runtime: 100 checked live calls (99 waiting, one recall of two projectiles) in
+a declared partial attack fixture; 225 isolated ARM946 cases cover masks,
+timers, RNG seeds and angle directions. Native motion/math execute; isolated
+animation/audio use stubs. Arena ownership, complete task/scene records and
+checkpoint restoration are checked. All 104 saves are unchanged. Failed probes
+and corrected results are retained; see the projectile-recall reconstruction
+notes and private xhigh_from_55/ov25_recall_validation.json.
+
+Matching C/C++: 866468/1563700 (55.41%). Symbolic ASM remains separate.

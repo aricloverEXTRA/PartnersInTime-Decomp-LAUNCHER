@@ -9282,3 +9282,50 @@ equaled structure size; its corrected successor checks the actual allocation.
 `battle_window_close_validation.json` records source versions and artifacts.
 All 23 functions in the affected window/reward objects remain exact (2896 bytes);
 the full gate passes 107 tests, the original ROM hash and native relinking.
+
+## Elder Princess Shroob projectile recall
+
+[`Overlay25EffectSequence_RecallProjectiles`](../../src/elder_princess_shroob_ov025/ov25_effect_sequence_advance_sprite.cpp)
+reconstructs overlay 25 `0x020C3A08..0x020C3C5C` (596 bytes) in C++.
+After its signed countdown reaches zero, it recalls each active actor 44–49
+toward actor 43, with a Z offset of -24. The native square-root unit supplies
+the distance; motion channel 2 receives scaled acceleration 16. Context
+`+27108` holds six active entries, while bit `i` of `+27132` selects child
+parameter 56/57 and animation 17/19. Each child gets an RNG timer and an angle
+from `atan2(dy-dz, dx)`. Positive X subtracts half a turn with unsigned
+16-bit wrapping. Child callbacks occupy `work + 6800 + 36*(i+1)`.
+
+Private `eur_xhigh_ov25_recall/live_v3.json` checks 100 calls over 1870 frames:
+99 countdown updates and one recall of two projectiles. It verifies complete
+7088-byte work state, the 12-byte arena slot, 70 scene records, timer/RNG/angle
+results, hardware square-root inputs/results, native motion/list writes,
+helper arguments and preserved registers. The work state belongs to a resource
+arena; its slot supplies the size and owner. It has no individual heap header.
+Animation changes in the receiving object/model allocations are bounded
+observations; audio and rasterization are outside the independent oracle.
+
+The route starts from the previously controlled giant-phase checkpoint derived
+from save 103, rather than that save's normal Shrowser encounter. At the guarded
+task dispatcher `0x020B60FC`, frame 320 replaces the primary callback
+`0x020CBE28` with native initializer `0x020C4354`. Native code loads the resources
+and initializes the anchor/projectiles. At frame 700 a second four-byte callback
+edit changes `0x020C5DA4` to `0x020C3D78`, bypassing preceding motion/launch phases
+that require additional attack-script state. Recall starts at frame 902 and
+launches at 1001. This checks a partial sequence, not normal attack completion.
+The final capture still shows the effect. Checkpoint reload restores all main
+RAM and DTCM; all 104 original saves retain their hashes.
+
+`isolated_v1.json` adds 225 ARM946 cases across positive/zero/negative timers,
+five active-slot masks, three variant masks and three RNG seeds. All six slots,
+both animation choices and positive/negative/zero X directions are covered.
+The compiled caller and native lookup, motion, RNG and atan execute; animation
+and audio use guarded stubs. Integer square-root/divider results model MMIO
+without hardware latency or IRQ behavior. Full main RAM, DTCM outside the
+observed stack, ordered helper arguments and callee-saved registers are checked.
+These synthetic cases are separate from live gameplay coverage.
+
+The failed discovery guard at frame 167 encountered another identified overlay.
+Two failed oracle versions incorrectly assumed a heap allocation and omitted
+the motion wrapper's Q8 scaling. Preserved reports and corrected runs distinguish
+those probe errors from the matching game code. The final five-function build
+object matches all 1660 bytes; the full gate passes 107 tests and both ROM checks.

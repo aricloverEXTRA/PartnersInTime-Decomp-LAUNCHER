@@ -11,7 +11,7 @@ src/elder_princess_shroob_ov025/ov25_effect_sequence_initialize_alternate.cpp:
     .text start:0x020c34c4 end:0x020c37e4
 
 src/elder_princess_shroob_ov025/ov25_effect_sequence_advance_sprite.cpp:
-    .text start:0x020c3c5c end:0x020c4084
+    .text start:0x020c3a08 end:0x020c4084
 
 src/elder_princess_shroob_ov025/enemy_projectile_impact.cpp:
     .text start:0x020c4084 end:0x020c47c8
