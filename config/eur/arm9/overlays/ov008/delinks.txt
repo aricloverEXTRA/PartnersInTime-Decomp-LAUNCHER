@@ -120,3 +120,6 @@ src/save_menu_ov008/save_menu_textured_quad.c:
 
 src/save_menu_ov008/save_scene_resources.c:
     .text start:0x0206c474 end:0x0206c670
+
+src/save_menu_ov008/save_panel_fade.c:
+    .text start:0x0207297c end:0x02072a50

@@ -10904,3 +10904,17 @@ existing queue and VBlank models. Another 146 isolated ARM946 cases cover
 missed branches with explicit helper stubs; all 104 saves remain unchanged.
 The [frame-driver evidence](research/RECONSTRUCTION_NOTES.md#battle-scheduler-frame-driver)
 distinguishes the checks, observations and corrected probe failure.
+
+
+### Save-menu panel column fades
+
+- Reconstructed `SaveMenuPanel_UpdateFade` (overlay 8, 212 bytes) as exact C.
+- Matching C/C++: 863,784 / 1,563,700 (55.24%); overlay 8: 30,200 / 54,068 (55.86%).
+- Full build, 107 tests, golden ROM and zero-difference native relink passed.
+- Controlled checkpoint-55 replay checked 588 updates and 28 complete pool-slot
+  lifetimes. A temporary location-ID comparison input was restored before the
+  callbacks ran. The ordinary equal-label route skips this fade.
+- Another 238 isolated ARM946 cases checked clamp/rounding boundaries with the
+  real mark helper, ordered writes, full memory outside the CPU stack and ABI.
+- Evidence and limits: [panel fades](research/RECONSTRUCTION_NOTES.md#save-menu-panel-column-fades).
+  Private artifacts: `build/runtime/eur_xhigh_save_panel_fade/`; all 104 saves unchanged.

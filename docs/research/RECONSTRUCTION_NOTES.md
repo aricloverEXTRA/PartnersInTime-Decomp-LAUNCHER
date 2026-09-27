@@ -8949,3 +8949,59 @@ The correction checks the actual next executed instruction; matching game code
 was unchanged. Both successful producers exited zero, no calls remained pending,
 and all 104 original saves are unchanged. Artifact hashes and coverage totals
 are checked in `build/analysis/xhigh_from_55/battle_frame_validation.json`.
+
+
+## Save-menu panel column fades
+
+`SaveMenuPanel_UpdateFade`, overlay 8 `0x0207297C..0x02072A50`, reconstructs
+212 bytes in [save_panel_fade.c](../../src/save_menu_ov008/save_panel_fade.c).
+Each 72-byte task has a delay, panel and column indices, and Q12 opacity and
+velocity at offsets 36 through 52. After the delay, it advances opacity, clamps
+at 31 for a positive velocity or zero for a nonpositive velocity, and marks the
+task for removal. Otherwise it divides toward zero and updates one byte of the
+two-by-fourteen opacity table at `0x0207AA72`. Marking and later pool return are
+separate operations. Row addressing before the column offset recovers the native
+dataflow; the compiler's reverse local allocation order resolves the remaining
+register differences. The callback is pure C, with no inline assembly.
+
+The actual linked object is exact. The full gate passes all 107 tests, the
+original EUR ROM hash and a native relink with zero differing bytes. The private
+producer is `build/analysis/xhigh_from_55/probe_save_panel_fade_live_v2.py`.
+Reports live under `build/runtime/eur_xhigh_save_panel_fade/`.
+
+The ordinary checkpoint-55 save route (`save55_v1.json`) completed 708 frames
+but did not run this callback: both location labels had ID 13, so the creator
+used its immediate path. Its target-coverage assertion therefore failed.
+`different55_v2.json` repeats the same buttons with one bounded RAM fixture.
+At the fully guarded creator `0x020727D8`, indices at `0x0207AA64` are checked
+as 0 and 1. The probe saves the halfword at `0x0207AA6C` and temporarily copies
+the existing third name ID from `0x0207AA70` there, making the comparison differ.
+It restores and verifies the original two bytes at the creator's SP-matched
+return, in the same frame, before the new callbacks run. This tests a controlled
+label-change path; it does not establish a natural change of location.
+
+The live check covers 588 updates: 224 delay steps, 168 rising and 168 falling
+steps, and fourteen clamps at each endpoint. All fourteen columns of both panels
+run. The probe checks complete task records, the full 10,248-byte workspace,
+pool metadata, mark-helper arguments and effects, and stack/callee-saved
+register restoration. It observes and validates 28 pool-slot creations, then
+independently verifies all 28 later unlinks and returns through the real pool
+cleanup, including list neighbors, pool links and the live element count.
+The creator's other internals and graphics rendering remain observational.
+
+Nine screenshots and 54 VRAM/palette/OAM dumps are hash/extent checked. The five
+capture points before the frame-209 fixture exactly match the ordinary run.
+The save animation at frame 217 and visible field return at frame 708 were
+inspected. All 104 supplied saves remain unchanged; saving uses the emulator's
+battery copy.
+
+`isolated_v2.json` adds 238 ARM946 cases, executing the compiled callback and
+the actual mark helper without stubs. Cases cover every panel/column, delayed
+updates, exact and crossed clamp thresholds, zero velocity, and signed Q12
+rounding. The independent model checks ordered writes, helper arguments, full
+4 MiB RAM and 16 KiB DTCM outside the eight-byte stack frame, a 4 KiB scratch
+page, and the return ABI. These copied-memory cases do not add live lifetimes,
+IRQ or raster coverage. The first isolated harness set SP before switching ARM
+mode and failed on an unmapped write; setting the mode before the banked SP
+fixed the harness. Failed producers and logs are preserved. Artifact hashes
+and totals are recorded in the private `save_panel_fade_validation.json`.
