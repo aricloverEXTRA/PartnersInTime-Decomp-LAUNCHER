@@ -598,3 +598,6 @@ src/battle/battle_party_rebound.c:
 
 src/battle/battle_wheel_targets.cpp:
     .text start:0x0209a0c8 end:0x0209a580
+
+src/battle/battle_auxiliary_pause.c:
+    .text start:0x02076c38 end:0x02076c74

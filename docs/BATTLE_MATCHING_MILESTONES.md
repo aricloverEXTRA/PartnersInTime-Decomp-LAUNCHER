@@ -10929,3 +10929,13 @@ A 465-frame castle replay checks the ordinary no-correction path; a restored
 one-step fixture checks all sixteen writes. Another 349 isolated ARM946 cases
 cover direction, iteration and scan boundaries with an explicit geometry stub.
 All 104 saves are unchanged. [Evidence and limits](research/RECONSTRUCTION_NOTES.md#field-corner-overlap-correction).
+
+
+## Auxiliary battle-object pause control (2026-09-27)
+
+Reconstructed the 60-byte helper behind battle opcode 0x08C. Matching C/C++ reaches
+864,520/1,563,700 (55.29%). The helper and full updated dispatcher are exact;
+the full gate, 107 tests, golden ROM and native relink pass. Four restored live
+calls verify all sixteen objects and their active renderers. Forty-eight isolated
+ARM946 cases use the real setter and lookup, without stubs. All 104 saves remain
+unchanged. [Evidence and limits](research/RECONSTRUCTION_NOTES.md#battle-auxiliary-object-pause-control).

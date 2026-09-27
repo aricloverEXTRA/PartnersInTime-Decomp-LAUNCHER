@@ -610,6 +610,7 @@ int BattleSceneObject_IsAnimationActiveById(u32 object_id,
                                             int channel_index);
 int BattleSceneObject_ConfigureAnimationLayer(int object_id, int layer);
 BattleSceneObject *BattleSceneObject_GetById(u32 object_id);
+void BattleScene_SetAuxiliaryObjectsPaused(int paused);
 /* Reuses a matching slot or reserves aligned state storage in the resource arena. */
 BattleSceneRenderOverride *BattleSceneObject_ReserveRenderOverride(
     BattleSceneObject *object, u32 state_size);

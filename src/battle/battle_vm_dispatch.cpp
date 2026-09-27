@@ -62,7 +62,6 @@ extern int func_ov002_020be3e8(BattleSceneObject *object, int channel_index,
 extern void func_ov002_020724b0(s16 *parameters, const void *keyframes,
                                 u16 keyframe_count, int extent_q16,
                                 int step_fixed);
-extern void func_ov002_02076c38(int paused);
 extern void func_ov002_02077e78(BattleActor *actor, s16 animation_id,
                                 int damage, int effect_offset_x,
                                 int effect_offset_y);
@@ -1571,7 +1570,7 @@ int BattleAI_DispatchOpcode(ScriptVm *vm, ScriptVmState *state,
         return SCRIPT_VM_CONTINUE;
 
     case BATTLE_VM_SET_AUXILIARY_OBJECTS_PAUSED:
-        func_ov002_02076c38(command->arguments[0]);
+        BattleScene_SetAuxiliaryObjectsPaused(command->arguments[0]);
         break;
 
     case BATTLE_VM_CALCULATE_DAMAGE:

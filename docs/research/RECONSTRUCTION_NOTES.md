@@ -9060,3 +9060,51 @@ only the probe was corrected. Successful producer versions are
 the isolated producer is `check_corner_correction_isolated_v1.py`. Artifact hashes,
 extents and counts are checked in `corner_correction_validation.json` there.
 All 104 original save files remain unchanged.
+
+
+## Battle auxiliary-object pause control
+
+`BattleScene_SetAuxiliaryObjectsPaused` (overlay 2, `0x02076C38..0x02076C74`)
+reconstructs 60 bytes in [battle_auxiliary_pause.c](../../src/battle/battle_auxiliary_pause.c).
+It normalizes any nonzero input to 1, then sets property 46 on object IDs 40..55.
+The existing property setter writes each scene object's `time_paused` halfword
+at `+0x1A` and bit 9 in each non-null renderer's flags at `+0x7C`. Other bits
+survive. These objects occupy embedded 260-byte slots in the 401416-byte battle
+allocation; the field-object pointer table starts at context `+0x4CC8`.
+
+Battle opcode `0x08C` calls this helper. The private decoded real scripts contain
+eight uses in `BAI/BAI_mon_0_hn.dat`, entries 0, 1 and 9. That establishes static
+call sites; the new live check does not claim to execute those enemy scripts.
+The actual helper and updated 19168-byte dispatcher objects are exact. The full
+gate passes 107 tests, the original ROM hash and zero-difference native relinking.
+
+Private `build/runtime/eur_xhigh_auxiliary_pause/controlled83_v1.json` runs 180
+neutral frames from `eur_attack_helpers/ov17_bros_menu83.dst` (SHA-1
+`21d2e64a24b389689627292539103880c6761b47`). This checkpoint derives from save 83
+through the previously documented controlled encounter; it is not a natural
+story encounter entry. At four fully guarded battle-VM entries (`0x02079950`),
+the probe redirects to the helper with 1, 0, -5 and 65536. DeSmuME executes the
+already-decoded VM push before redirection; its 28 bytes and SP are restored at
+the target entry. All 64 native property calls are checked against independent
+object/renderer expectations. Each call checks the complete battle allocation
+and eight live 304-byte alternate renderers, their ownership and allocation
+bounds, the normalized arguments and callee-saved registers.
+
+At each target return, all tracked original memory is restored and read back;
+the original VM registers are restored on re-entry, and each original command
+is observed returning. The unmodified baseline has no target calls. All seven
+screenshots and six final graphics dumps match that baseline. The final visible
+Bros menu was inspected. This verifies controlled pause/resume effects, not
+sustained animation timing or naturally reached `0x08C` instructions.
+
+`isolated_v1.json` adds 48 ARM946 cases using the actual compiled helper, native
+property setter and native object lookup, with no stubs. Synthetic inputs cover
+zero and seven distinct nonzero words, null/primary/alternate/both/shared renderer
+pointers and the copied live layout. All 768 property calls, 768 lookups and
+1600 ordered stores match the independent model. Full 4 MiB RAM, 16 KiB DTCM
+and 64 KiB scratch memory are checked outside the 40-byte call stack; SP/LR and
+r4-r11 are preserved. These cases do not prove renderer construction or IRQ
+behavior. All 104 original saves are unchanged. Versioned producers and artifact
+validation are in `build/analysis/xhigh_from_55/`, named
+`probe_auxiliary_pause_live_v1.py`, `check_auxiliary_pause_isolated_v1.py` and
+`auxiliary_pause_validation.json`.
