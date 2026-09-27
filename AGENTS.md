@@ -103,6 +103,7 @@ that share ROM/save paths.
 | Native inspection and relinking | [IDA guide](tools/ida/README.md), [reassembly plan](docs/REASSEMBLY_PLAN.md) |
 | Emulator tooling and navigation | [Runtime guide](docs/research/RUNTIME_ANALYSIS.md), [tested routes](docs/research/RECONSTRUCTION_NOTES.md#runtime-verification) |
 | RAM roots, object extents and graphics ranges | [EUR memory reference](docs/research/RECONSTRUCTION_NOTES.md#eur-memory-reference) |
+| NitroSDK API and type research | [Cross-game reference and PiT differences](docs/research/RECONSTRUCTION_NOTES.md#nitrosdk-cross-game-reference) |
 | ABI and compiler lessons | [Reconstruction reference](docs/research/RECONSTRUCTION_NOTES.md#reconstructing-and-integrating-code) |
 | Battle effect wrappers and scene-object ownership | [Projection, returned handles and embedded object records](docs/research/RECONSTRUCTION_NOTES.md#battle-relative-effect-spawning) |
 | Battle scheduler, queues and isolated ARM checks | [Allocation layout and boundary cases](docs/research/RECONSTRUCTION_NOTES.md#battle-scheduler-queues), [VBlank callback contracts and live replay](docs/research/RECONSTRUCTION_NOTES.md#battle-scheduler-vblank-consumer) |

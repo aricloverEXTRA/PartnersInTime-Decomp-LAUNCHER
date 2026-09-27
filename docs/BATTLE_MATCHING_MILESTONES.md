@@ -10831,3 +10831,17 @@ ASM, reaching 860112 / 1563700 matching bytes (55.00%). Full checks pass:107 tes
 golden ROM and native relink with zero differences. A documented trait fixture
 covers all four figures and three bounce indices; all104 original saves unchanged.
 See [landing-bounce evidence](research/RECONSTRUCTION_NOTES.md#cannonballers-landing-bounces).
+
+
+## 2026-09-27: NitroSDK archive-table caching
+
+Reconstructed `FS_LoadArchiveTables` (ARM9 `0x0203E438..0x0203E564`, 300 bytes)
+in `src/nitro/fs/fs_archive_tables.c`, with one documented inline addition.
+Full build: 107 tests, byte-identical EUR ROM, zero native relink differences.
+Natural cold boot: two size queries and one table load; full archive/buffer,
+ROM table contents and ABI checked. 169 isolated ARM946 cases cover alignment,
+capacity and I/O-result branches with explicit filesystem-helper models.
+All 104 original saves unchanged. Details and external SDK reference caveats:
+[archive-table evidence](research/RECONSTRUCTION_NOTES.md#archive-table-caching).
+Private reports: `build/runtime/eur_xhigh_fs_tables/{boot55_v1,isolated_v1}.json`.
+Matching C/C++ now 860412/1563700 (55.0241%); symbolic ASM remains separate.

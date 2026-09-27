@@ -594,3 +594,6 @@ src/msl/exception_spec.c:
 
 src/msl/active_catch.cpp:
     .text start:0x02047660 end:0x020477b4
+
+src/nitro/fs/fs_archive_tables.c:
+    .text start:0x0203e438 end:0x0203e564

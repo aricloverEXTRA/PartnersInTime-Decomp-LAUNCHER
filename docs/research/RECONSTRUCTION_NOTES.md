@@ -11,6 +11,7 @@ resources, not files included in a fresh clone. Check their availability and
 provenance before reuse. Evidence from a controlled fixture does not establish
 ordinary gameplay accessibility or coverage of unexercised branches.
 
+- [NitroSDK cross-game reference](#nitrosdk-cross-game-reference)
 - [Locating evidence and comparing candidates](#locating-evidence-and-comparing-candidates)
 - [EUR memory reference](#eur-memory-reference)
 - [Compiler and linker behavior](#compiler-and-linker-behavior)
@@ -27,6 +28,52 @@ ordinary gameplay accessibility or coverage of unexercised branches.
   [entry/exit setup calls](#pause-transition-setup-calls)
 - Tested routes: [shops](#shops), [save menus](#save-menus), [Game Over](#game-over),
   [Smash Eggs](#smash-eggs), [credits](#credits), [Nawatobi](#nawatobi)
+
+## NitroSDK cross-game reference
+
+The [NitroSDK manual for Bowser's Inside Story](https://inf.gg/mlbis/manual/nitrosdk)
+is an external reference for SDK names, records and API behavior. Its author
+identifies the research as independent reverse engineering, with function names
+cross-referenced to the retail GTA: Chinatown Wars symbol map. Addresses belong
+to those games; locate each PiT routine through current symbols and instructions.
+Names marked `?` and unknown fields remain hypotheses.
+
+Check types and arithmetic against PiT before adopting them. For example, the
+manual describes archive-table caching, but its displayed size formula masks
+`~0x3f`. PiT's `FS_LoadArchiveTables` at EUR ARM9 `0x0203E438` masks `~0x1f`:
+`(fat_size + fnt_size + 63) & ~31`. Its destination also aligns to 32 bytes.
+PiT's archive-name helper tests its length with signed branches, despite the
+reference's unsigned declaration. These differences do not establish whether
+the other game differs or the reference needs correction.
+
+### Archive table caching
+
+[The loader](../../src/nitro/fs/fs_archive_tables.c) owns the 300-byte range
+`0x0203E438..0x0203E564`. It queries required capacity without touching the buffer
+when too small; otherwise it loads FAT then FNT, installs RAM table pointers and
+retains the original buffer pointer. Failed reads clear that table, while failed
+opens leave its destination untouched. Either failure still installs the new
+table pointers. A nonnegative short read does not clear the unread tail.
+
+One inline `add` preserves the native separate reserve/round additions; MWCC
+folds their C equivalent into `+63`. Cached table offsets preserve the native
+loads before outgoing call arguments. The actual linked object and full ROM
+match exactly; no additional symbolic-ASM unit is counted.
+
+Private evidence is in `build/analysis/xhigh_from_55/` and
+`build/runtime/eur_xhigh_fs_tables/`. `boot55_v1.json` records a natural 1,200-frame
+cold boot using save 55: two capacity queries and one successful load, checking
+the entire 80-byte archive, all 2,304 buffer bytes including padding, the 808-byte
+FAT and 1,444-byte FNT against ROM, helper arguments/results and preserved
+registers/stack. The final title screen was inspected; all 104 saves stayed intact.
+
+`isolated_v1.json` supplements this with 169 ARM946 cases on copied live RAM and
+synthetic records. It covers all 32 buffer alignments, insufficient/exact/extra
+capacity, zero lengths, unsigned size comparisons, independent open/read failures
+and short reads. All mapped RAM/DTCM/scratch outside the bounded CPU stack, 670
+ordered archive stores and helper calls are checked. The real initializer and
+byte-fill execute; open/read/close are explicit models. These cases do not claim
+live failed cartridge I/O, asynchronous queue or hardware timing coverage.
 
 ## Locating evidence and comparing candidates
 
