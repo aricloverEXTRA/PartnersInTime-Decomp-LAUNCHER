@@ -9369,3 +9369,51 @@ outside the observed stack are checked. The cases comprise 144 waits, 99 launche
 and 117 completions; they do not establish normal gameplay entry or IRQ timing.
 All three functions in the final source object match 924 native bytes. The full
 gate passes 107 tests and both exact ROM checks.
+
+### Spinning orb and projectile emission
+
+[`Overlay25Projectile_UpdateEmission`](../../src/elder_princess_shroob_ov025/enemy_projectile_effects.cpp)
+reconstructs `0x020C5374..0x020C5798` (1060 bytes) in C++. Each update rotates
+the orb and adjusts its projected depth relative to its owner. Once movement
+channel 2 finishes, it starts the next pair of model animations, selects the
+Mario/Luigi effect variant and activates that slot's trail callback. Empty
+slots are skipped. After the last slot, the native move uses object 50's X
+directly and `192 - z`, then hands over to `WaitSpin`; the X argument is not
+a coordinate difference. Movement duration retains the native signed Q8
+conversion and division after the hardware square root.
+
+Private `eur_xhigh_ov25_emission/live_v1.json` records 1070 frames from the
+controlled giant-phase `phase103.dst` checkpoint (SHA-1
+`f83e3507a0e81de426d54c5da1d4593a365d5f8c`). At guarded dispatcher frame 320,
+the native mode-0 initializer is selected and its shared target table is set
+to actor IDs 56/57 plus four empty slots. Native initialization and every later
+phase run without another edit. This is controlled sequence coverage, not a
+naturally selected story attack. All 55 controller calls pass: two advances,
+52 waits and the final transition. Emissions occur at frames 571 and 581;
+motion durations are 44, 10 and 49 updates. The controller reaches subsequent
+spin/launch phases and the battle continues.
+
+The oracle independently checks full work/slot/scene records, receiving model
+allocations, projection inputs and stack outputs, rotation/depth stores, child
+state, slot selection, motion/list effects, helper arguments and preserved
+registers. Model-animation and animation-setting effects in receiving records
+are bounded observations; animation pools, audio and rendering internals are
+outside this oracle. All six screenshots and their VRAM/palette/OAM dumps equal
+discovery. The orb and final battle images were inspected. Checkpoint reload
+restores main RAM and DTCM; all 104 original saves are unchanged.
+
+`isolated_v2.json` adds 768 ARM946 cases with the compiled controller and native
+projection, object/model lookup, channel query and motion/list helpers. It covers
+empty/mixed/full masks, indices -1/0/1/3/4/5, both effect variants, active/idle
+motion, raw/projected positions, both views and zero/nonzero movement durations.
+Synthetic slots share valid copied model allocations. Model-animation start,
+animation setting and sound are guarded stubs; SQRT is immediate modeled I/O.
+Full main RAM, DTCM outside the observed 112-byte stack, projected stack outputs,
+helper order and ABI pass, with 35,296 stores. These cases do not verify hardware
+latency, IRQ timing or live lifetimes. The first isolated attempt stopped before
+execution because slot 50 has only an alternate model; the corrected fixture
+uses the orb's valid primary model and slot 50's valid alternate model.
+
+The final actual unit contains five exact functions totaling 2608 bytes.
+The complete build gate passes 107 tests, the golden ROM hash and zero native
+relink differences. No inline assembly was added.

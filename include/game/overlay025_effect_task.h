@@ -120,6 +120,7 @@ void Overlay25Projectile_UpdateReflectedImpact(Overlay25Task *task, BattleSceneO
 void Overlay25Projectile_UpdateSpin(Overlay25Task *task, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Projectile_LaunchNext(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Projectile_WaitAll(Overlay25Task *task, BattleSceneObject *, Overlay25WorkPrefix *work);
+void Overlay25Projectile_UpdateEmission(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Projectile_UpdateTrail(Overlay25Task *task, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Projectile_WaitSpin(Overlay25Task *task, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Enemy_ReleaseProjectileEffects(Overlay25Task *task, BattleSceneObject *object, Overlay25WorkPrefix *work);

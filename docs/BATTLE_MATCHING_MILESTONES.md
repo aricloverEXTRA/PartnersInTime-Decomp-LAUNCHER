@@ -11012,3 +11012,17 @@ golden ROM and zero differing native-relink bytes. Evidence and limits are in
 the reconstruction notes and xhigh_from_55/ov25_sequential_validation.json.
 
 Matching C/C++: 867116/1563700 (55.45%). Symbolic ASM remains separate.
+
+## Elder Princess Shroob orb emission controller
+
+- Added the 1060-byte `Overlay25Projectile_UpdateEmission` in readable C++;
+  all five functions in the extended effect unit match exactly.
+- Full gate: 107 tests, golden EUR ROM, zero native relink differences.
+- Controlled live sequence: 55 checked calls over 1070 frames, two emissions,
+  native transition into spin and later launches; six matching graphics captures.
+- Isolated ARM946: 768 cases with native projection/motion and explicit animation/
+  audio stubs; empty masks, variants, views and zero-duration movement covered.
+- C/C++ now 868176 / 1563700 (55.52%). Evidence and limitations:
+  `build/runtime/eur_xhigh_ov25_emission/`,
+  `build/analysis/xhigh_from_55/ov25_emission_validation.json` and
+  [the reconstruction reference](research/RECONSTRUCTION_NOTES.md#spinning-orb-and-projectile-emission).
