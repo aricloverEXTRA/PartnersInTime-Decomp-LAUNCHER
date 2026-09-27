@@ -11075,3 +11075,14 @@ cases verify channel boundaries and adapter stores; native geometry is outside
 the reconstruction. Actual objects, golden ROM, native relink and 107 tests pass.
 All 104 saves are intact. Matching C/C++: 868980/1563700 (55.5720%).
 Private evidence: xhigh_from_55/scene_axis_validation.json.
+
+
+## Scene sine-displacement setup (2026-09-28)
+
+Linked the exact sine-channel setup beside axis rotation. Six restored live
+fixtures and 320 isolated cases cover duration control, wrapping, channel
+replacement and native division boundaries. All baseline screenshots/graphics
+match. The complete 448-byte unit and Scene dispatcher remain exact; golden ROM,
+native relink and 107 tests pass. All 104 saves are intact.
+Matching C/C++: 869148/1563700 (55.5828%).
+Private evidence: xhigh_from_55/scene_sine_validation.json.

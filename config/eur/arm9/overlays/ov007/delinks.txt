@@ -235,5 +235,5 @@ src/scene_menu_ov007/pause_key_item_model.cpp:
 src/scene_menu_ov007/scene_text.cpp:
     .text start:0x02083c20 end:0x02083e6c
 
-src/scene_menu_ov007/scene_axis_rotation.c:
-    .text start:0x02085998 end:0x02085ab0
+src/scene_menu_ov007/scene_axis_motion.c:
+    .text start:0x02085998 end:0x02085b58

@@ -56,6 +56,9 @@ void SceneObject_StartAxisRotation(SceneObject *object, int channel,
     s16 origin_x, s16 origin_y, s16 origin_z,
     s16 axis_end_x, s16 axis_end_y, s16 axis_end_z, s16 angular_speed, s16 angle);
 void SceneObject_UpdateAxisRotation(SceneObject *object, SceneMotionChannel *channel);
+void SceneObject_StartSineDisplacement(SceneObject *object, int channel,
+    int direction_x, int direction_y, int direction_z, int phase,
+    int angular_speed, int cycles, int final_amplitude);
 #ifdef __cplusplus
 }
 #endif

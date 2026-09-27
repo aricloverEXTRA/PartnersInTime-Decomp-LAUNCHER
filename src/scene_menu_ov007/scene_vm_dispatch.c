@@ -160,7 +160,6 @@ extern void func_ov007_02089000(
     int argument_9
 );
 extern void func_ov007_020883a0();
-extern void func_ov007_02085ab0();
 extern void func_ov007_020881d8();
 extern void func_ov007_02087fdc();
 extern void func_ov007_02087ebc();
@@ -510,7 +509,7 @@ int SceneVm_DispatchCommand(
 
     case SCENE_OP_MOVE_OBJECT_COMPLEX:
         object = SceneObject_GetById(ARG_U16(0));
-        func_ov007_02085ab0(
+        SceneObject_StartSineDisplacement(
             object,
             ARG_U16(1),
             ARG(3),

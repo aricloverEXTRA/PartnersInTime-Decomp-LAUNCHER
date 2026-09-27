@@ -9547,7 +9547,7 @@ coverage in this batch.
 
 ## Scene axis-rotation channels
 
-[`scene_axis_rotation.c`](../../src/scene_menu_ov007/scene_axis_rotation.c)
+[`scene_axis_motion.c`](../../src/scene_menu_ov007/scene_axis_motion.c)
 reconstructs the two functions behind Scene opcode `0x068`. Setup takes a channel
 and eight signed halfword parameters: two axis endpoints, angular speed and
 angle. It computes signed `angle * 256 / speed`, begins the channel and stores
@@ -9589,3 +9589,49 @@ range; they do not establish geometry, IRQ or object-lifetime behavior.
 
 Both functions (280 bytes) and the updated 9,196-byte Scene dispatcher match
 their native ranges exactly. The complete ROM, native relink and 107 tests pass.
+
+
+## Scene sine-displacement setup
+
+[`scene_axis_motion.c`](../../src/scene_menu_ov007/scene_axis_motion.c) also
+implements `SceneObject_StartSineDisplacement` at `0x02085AB0`. Scene opcode
+`0x057` passes the object, channel and seven full-width integers; argument 2 of
+the script command is unused. Negative speed reverses both speed and phase.
+Zero cycles sets duration to zero for indefinite motion. Otherwise setup uses
+signed division of `speed - 1 + ((cycles << 16) - phase)` by speed and returns
+without changing the object when the result is nonpositive. The C expression
+uses unsigned intermediates to preserve the native 32-bit wrapping. Successful
+setup starts the channel and stores six halfwords, preserving the remaining
+four parameter bytes. The 348-byte sine-update callback remains native.
+
+The native compiler division helper returns the numerator when its denominator
+is zero. This behavior was read from its instructions and exercised with the
+actual helper; the reconstruction retains that call. It is not an inferred
+hardware division contract or a recommendation for valid motion inputs.
+
+As with axis rotation, the 6,585 exported reachable scene commands contain no
+`0x057` uses. Private `build/runtime/eur_xhigh_scene_sine/controlled_v1.json`
+therefore uses six guarded calls in the initialized Bros. tutorial scene:
+one indefinite, three finite and two rejected requests, including negative and
+zero speeds. The complete 43,056-byte scene manager, heap header, object-slot
+ownership and motion list are checked. Expected duration, child-helper effects,
+parameter stores, early-return preservation and ABI are modeled independently.
+Each call restores the scene and 544 caller-stack bytes before the original VM
+command resumes. All six original commands return normally. Five screenshots
+and twenty graphics captures match the unmodified 1,030-frame baseline; the
+tutorial and field return were inspected. Both runs restore checkpoint RAM/DTCM,
+and all 104 original saves remain unchanged.
+
+`isolated_v1.json` verifies 320 ARM946 cases with the actual compiled setup and
+native division/channel helpers, with no stubs. It covers all four channels,
+list insertion/reuse, active-channel replacement, deferred deltas and twenty
+phase/speed/cycle combinations, including `INT_MIN`, zero speed, cycle-shift
+wrapping and halfword truncation. Outcomes are 48 indefinite, 80 finite and
+192 rejected requests. Checks include full main RAM, DTCM outside the observed
+stack (at most 72 bytes), 2,424 ordered non-stack stores, helper arguments/results
+and preserved registers. These calls do not execute the sine-update callback or
+establish animation, IRQ timing or subsequent object lifetime.
+
+The new setup adds 168 matching C bytes. The adjacent rotation functions remain
+exact in the renamed, contiguous 448-byte unit, as does the 9,196-byte dispatcher.
+The complete ROM, native relink and 107 tests pass.

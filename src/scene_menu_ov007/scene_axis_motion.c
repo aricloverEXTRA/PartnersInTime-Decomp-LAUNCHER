@@ -1,13 +1,14 @@
 /*
- * Scene axis-rotation channels (overlay 7, 0x02085998-0x02085AB0).
- * Stores the axis endpoints and timing, then adapts the object's coordinates
- * to the native rotation helper's three-halfword position buffer.
+ * Scene axis motion (overlay 7, 0x02085998-0x02085B58).
+ * Rotation setup and coordinate updates, plus sine-displacement setup.
+ * The geometry and sine-update helpers remain native.
  */
 #include <game/scene_motion.h>
 
 extern s32 _s32_div_f(s32 numerator, s32 denominator);
 extern void func_ov007_0208552c(s16 *position, int angle, int origin_x,
     int origin_y, int origin_z, int axis_end_x, int axis_end_y, int axis_end_z);
+extern void func_ov007_02085b58(SceneObject *, SceneMotionChannel *);
 
 typedef struct SceneAxisRotationParameters {
     s16 origin_x, origin_y, origin_z;
@@ -17,6 +18,49 @@ typedef struct SceneAxisRotationParameters {
 
 typedef char SceneAxisRotationParameters_SizeCheck[
     sizeof(SceneAxisRotationParameters) == 16 ? 1 : -1];
+
+typedef struct SceneSineMotionParameters {
+    s16 direction_x, direction_y, direction_z;
+    s16 phase, angular_speed, final_amplitude;
+} SceneSineMotionParameters;
+
+typedef char SceneSineMotionParameters_SizeCheck[
+    sizeof(SceneSineMotionParameters) == 12 ? 1 : -1];
+
+void SceneObject_StartSineDisplacement(SceneObject *object, int channel,
+    int direction_x, int direction_y, int direction_z, int phase,
+    int angular_speed, int cycles, int final_amplitude)
+{
+    int start_phase;
+    int speed;
+    int duration;
+    SceneSineMotionParameters *parameters;
+
+    speed = angular_speed;
+    start_phase = phase;
+    /* Script arithmetic wraps at 32 bits before signed division. */
+    if (speed < 0) {
+        speed = (s32)(0u - (u32)speed);
+        start_phase = (s32)(0u - (u32)start_phase);
+    }
+    if (!cycles) {
+        duration = 0;
+    } else {
+        duration = _s32_div_f(
+            (s32)((u32)speed - 1u + (((u32)cycles << 16) - (u32)start_phase)),
+            speed);
+        if (duration <= 0)
+            return;
+    }
+    parameters = (SceneSineMotionParameters *)SceneObject_BeginMotionChannel(
+        object, channel, duration, func_ov007_02085b58);
+    parameters->direction_x = direction_x;
+    parameters->direction_y = direction_y;
+    parameters->direction_z = direction_z;
+    parameters->phase = start_phase;
+    parameters->angular_speed = speed;
+    parameters->final_amplitude = final_amplitude;
+}
 
 void SceneObject_UpdateAxisRotation(SceneObject *object, SceneMotionChannel *channel)
 {
