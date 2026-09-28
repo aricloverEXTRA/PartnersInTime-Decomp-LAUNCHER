@@ -7,7 +7,6 @@ extern "C" {
 void func_ov018_020c3b28(PocketChomp *, int);
 void func_ov018_020c4174(PocketChomp *, int, PocketChompAdultMotion *, int);
 int func_ov018_020c57b0(PocketChompAdultMotion *, PocketChomp *);
-void func_ov018_020c5d34(PocketChompAdultMotion *, int);
 extern u16 data_ov018_020c7190[];
 
 void PocketChomp_Update(PocketChomp *center, PocketChompAdultMotion *adult,
@@ -88,7 +87,7 @@ void PocketChomp_Update(PocketChomp *center, PocketChompAdultMotion *adult,
         switch (collision) {
         case 1:
         case 2:
-            func_ov018_020c5d34(adult, 0);
+            PocketChompAdult_BounceAway(adult, 0);
             BattleSound_Play(377, 0, 0, 0);
             BattleRumble_PlayTimed(1, 60, 0);
             BattleSound_Play(data_ov018_020c7190[adult->bits.mode], 0, 0, 0);

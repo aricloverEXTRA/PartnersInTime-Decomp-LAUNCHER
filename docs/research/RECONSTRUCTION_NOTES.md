@@ -10652,3 +10652,38 @@ count, 120 no-op destructor calls and 144 merges. Destructor exceptions, IRQ
 timing and pixel correctness remain untested. The full gate passes the golden
 ROM, zero native differences and 112 tests. Validation:
 `build/analysis/xhigh_from_55/msl_delete_array_validation.json`.
+
+
+## Pocket Chomp adult bounce exit
+
+`PocketChompAdult_BounceAway` (overlay 18, `0x020C5D34..0x020C6008`)
+plans three vertical arcs, cancels each trial channel, then uses their combined
+duration for the horizontal exit. It starts the real bounces in later calls and
+resets the participant once horizontal movement has finished. The routine shares
+the adjacent adult-exit source unit; its 724 bytes are pure matching C++.
+
+Preserve the two double operations `153.6 * height / 256.0` and the integer
+truncation after every bounce. The velocity comes from the Q12 square-root
+helper divided by 16. The first planning arc targets zero; subsequent trial arcs
+target the object's current height. Expressing that conditional with the zero
+case first reproduces the native instruction schedule without inline ASM.
+Animation helper `0x020C2E50` updates both the primary and optional variant
+scene objects, including their models and embedded palette records.
+
+Private `build/runtime/eur_xhigh_chomp_adult_bounce/` contains successful reports
+`auto83_v2`, `missed83_v1` and `cutoff1000_83_v1`: three ordinary 4111-frame routes
+from the verified save-83 battle-menu checkpoint. The last route stops automatic
+jump inputs after frame 1000 to exercise the opposite exit direction. Together
+they check 12 complete calls, 195 helper calls and 42 ordered direct stores,
+including all double-helper inputs/results, arc durations and motion-channel
+contents. Full attack work, both owned scene objects, actual model allocations,
+motion-list and graphics-queue neighbors are checked. Three return-to-command
+captures were viewed. Checkpoint RAM/DTCM and all 104 original saves are restored
+or unchanged; no RAM fixtures or helper stubs are used.
+
+Animation/reset internals remain bounded observations; effect allocation and
+rasterization are not independent oracles. These routes do not exercise the
+already-finished-bounces branch while horizontal movement is still active, or
+invalid bounce indices. The first failed probe omitted the variant object's
+palette ownership; its report and producer remain separate from the corrected
+runs. Private validation: `build/analysis/xhigh_from_55/chomp_adult_bounce_validation.json`.

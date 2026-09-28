@@ -10,7 +10,6 @@ extern "C" {
 extern "C" {
 extern u8 *gBattleContext;
 extern u16 data_ov002_020be704[];
-void func_ov018_020c5d34(PocketChompAdultMotion *, int);
 void func_ov018_020c60bc(PocketChompAdultMotion *);
 void func_ov018_020c5a98(PocketChompAdultMotion *);
 void func_ov002_02071938(BattleSceneObject *, BattleSceneObject *, int);
@@ -38,7 +37,7 @@ void PocketChompAdult_Update(PocketChompAdultMotion *adult)
                 /* Preserve the native forwarded enemy argument; the callee ignores it. */
                 BattleParty_ApplyNonfatalDamageFeedback(adult->actor, (int)target, object);
                 func_ov018_020c2c14(37, object);
-                func_ov018_020c5d34(adult, 0);
+                PocketChompAdult_BounceAway(adult, 0);
                 PocketChomp_BeginExitWithSupport(&work->center, work->active_support);
                 break;
             }
@@ -121,7 +120,7 @@ void PocketChompAdult_Update(PocketChompAdultMotion *adult)
             ++adult->entry_timer;
         } else {
             object->time_step_adjustment_q8 = 0;
-            func_ov018_020c5d34(adult, adult->bounce_count);
+            PocketChompAdult_BounceAway(adult, adult->bounce_count);
         }
         break;
     case 13:

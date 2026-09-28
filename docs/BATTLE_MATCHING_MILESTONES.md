@@ -11453,3 +11453,16 @@ heap merges. All 104 saves remain unchanged. Matching C/C++ is now
 881256/1563700 (56.3571%); symbolic ASM remains separate.
 See Runtime array deletion in the reconstruction reference and private
 msl_delete_array_validation.json for artifacts and coverage limits.
+
+
+### Pocket Chomp adult bounce exit
+
+Reconstructed the 724-byte three-bounce exit planner in pure C++, extending the
+adjacent adult-exit unit. All four functions in the affected actual source
+objects (3084 bytes) match; golden ROM, zero native differences and 112 tests pass.
+Three ordinary game routes cover both directions: 12 calls, 195 helper calls and
+42 ordered direct stores, with independent arithmetic and motion-channel checks.
+All 104 saves remain unchanged. Matching C/C++ is 881980/1563700 (56.4034%);
+symbolic ASM remains separate. See Pocket Chomp adult bounce exit in the
+reconstruction reference and private chomp_adult_bounce_validation.json for
+artifacts and coverage limits.
