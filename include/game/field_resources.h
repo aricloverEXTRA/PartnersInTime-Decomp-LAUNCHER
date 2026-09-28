@@ -93,7 +93,15 @@ typedef struct FieldResourceContext {
     int spawn_counts[2];
     int animation_counts[2];
     void *room_extra;
-    u8 unknown_2364[0x78];
+    union {
+        u8 unknown_2364[0x78];
+        struct {
+            void *extra_room_buffer;
+            u8 unknown_2368[4];
+            void *room_buffers[20]; /* Cleanup owns slots 1 through 19. */
+            u8 unknown_23bc[32];
+        };
+    };
     FieldArchiveRequest *reads;
     ArchiveCompressedRequest *compressed_reads;
     FieldArchiveRequest *read_cursor;
@@ -120,6 +128,11 @@ typedef struct FieldResourceContext {
 } FieldResourceContext;
 
 typedef char FieldResourceContext_SizeCheck[sizeof(FieldResourceContext) == 11068 ? 1 : -1];
+
+typedef char FieldResourceContext_ExtraRoomBufferOffsetCheck[
+    (u32)&((FieldResourceContext *)0)->extra_room_buffer == 0x2364 ? 1 : -1];
+typedef char FieldResourceContext_RoomBuffersOffsetCheck[
+    (u32)&((FieldResourceContext *)0)->room_buffers == 0x236c ? 1 : -1];
 
 typedef char FieldPrimaryResourceRecord_SizeCheck[sizeof(FieldPrimaryResourceRecord) == 8 ? 1 : -1];
 typedef char FieldSecondaryResourceRecord_SizeCheck[sizeof(FieldSecondaryResourceRecord) == 8 ? 1 : -1];

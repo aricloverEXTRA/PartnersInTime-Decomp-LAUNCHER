@@ -1,4 +1,4 @@
-/* Preserve entity presentation and release display resources for a cached field scene. */
+/* Release a complete room: entities, display resources and room-owned buffers. */
 
 extern "C" {
 #include <game/heap.h>
@@ -13,8 +13,8 @@ extern "C" {
 void func_02009058(int screen);
 }
 
-/* Free the room's display resources while retaining its entity state. */
-extern "C" void FieldArea_ReleaseRenderResources(FieldAreaContext *area)
+/* Release the room including its entities and room-owned data. */
+extern "C" void FieldArea_ReleaseRoomResources(FieldAreaContext *area)
 {
     FieldResourceContext *resources = (FieldResourceContext *)area;
     func_02009058((u8)area->flags.screen);
@@ -49,6 +49,12 @@ extern "C" void FieldArea_ReleaseRenderResources(FieldAreaContext *area)
     GameHeap_DeleteArray(area->quad_regions);
     GameHeap_DeleteArray(area->navigation_surfaces);
     GameHeap_DeleteArray(area->boundaries);
+    for (int i = 0; i < area->entity_count; ++i) {
+        if (area->entities[i]) area->entities[i]->base.unknown_04();
+    }
+    GameHeap_DeleteArray(resources->extra_room_buffer);
+    for (int i = 0; i < 19; ++i)
+        GameHeap_DeleteArray(resources->room_buffers[i + 1]);
     for (int set = 0; set < 2; ++set) {
         for (int i = 0; i < resources->animation_counts[set]; ++i)
             GameHeap_DeleteArray(resources->animation_buffers[set][i]);
@@ -87,11 +93,7 @@ extern "C" void FieldArea_ReleaseRenderResources(FieldAreaContext *area)
     area->unknown_2534 = 0;
     if (area->background)
         area->background->unknown_04();
-    for (int i = 0; i < area->entity_count; ++i) {
-        FieldRuntimeEntity *entity = area->entities[i];
-        if (entity->base.property_00a_bits.subtype != 9)
-            entity->base.release_renderers();
-    }
+    area->background = 0;
     for (int i = 0; i < 23; ++i) {
         if (area->effect_models[i]) {
             if (area->effect_models[i]->state_flag_bits.render_linked)
@@ -109,15 +111,7 @@ extern "C" void FieldArea_ReleaseRenderResources(FieldAreaContext *area)
         GameSpritePalette_Unlink(&area->effect_palettes[i].palette);
     GameSpritePalette_Unlink(&area->effect_palettes[2].palette);
     GameHeap_DeleteArray(area->paired_bounds);
-}
-
-extern "C" {
-void FieldArea_SaveEntityRenderSnapshots(FieldAreaContext *field)
-{
-    for (int i = 0; i < field->entity_count; ++i) {
-        FieldRuntimeEntity *entity = field->entities[i];
-        if (entity->base.property_00a_bits.subtype != 9)
-            entity->base.save_render_snapshot(0);
-    }
-}
+    GameHeap_DeleteArray((void *)area->variable_records);
+    GameHeap_DeleteArray(resources->scripts[0]);
+    GameHeap_DeleteArray(resources->scripts[1]);
 }

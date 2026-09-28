@@ -11126,3 +11126,67 @@ the already exact game function did not change. The first isolated runner failed
 before execution on an incorrect input path; the second corrects it. Failed
 versions and logs are preserved separately. The full build remains byte-identical,
 native relinking differs by zero bytes, and all 112 tests pass.
+
+
+## Field area resource release
+
+`FieldArea_ReleaseRenderResources` (`ov000 0x020809BC..0x02080EC4`,
+1,288 bytes) releases display resources while retaining entity state for a
+cached field scene. `FieldArea_ReleaseRoomResources`
+(`0x02080EFC..0x02081454`, 1,368 bytes) additionally deletes entities and the
+room-owned buffers. Both are pure C++ and match their full native ranges.
+The first shares its contiguous unit with entity render-snapshot capture;
+the timed-renderer deleting destructor occupies the gap between the releases.
+
+The existing 11,216-byte area and room-resource views now expose three
+24-byte palette records at +0x2A74 and 23 effect-model pointers at +0x2ABC.
+The four animation-model pointers at +0x2B18 remain a distinct trailing view.
+Full room cleanup frees +0x2364 and slots 1..19 in the pointer table at
++0x236C. Primary resource flag bit 0 suppresses freeing borrowed graphics,
+animation and bounds; both paths still free the containing resource arrays.
+The sub-screen tile allocation is embedded at area +8, not a separate heap
+object. Model stop, texture-offset release and deleting destruction occur in
+that order. Retain the native owner-clear order for palette crossfades and
+screen wipes. The wipe's active/retain cleanup branch follows a cleared owner
+pointer; the tested routes have both flags clear, and no synthetic active-wipe
+coverage is claimed.
+
+Private `build/runtime/eur_xhigh_field_area_release/pause_v2.json` passes
+591 ordinary frames from the verified Younger Princess Shroob field state,
+opening and closing pause. It checks one display release for room 556 and
+one full release for room 551, on opposite screens: 284 direct helper calls,
+417 nested heap/list operations, 42 caller stores and 1,557 primitive stores.
+The final capture shows the visible field return.
+
+`room_v2.json` passes a separate 1,834-frame controlled route, queuing room 359
+and then room 551 through two temporary Field VM commands. Each 72-byte command
+is restored at dispatcher return. The second release observes room 359's
+populated animation array and frees its one animation buffer. This route checks
+two full releases, 326 direct helper calls, 633 nested heap/list operations,
+38 caller stores and 2,395 primitive stores. The intermediate teleport is a
+resource-lifetime fixture, not a normal story entry; the final capture shows
+the original room again. `room_v1.json` is the earlier one-way route, recorded
+separately rather than counted again in these totals.
+
+The oracle independently checks caller decisions, argument/order/store traces,
+complete live area and resource-array extents, notification flags, and every
+observed nested heap free and sprite/palette unlink. Heap checks include full
+payloads, neighboring headers, region metadata and coalescing; list checks
+include both screens' roots and all nodes. Freed snapshots are retired at the
+checked return before address reuse. Other virtual-object changes are observed
+within their actual allocations; window internals, graphics helpers, IRQ timing
+and pixels remain outside the independent model. Active clipping, active/retained
+wipes, subtype-9 renderer-release exclusion and a populated second animation set
+are not covered. Seven captures and 48 binary dumps are validated; checkpoint
+RAM/DTCM are restored and all 104 original saves are unchanged.
+
+The ordinary and one-way probes use `probe_field_area_release_v2.py`; the return
+route uses `probe_field_area_release_v3.py`, both with
+`field_area_release_oracle_v1.py` under `build/analysis/xhigh_from_55/`.
+Probe v1 failed before emulation by decoding literal-pool words as stores;
+v2 excludes the two 28-byte pools from execution hooks while still guarding
+and comparing them. The actual four affected source objects contain 22 exact
+functions / 8,916 bytes, of which 2,656 bytes are newly reconstructed.
+The complete second gate passes the golden ROM, zero native differences and
+112 tests. The first gate failed only the missing module-comment test.
+Validation: `build/analysis/xhigh_from_55/field_area_release_validation.json`.

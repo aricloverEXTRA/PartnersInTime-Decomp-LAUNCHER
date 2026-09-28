@@ -11626,3 +11626,36 @@ artifacts and coverage limits.
   unchanged. Failed oracle/input-path versions are retained separately.
   See [DMA evidence](research/RECONSTRUCTION_NOTES.md#itcm-dma-register-programming-and-geometry-fifo)
   and private `build/analysis/xhigh_from_55/mi_dma_itcm_validation.json`.
+
+
+## 2026-09-28: Field area display and room release
+
+Reconstructed FieldArea_ReleaseRenderResources (ov000 0x020809BC, 1288 bytes)
+and FieldArea_ReleaseRoomResources (0x02080EFC, 1368 bytes) as readable C++.
+The first retains entity state for cached scenes; the second releases entities
+and room-owned data. Existing shared records now describe embedded palettes,
+effect slots and cleanup-owned buffer pointers. No inline ASM.
+
+Both new functions plus affected callers/snapshot capture are exact in four
+actual source objects: 22 functions / 8916 bytes. Full gate v2 passes the golden
+EUR ROM, native relink with zero differences and 112 tests. Gate v1 passed the
+ROM checks but failed the file-header-comment test; the comments were added.
+
+Runtime: ordinary pause_v2 (591 frames) and controlled room_v2 (1834 frames)
+check four complete releases, 610 helper calls, 1050 nested heap/list operations,
+80 caller stores and 3952 primitive stores. Both screens, borrowed/owned primary
+resources, entity cleanup, linked effect models and a populated animation buffer
+are covered. Full areas/arrays, allocations/heap metadata and sprite/palette
+lists are checked, with freed records retired before reuse. Virtual-object
+changes outside these primitives and rasterization remain observational. Active
+clipping/wipes, subtype9 exclusion and a populated second animation set are not
+covered. The two temporary room-change commands and checkpoint RAM/DTCM are
+restored; 104 saves unchanged. Seven images / 48 binary dumps validated.
+
+Private evidence: build/runtime/eur_xhigh_field_area_release/{pause_v2,room_v2}.json;
+build/analysis/xhigh_from_55/field_area_release_validation.json. Earlier probe v1
+failed before emulation on literal-pool disassembly; later probes guard full
+native functions while hooking only code. One-way room_v1 remains separate.
+
+New matching C/C++: 2656 bytes. Total: 890296 / 1563700 (56.9352%).
+Symbolic ASM remains separate at 4040 bytes.

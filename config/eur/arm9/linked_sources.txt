@@ -1078,3 +1078,5 @@ src/battle/battle_chain_relaxation.cpp
 src/nitro/os/os_reset_itcm.c
 
 src/nitro/mi/mi_dma_itcm.c
+
+src/field/field_area_release.cpp

@@ -4,6 +4,7 @@
 #include <game/field_script_manager.h>
 #include <game/field_bounds_records.h>
 #include <game/field_navigation.h>
+#include <game/field_resources.h>
 
 typedef struct FieldVariablePlacement FieldVariablePlacement;
 struct FieldPaletteCrossfade;
@@ -151,7 +152,12 @@ typedef struct FieldAreaContext {
     };
     union { void *auxiliary; struct FieldSystem *system; };
     union { FieldNavigationChangeManager *navigation_changes; struct FieldBackground *background; };
-    u8 unknown_2504[8], unknown_250c[44], unknown_2538[40];
+    u8 unknown_2504[8];
+    union {
+        u8 unknown_250c[44];
+        struct { u8 unknown_250c_prefix[40]; void *unknown_2534; };
+    };
+    u8 unknown_2538[40];
     union { void *party_order; struct FieldTimer *timer; };
     union { void *unknown_2564; struct FieldModelAnimation *model_animation; };
     union { void *unknown_2568; struct FieldSpriteAnimation *sprite_animation; };
@@ -173,6 +179,11 @@ typedef struct FieldAreaContext {
     void *unknown_2a70;
     union {
         u8 unknown_2a74[180];
+        struct {
+            FieldPaletteResource effect_palettes[3];
+            FieldRenderObject *effect_models[23];
+            u8 unknown_2b18[16];
+        };
         struct { u8 unknown_2a74_prefix[0xA4]; struct FieldRenderObject *animation_models[4]; };
     };
     u8 effect_owners[8];
@@ -194,6 +205,13 @@ typedef struct FieldAreaContext {
 typedef char FieldAreaContext_SizeCheck[sizeof(FieldAreaContext) == 11216 ? 1 : -1];
 typedef char FieldAreaContext_StartupScriptOffsetCheck[
     (u32)&((FieldAreaContext *)0)->startup_script == 40 ? 1 : -1];
+typedef char FieldAreaContext_EffectPalettesOffsetCheck[
+    (u32)&((FieldAreaContext *)0)->effect_palettes == 0x2a74 ? 1 : -1];
+typedef char FieldAreaContext_EffectModelsOffsetCheck[
+    (u32)&((FieldAreaContext *)0)->effect_models == 0x2abc ? 1 : -1];
+typedef char FieldAreaContext_Unknown2534OffsetCheck[
+    (u32)&((FieldAreaContext *)0)->unknown_2534 == 0x2534 ? 1 : -1];
+
 typedef struct FieldAreaSnapshot {
     u16 room_id;
     struct {
@@ -236,6 +254,9 @@ void FieldArea_UpdateEntities(FieldAreaContext *area);
 void FieldArea_UpdateEntityVisibility(FieldAreaContext *area);
 void FieldArea_BeginFrame(FieldAreaContext *area);
 void FieldArea_SaveEntityRenderSnapshots(FieldAreaContext *area);
+/* Keep entity state for a cached scene, or free the complete room. */
+void FieldArea_ReleaseRenderResources(FieldAreaContext *area);
+void FieldArea_ReleaseRoomResources(FieldAreaContext *area);
 void FieldArea_ResetEntityRenderOrder(FieldAreaContext *area);
 void FieldArea_ResetEntityUpdateOrder(FieldAreaContext *area);
 FieldAreaContext *FieldArea_CopyState(FieldAreaContext *field, const FieldAreaContext *source);
