@@ -10083,7 +10083,7 @@ Final compiled bytes equal the completed live and isolated inputs.
 
 ## Load-menu copy confirmation
 
-[LoadMenu_UpdateCopyConfirmation](../../src/save_menu_ov008/load_copy_confirmation.c)
+[LoadMenu_UpdateCopyConfirmation](../../src/save_menu_ov008/load_slot_confirmation.c)
 reconstructs overlay 8's `0x0206DE48..0x0206E310` (1,224 bytes, pure C).
 The 72-byte task uses phase, timer and child result at offsets 32, 36 and 60.
 The shared menu workspace selects the source with signed byte `+0x19D` and the
@@ -10135,3 +10135,39 @@ lifetimes. Final source/object hashes and producer exits are recorded in
 `build/analysis/xhigh_from_55/load_copy_validation.json`. The integrated build
 reproduces the original ROM, has zero native-relink differences and passes all
 112 tests.
+
+
+## Load-menu delete confirmation
+
+[LoadMenu_UpdateDeleteConfirmation](../../src/save_menu_ov008/load_slot_confirmation.c)
+owns the adjacent `0x0206D82C..0x0206DE48` range (1,564 bytes, pure C).
+The first confirmation at phase 100 opens a second prompt at phase 200, resetting
+the selection to No. Acceptance probes storage, clears the entire 2,024-byte RAM
+slot and starts the writer with checksum 0 and selection mode -1, which removes
+slot occupancy. Phase 300 waits 60 updates and handles the write result. Success
+clears the 160-byte display summary and text pixels, then requests empty preview
+buffer 2. Both write-error results clear the destination through the existing
+helper, show message 32 and wait another 30 updates before acknowledgement.
+Cancellation is available at both prompts and takes priority over confirmation.
+The first C draft matches completely. The reorganization tool renamed the copy
+unit to `load_slot_confirmation.c`; its two functions total 2,788 exact bytes.
+The copy function's compiled bytes are unchanged from its completed replays.
+
+Private `build/runtime/eur_xhigh_load_delete/` contains `delete55_v1.json`
+(688 frames, 81 calls) and `cancel_delete55_v1.json` (916 frames, 239 calls).
+Both use ordinary buttons from the existing second-confirmation checkpoint.
+The latter cancels, reopens the first prompt, accepts both confirmations and
+returns to the empty load menu, which was visually inspected. All 138 caller
+stores and 30 helper entries/returns are checked. The full task, workspace,
+save buffer, text/live allocations, factory pool/list boundaries and ABI use the
+same independent checks and bounded text observations as the copy replay above.
+Both routes restore checkpoint RAM/DTCM and preserve all 104 original saves.
+`isolated_v1.json` adds 503 ARM946 cases with 262 stores and 238 modeled helper
+calls, covering both prompt cancellations, signed selection limits, input locks,
+probe and write failures, timers, acknowledgements and unused phases. These are
+caller checks with explicit helper models, not live flash-failure evidence.
+
+The original-ROM hash and native relink pass. The first overall check caught a
+stale documentation link after the source rename; the corrected run passes all
+112 tests. Exact objects, source/report hashes, failed and successful producer
+exits are retained in `build/analysis/xhigh_from_55/load_delete_validation.json`.

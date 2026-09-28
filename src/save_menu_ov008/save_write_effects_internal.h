@@ -47,6 +47,7 @@ void SaveMenuWrite_StartRollback(void);
 void SaveMenu_UpdateExit(SaveMenuExitTask *task);
 void SaveMenu_UpdateConfirmation(SaveMenuConfirmTask *task);
 void LoadMenu_UpdateCopyConfirmation(SaveMenuConfirmTask *task);
+void LoadMenu_UpdateDeleteConfirmation(SaveMenuConfirmTask *task);
 extern void func_ov008_0206b37c(SaveMenuTransferTask *);
 extern void func_ov008_0206ac14(SaveMenuTransferTask *);
 extern void func_ov008_0206ae78(SaveMenuTransferTask *);

@@ -11265,3 +11265,18 @@ Golden ROM, zero native differences and 112 tests pass. See the
   outside the independent caller oracle. Initial probe parser failure and
   successful reruns are retained. Evidence: `load_copy_validation.json` under
   `build/analysis/xhigh_from_55/`.
+
+
+## Load-menu delete confirmation
+
+- Added 1,564 matching pure-C bytes for both delete prompts and their asynchronous
+  results. The first draft is exact. Consolidated with the adjacent copy dialog:
+  `load_slot_confirmation.c`, two functions / 2,788 exact bytes. C/C++ coverage
+  reaches 876,828 / 1,563,700 bytes (56.0739%); overlay 8 reaches 61.19%.
+- Golden ROM, zero native-relink differences, 112 tests. The initial check caught
+  a stale renamed-source documentation link; the corrected check passes.
+- Two ordinary deletion routes: 1,604 frames, 320 calls, 138 owned stores,
+  30 helper entry/return pairs. Another 503 isolated ARM946 cases check error
+  and boundary paths with explicitly modeled helpers. Empty menu inspected;
+  full checkpoint RAM/DTCM restored, all 104 saves unchanged. Evidence:
+  `build/analysis/xhigh_from_55/load_delete_validation.json`.

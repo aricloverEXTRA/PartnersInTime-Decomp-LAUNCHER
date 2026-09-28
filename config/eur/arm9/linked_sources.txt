@@ -1061,4 +1061,4 @@ src/scene_menu_ov007/pause_text_panel_close.cpp
 src/scene_menu_ov007/pause_selection_close.cpp
 src/scene_menu_ov007/pause_bitmap_close.cpp
 
-src/save_menu_ov008/load_copy_confirmation.c
+src/save_menu_ov008/load_slot_confirmation.c
