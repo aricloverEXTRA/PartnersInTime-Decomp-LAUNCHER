@@ -11200,3 +11200,19 @@ Golden ROM, zero native differences and 112 tests pass. See the
   and full-width factory arguments, with 3,096 ordered stores and no stubs.
   Upload graphics remain observational. Reports and exact producer provenance:
   `build/analysis/xhigh_from_55/save_location_requests_validation.json`.
+
+
+## Session save-context initialization
+
+- Added 460 bytes of matching C++ at ARM9 `02005BA8..02005D74`: initial live
+  context allocation, supplied/default settings and runtime option extraction.
+- Corrected the shared settings record's signed halfwords and alignment padding;
+  all seven affected actual functions (1,248 bytes) match. No inline ASM.
+- Golden ROM and zero differing native bytes; all 112 tests pass.
+- Ordinary save 65 boot/load: 2,477 frames, one initializer, five ordered helpers;
+  full context and independently derived allocation writes, bounded party/text
+  observations, captured graphics and visually checked field. 104 saves intact.
+- 262 isolated copied-RAM cases check 2,604 ordered caller stores; party/text
+  helpers are explicit stubs, with their ordinary calls covered by the live run.
+- Matching C/C++: 871960/1563700 (55.7626%). Details and limits are in the
+  reconstruction reference's session save-context section.

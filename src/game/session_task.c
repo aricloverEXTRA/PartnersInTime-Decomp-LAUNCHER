@@ -11,7 +11,6 @@
 extern GameTaskVTable data_02050020;
 extern void *data_02059f64;
 extern void func_02004f9c(u32 language);
-extern void func_02005ba8(const GameSessionSettings *settings);
 
 GameSessionTask *GameSessionTask_Init(GameSessionTask *task, u32 priority, u32 unused, void *argument,
                              u32 requested_state, u32 unknown, const GameSessionSettings *settings)
@@ -19,7 +18,7 @@ GameSessionTask *GameSessionTask_Init(GameSessionTask *task, u32 priority, u32 u
     GameTask_Init(&task->base, priority, unused, argument);
     task->base.vtable = &data_02050020;
     func_02004f9c(settings->language);
-    func_02005ba8(settings);
+    GameSession_InitializeSaveContext(settings);
     *(void **)(gSaveData + 0x51c) = data_02059f64;
     GameSessionTask_RequestState(task, requested_state);
     return task;

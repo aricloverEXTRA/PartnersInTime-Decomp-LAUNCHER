@@ -9928,3 +9928,45 @@ stores, 636 function entries, helper arguments, returned pointers and mapped
 memory outside the 32-byte CPU stack frame are checked. These synthetic cases
 do not run the upload callback or establish live IRQ behavior. The separate
 live routes supply task-lifetime and visible-menu evidence.
+
+
+## Session save-context initialization
+
+[Session save initialization](../../src/game/session_save_context.cpp) reconstructs
+the resident range `0x02005BA8..0x02005D74` (460 bytes, pure C++). It returns
+immediately if `gSaveData` already exists. Otherwise it allocates and clears
+1,420 bytes from heap 1, copies supplied settings or the defaults at
+`0x02048F08`, derives runtime options, and initializes the party and text tables.
+Supplied settings additionally copy their two final words to script storage at
+context offset `0x48`. The default path takes the rumble option from bit 0 of
+`0x0205A00C`.
+
+The shared `GameSessionSettings` layout now reflects signed halfwords at offsets
+2 and 4 and alignment padding at offset 6. Native C++ memberwise assignment
+copies fields but leaves that padding alone. The settings remain 16 bytes, with
+their final two words at offset 8. All seven actual functions in the new unit
+and the two affected session units match: 1,248 bytes, including 460 new bytes.
+The full gate reproduces the original ROM, reports zero native differing bytes
+and passes all 112 tests.
+
+Private replay `build/runtime/eur_xhigh_session_save/boot65_v2.json` checks an
+ordinary cold boot and load from save 65: 2,477 frames, one supplied-settings
+initialization and all five ordered helper calls. The full allocation, settings,
+root pointer, rumble byte, stack and preserved registers are checked. Heap
+allocation writes are independently derived and verified before text loading.
+Party effects are observed only within 284 bytes at context `+0x3F8`; text-table
+writes are observed only within 56 bytes at `+0x520`. The text loader's further
+allocations retire the initial neighboring heap metadata from this caller oracle.
+An earlier probe failed because it incorrectly required that metadata to remain
+unchanged through text loading; `boot65_v1.json` and its producer remain preserved.
+Main/sub VRAM, palettes and OAM are captured, and the loaded field was visually
+checked. All 104 original saves are unchanged; no live RAM fixtures were used.
+
+`isolated_v1.json` supplements the ordinary route with 262 copied-RAM ARM946
+cases: 256 supplied-settings combinations, four default rumble-byte values and
+two existing-context returns. It checks the actual compiled initializer with
+native allocation, clear and copy helpers, all mapped memory outside 44 stack
+bytes, helper order/arguments and 2,604 ordered session stores. Party and text
+initialization are explicit no-op stubs in these cases. Synthetic language bits
+check copying and extraction, not valid gameplay language configurations; these
+cases do not establish live IRQ, resource lifetime or rendering behavior.

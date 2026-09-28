@@ -526,6 +526,9 @@ src/game/sprite_image_decode_wide.c:
 src/game/session_init.c:
     .text       start:0x02004d40 end:0x02004f9c
 
+src/game/session_save_context.cpp:
+    .text start:0x02005ba8 end:0x02005d74
+
 src/game/session_requests.c:
     .text       start:0x02005d74 end:0x02005da4
 

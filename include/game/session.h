@@ -9,7 +9,8 @@
 typedef struct GameSessionSettings {
     u16 unknown_0 : 1, unknown_1 : 1, option_2 : 1, option_3 : 1;
     u16 language : 5, unknown_9 : 1, unknown_10_15 : 6;
-    u16 unknown_02, unknown_04, unknown_06;
+    s16 unknown_02, unknown_04;
+    /* Alignment padding at +6 is not copied by the settings assignment. */
     u32 unknown_08[2];
 } GameSessionSettings;
 
@@ -27,6 +28,7 @@ typedef char GameSessionTask_SizeCheck[sizeof(GameSessionTask) == 44 ? 1 : -1];
 extern "C" {
 #endif
 void GameSession_ResetSaveState(void);
+void GameSession_InitializeSaveContext(const GameSessionSettings *settings);
 void GameSession_InitSettings(int language, u8 option_2, u8 option_3, GameSessionSettings *settings);
 void GameSession_Start(int language, u8 option_2, u8 option_3);
 void GameSessionTask_RequestState(GameSessionTask *task, u32 requested_state);
