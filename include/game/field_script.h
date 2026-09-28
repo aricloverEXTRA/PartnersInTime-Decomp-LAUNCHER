@@ -91,6 +91,9 @@ typedef char FieldScriptState_SizeCheck[
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Fill save flags 1024..2047; any nonzero enabled value sets every bit. */
+void FieldVm_FillExtendedSaveFlags(int enabled);
 int FieldScript_Begin(FieldScriptState *state, FieldScriptState *parent,
                       int context_type, const u16 *script);
 FieldEntity *FieldScript_ResolveEntity(FieldVmRuntime *runtime,

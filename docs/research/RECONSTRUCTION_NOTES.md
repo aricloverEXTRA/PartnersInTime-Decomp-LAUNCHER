@@ -11277,3 +11277,33 @@ and source hashes validate, and all 104 original saves remain unchanged.
 `build/analysis/xhigh_from_55/cannon_badge_tuning_validation.json` records the
 checks. The full build gate passes the golden ROM, zero native differences and
 112 tests. This adds 104 pure C++ bytes, with no new assembly.
+
+
+## Field VM extended save-flag fills
+
+[field_extended_save_flags.cpp](../../src/field/field_extended_save_flags.cpp)
+reconstructs the 44-byte overlay-0 helper at `0x02081BD4..0x02081C00`.
+`FieldVm_FillExtendedSaveFlags` fills the 128 bytes at `gSaveData + 0x270` with
+zero or all ones. These are VM save flags 1024 through 2047, selected by commands
+`0x130` and `0x131`. The underlying native helper fills 32-bit words; the explicit
+unsigned fill pattern recovers the conditional all-ones instruction that a
+signed draft expressed as Boolean conversion followed by negation. No ASM is
+needed. Both the actual helper object and the migrated 23,492-byte dispatcher
+match completely, including literals and resolved relocations.
+
+Private `build/runtime/eur_xhigh_field_extended_save_flags/live_v2.json` records
+120 neutral frames from `eur_story_065_hud_verified.dst` (SHA-1
+`ece238ed785fda646a77cde5e886aa7da3e009d7`). At guarded dispatcher entries in
+frames 30 and 60, temporary decoded commands invoke clear and set respectively.
+Each call checks the whole 1,380-byte live save, the native fill-helper ABI,
+all 32 ordered word stores, and preserved stack/callee-saved registers. Induced
+flags are restored before the dispatcher resumes; all 72 decoded-command bytes
+are restored at the dispatcher return. Final checkpoint reload also restores
+main RAM and DTCM. This is controlled command coverage, not a natural story
+trigger or a test of gameplay with every extended flag set.
+
+Both field captures were visually inspected. Sixteen image/memory artifacts,
+source hashes and report counts validate, and all 104 original saves remain
+unchanged. The producer exits zero. The full gate passes the golden EUR ROM,
+zero native differences and 112 tests; this adds 44 pure C++ bytes. Evidence:
+`build/analysis/xhigh_from_55/field_extended_save_flags_validation.json`.

@@ -543,3 +543,6 @@ src/field/field_planar_screen_position.cpp:
 
 src/field/field_area_release.cpp:
     .text start:0x02080efc end:0x02081454
+
+src/field/field_extended_save_flags.cpp:
+    .text start:0x02081bd4 end:0x02081c00

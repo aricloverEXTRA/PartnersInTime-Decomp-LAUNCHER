@@ -11681,3 +11681,20 @@ producers remain separate. Evidence: build/runtime/eur_xhigh_cannon_badge_tuning
 {ordinary_v2,badge_v2}.json and build/analysis/xhigh_from_55/
 cannon_badge_tuning_validation.json. Matching C/C++: 890548 / 1563700 (56.9513%).
 Symbolic ASM remains separate at 4040 bytes.
+
+
+## 2026-09-28: Field VM extended save-flag fills
+
+Reconstructed FieldVm_FillExtendedSaveFlags (ov000 0x02081BD4, 44 bytes)
+in C++, with an unsigned word-fill pattern and no ASM. Helper and migrated
+VM dispatcher: two actual functions / 23536 bytes exact. Full gate passes
+the golden ROM, zero native differences and 112 tests. Controlled live
+commands 0x130/0x131 complete in a 120-frame field replay: two calls, two
+fill-helper checks and all 64 ordered word stores; full save checked.
+Flags restored at helper return, decoded commands at dispatcher return,
+and checkpoint RAM/DTCM restored at replay end. Both field captures inspected;
+16 artifacts validated; all 104 saves unchanged. No natural story-trigger or
+downstream all-flags behavior claim. Evidence: build/runtime/
+eur_xhigh_field_extended_save_flags/live_v2.json and build/analysis/
+xhigh_from_55/field_extended_save_flags_validation.json. Matching C/C++:
+890592 / 1563700 (56.9541%); symbolic ASM remains separate at 4040 bytes.
