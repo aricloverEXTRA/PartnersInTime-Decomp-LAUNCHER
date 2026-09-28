@@ -17,5 +17,23 @@
       "GameHeap_IrqStackSize": "0x400",
       "GameHeap_SystemStackSize": "0x0"
     }
+  },
+  {
+    "source": "src/game/session_update.c",
+    "constants": {
+      "SDK_OVERLAY_ov000_ID": "0x0",
+      "SDK_OVERLAY_ov002_ID": "0x2",
+      "SDK_OVERLAY_ov005_ID": "0x5",
+      "SDK_OVERLAY_ov006_ID": "0x6",
+      "SDK_OVERLAY_ov007_ID": "0x7",
+      "SDK_OVERLAY_ov008_ID": "0x8",
+      "SDK_OVERLAY_ov009_ID": "0x9",
+      "GameOverlay_FieldEnd": "0x20c1680",
+      "GameOverlay_BattleEnd": "0x20c0fc0",
+      "GameOverlay_TitleEnd": "0x20997e0",
+      "GameOverlay_SceneEnd": "0x20a7260",
+      "GameOverlay_SaveMenuEnd": "0x207aaa0",
+      "GameOverlay_ShopEnd": "0x207f400"
+    }
   }
 ]

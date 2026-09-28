@@ -8,6 +8,10 @@
 
 #include <nitro/fs.h>
 
+/* The linker defines each ID as a symbol value, not a stored integer. */
+#define FS_EXTERN_OVERLAY(name) extern u32 SDK_OVERLAY_##name##_ID[1]
+#define FS_OVERLAY_ID(name) ((u32)&SDK_OVERLAY_##name##_ID)
+
 typedef struct FsRomTable { u32 offset; u32 size; } FsRomTable;
 typedef struct FsOverlayInfo {
     u32 id;

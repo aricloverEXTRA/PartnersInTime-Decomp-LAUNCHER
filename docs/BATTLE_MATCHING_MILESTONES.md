@@ -11216,3 +11216,19 @@ Golden ROM, zero native differences and 112 tests pass. See the
   helpers are explicit stubs, with their ordinary calls covered by the live run.
 - Matching C/C++: 871960/1563700 (55.7626%). Details and limits are in the
   reconstruction reference's session save-context section.
+
+
+## Session overlay transitions
+
+- Added 1,352 bytes of matching C at ARM9 `02005DA4..020062EC`: overlay
+  reservation/loading, completion polling, task disable and child-state creation.
+- Recovered linker-defined overlay IDs and verified code/BSS ends against the
+  EUR overlay table; retained the original empty phase-4 jump-table entry.
+- Final actual object matches; full ROM/native verification and 112 tests pass.
+- Ordinary save-65 boot, load, save menu, pause and return: 3,357 frames,
+  16 dispatcher calls and 48 ordered helper calls. Full 44-byte task with
+  bounded list-link observations; captured graphics and inspected menu/field.
+- 149 isolated cases add busy, allocation-result and invalid-state branches;
+  child/loader helpers are explicit stubs. All 104 original saves remain intact.
+- Matching C/C++: 873312/1563700 (55.8491%). Detailed limits and the SDK
+  reference are recorded in the session overlay-transitions research section.

@@ -9970,3 +9970,51 @@ bytes, helper order/arguments and 2,604 ordered session stores. Party and text
 initialization are explicit no-op stubs in these cases. Synthetic language bits
 check copying and extraction, not valid gameplay language configurations; these
 cases do not establish live IRQ, resource lifetime or rendering behavior.
+
+
+## Session overlay transitions
+
+[Session transitions](../../src/game/session_update.c) reconstructs the resident
+dispatcher `0x02005DA4..0x020062EC` (1,352 bytes, pure C). Request phases 0 and 2
+reserve RAM and begin loading the selected overlay; phases 1 and 3 poll its
+completion, disable the session task and construct the child state. Phase 4 is
+an explicit empty case in the original jump table. Field entry optionally resets
+save state and allocates the 952-byte `FieldSystem` before construction.
+
+The earlier private draft treated overlay IDs as integer constants. Native code
+loads them through its literal pool, consistent with the SDK's linker-defined
+overlay symbols. The [SDK overlay-ID documentation](https://twlsdk.randommeaninglesscharacters.com/docs/twl/TwlSDK/fs/fs_overlay_id_types.html)
+describes this contract. `FS_EXTERN_OVERLAY` and `FS_OVERLAY_ID` now express it;
+EUR IDs and overlay ends are exported through `linker_aliases.json`. Each end is
+checked against the extracted overlay table's address, code size and BSS size.
+These are symbol values, not addresses to dereference. Correct IDs, the explicit
+empty phase and the typed reset bit resolve the older draft without inline ASM.
+The final actual object matches all 1,352 bytes. Both complete gates reproduce
+the original ROM, report zero differing native bytes and pass 112 tests.
+
+Private `build/runtime/eur_xhigh_session_update/boot65_v2.json` follows ordinary
+buttons from cold boot through title, loading, field movement, the save menu,
+pause and return to the field. Its 3,357 frames contain 16 complete dispatcher
+calls and 48 ordered helper calls. Phases 0/1 execute once each and phases 2/3
+seven times each; requested states 0, 2, 4, 5, 8 and 9 are observed. All eight
+load-completion polls return ready. The oracle checks the entire 44-byte session
+task, root, phase writes, disable flags, helper arguments/order, stack and
+preserved registers. The two task-list links are bounded observations when
+overlay initialization or child construction may insert tasks. Loader internals,
+allocation results and child scene behavior remain outside this caller oracle.
+Main/sub VRAM, palettes and OAM are captured; save menu, pause and final field
+were visually inspected. All 104 original saves remain unchanged.
+
+The initial route (`boot65_v1.json`, exit 1) passed all 12 per-call checks but
+failed the final pause-coverage assertion: X at the save point opened the save
+menu. The corrected route adds Start to enter pause; no RAM fixture is used.
+Its producer is `build/analysis/xhigh_from_55/probe_session_update_v2.py`.
+
+`isolated_v1.json` adds 149 copied-RAM ARM946 cases, including busy returns,
+reset/no-reset field entry, success/failure allocation results, inactive phase 4
+and invalid phases/states. Actual compiled dispatcher code and native
+`GameTask_Disable` execute; all other direct helpers are explicit controlled
+stubs that clobber volatile registers. All 122 ordered stores, helper arguments,
+full mapped memory outside eight stack bytes and preserved registers are checked.
+These fixtures verify dispatch decisions, not real loader waiting, heap failure,
+child lifetimes, IRQ behavior or rendering.

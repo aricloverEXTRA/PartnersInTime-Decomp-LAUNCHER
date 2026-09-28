@@ -33,6 +33,7 @@ void GameSession_InitSettings(int language, u8 option_2, u8 option_3, GameSessio
 void GameSession_Start(int language, u8 option_2, u8 option_3);
 void GameSessionTask_RequestState(GameSessionTask *task, u32 requested_state);
 void GameSessionTask_RequestStatePhase2(GameSessionTask *task, u32 requested_state);
+void GameSessionTask_Update(GameSessionTask *task);
 GameSessionTask *GameSessionTask_Init(GameSessionTask *task, u32 priority, u32 unused,
     void *argument, u32 requested_state, u32 unknown, const GameSessionSettings *settings);
 GameSessionTask *GameSessionTask_Destroy(GameSessionTask *task);

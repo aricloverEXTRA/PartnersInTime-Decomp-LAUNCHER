@@ -532,6 +532,9 @@ src/game/session_save_context.cpp:
 src/game/session_requests.c:
     .text       start:0x02005d74 end:0x02005da4
 
+src/game/session_update.c:
+    .text start:0x02005da4 end:0x020062ec
+
 src/game/session_task.c:
     .text       start:0x020062ec end:0x020063a4
 
