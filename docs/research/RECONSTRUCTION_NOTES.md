@@ -11307,3 +11307,46 @@ source hashes and report counts validate, and all 104 original saves remain
 unchanged. The producer exits zero. The full gate passes the golden EUR ROM,
 zero native differences and 112 tests; this adds 44 pure C++ bytes. Evidence:
 `build/analysis/xhigh_from_55/field_extended_save_flags_validation.json`.
+
+
+## Battle vertical list selection
+
+`BattleMenu_UpdateVerticalSelection` in `src/battle/battle_menu_vertical.c`
+(overlay 2, `0x020999D8..0x02099A74`, 156 bytes) updates a row in a nonempty
+battle item list. It reads unsigned halfwords at `gBattleContext + 0x104`
+(new presses) and `+0x106` (repeats). Up/down masks are `0x40`/`0x80`.
+A new press wraps at the corresponding edge; otherwise repeat movement
+clamps to `0..entry_count-1`. Opposite repeat bits cancel, while an up-edge
+press has priority over a down-edge press. A changed row plays sound 1
+with zero delay, interval and count; an unchanged row is silent.
+
+The native caller `BattleTurnState_Update` uses the helper for Bros. Items
+(return `0x020831D0`, selection `+0x120`, count `+0x5A6`) and ordinary items
+(return `0x020832F8`, selection `+0x124`, count `+0x5A4`). The indices are
+loaded as signed halfwords and counts as unsigned halfwords. Saving the
+original index while updating the parameter itself reproduces the native
+register lifetime in readable C; no ASM is needed. The actual build object,
+including the pointer literal and resolved call, matches all 156 bytes.
+
+Private evidence in `build/runtime/eur_xhigh_battle_menu_vertical/`:
+`live_v1.json` records 665 calls from the Bros. Items caller, using the
+compatible restored-encounter checkpoint `ov17_bros_menu83.dst` (SHA-1
+`21d2e64a24b389689627292539103880c6761b47`). Up/down taps and holds cover
+both wraps, both clamps, repeat movement and idle returns without new RAM
+edits. All returns check the selected row, sound decision and arguments,
+immediate resident audio dispatch, sound return, SP/r4-r11, and unchanged
+full 401416-byte battle allocation, 1380-byte save and pointer roots.
+There are 20 sound calls; the other 645 returns are silent. Four inspected
+captures show the list, with mapped VRAM, palette and OAM dumps retained.
+The original checkpoint's full RAM/DTCM is restored after the replay.
+
+`isolated_v1.json` adds 304 ARM946 cases in copied live RAM/DTCM: singleton
+and large lists, out-of-range selections, simultaneous keys and unrelated
+input bits. Every target stack store and all mapped memory are checked.
+The sound entry is explicitly stubbed there; real sound dispatch is covered
+only by the live replay. Empty lists are outside the public contract.
+The ordinary-item caller, audio-engine effects outside the checked records,
+interrupt timing and rendered pixels have no independent oracle in this block.
+The full build gate and all 112 tests pass. The private validation report
+`build/analysis/xhigh_from_55/battle_menu_vertical_validation.json` checks
+30 artifacts and all 104 unchanged original saves.

@@ -1086,3 +1086,5 @@ src/shop_ov009/shop_hblank.cpp
 src/attack_cannonball_ov012/badge_tuning.cpp
 
 src/field/field_extended_save_flags.cpp
+
+src/battle/battle_menu_vertical.c

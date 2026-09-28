@@ -11698,3 +11698,21 @@ downstream all-flags behavior claim. Evidence: build/runtime/
 eur_xhigh_field_extended_save_flags/live_v2.json and build/analysis/
 xhigh_from_55/field_extended_save_flags_validation.json. Matching C/C++:
 890592 / 1563700 (56.9541%); symbolic ASM remains separate at 4040 bytes.
+
+
+## 2026-09-28: Battle vertical list selection
+
+Linked BattleMenu_UpdateVerticalSelection (ov002 0x020999D8, 156 bytes)
+as readable C without ASM. The actual source object matches the entire
+function. Full gate: golden ROM, zero native differences, 112 tests.
+A 665-frame Bros. Items replay checks all 665 calls, both wrap directions,
+both repeat clamps, movement and idle; 20 real sound dispatches checked.
+Full battle/save records and ABI verified, four captures inspected, and
+checkpoint RAM/DTCM restored. Another 304 isolated ARM946 cases cover
+simultaneous keys and list boundaries with sound explicitly stubbed.
+No ordinary-item caller, independent audio or pixel coverage claimed.
+All 30 artifacts validate and 104 original saves remain unchanged.
+Evidence: build/runtime/eur_xhigh_battle_menu_vertical/{live_v1,isolated_v1}.json
+and build/analysis/xhigh_from_55/battle_menu_vertical_validation.json.
+Matching C/C++: 890748 / 1563700 (56.9641%); symbolic ASM remains 4040 bytes.
+Work pauses after this block at the user's request.
