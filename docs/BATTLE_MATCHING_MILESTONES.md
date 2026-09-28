@@ -11591,3 +11591,19 @@ artifacts and coverage limits.
   identical checked reset behavior but different late title OAM/pixels; cause
   unconfirmed. Full checkpoint restoration and visible title confirmed.
 - Evidence: `build/analysis/xhigh_from_55/os_reset_itcm_validation.json`.
+
+
+## 2026-09-28 - ITCM card sector reader
+
+- Added 304 exact C bytes for `OSi_ReadCard`, extending the reset ITCM unit to
+  592 bytes. Fixed-base addressing matches without new inline assembly.
+  Seven functions/940 bytes in both actual reset objects compare exactly.
+- Matching C/C++: **887,120 / 1,563,700 bytes (56.7321%)**. Full verification
+  passes: original ROM hash, zero native-relink differences and 112 tests.
+- Ordinary reset checks 972 sectors, 124,416 FIFO words, 124,319 destination
+  stores and all command/control writes. 360 isolated native-reader cases add
+  signed-size, partial-word, sector and busy/readiness boundaries with explicit
+  register/FIFO models and no function stubs.
+- 43 artifacts validate; visible restart and full checkpoint restoration;
+  104 original saves unchanged. Initial conditional-hook probe failure preserved.
+- Evidence: `build/analysis/xhigh_from_55/os_read_card_itcm_validation.json`.

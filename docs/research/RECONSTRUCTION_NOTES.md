@@ -11034,3 +11034,45 @@ stores are checked. The first isolated version failed after 48 cases because
 Unicorn's writer requires immutable bytes for the modeled header; the corrected
 producer passes without game-code changes. Hardware cache effects, concurrent
 ARM7 timing and the final boot assembly are outside this isolated model.
+
+### ITCM card sector reader
+
+`OSi_ReadCard`, `0x01FF8270..0x01FF83A0`, extends
+[`os_reset_itcm.c`](../../src/nitro/os/os_reset_itcm.c) by 304 pure C bytes.
+It rounds the ROM offset down to a 512-byte sector, issues command `0xB7`,
+consumes every FIFO word and stores only words whose signed byte offset falls
+inside the requested count. The destination remains a fixed integer address
+plus that offset; a byte-pointer expression made MWCC carry and increment a
+second pointer, adding two instructions. Correcting this dataflow matches the
+whole function without new assembly. The complete ITCM unit is now 592 bytes.
+
+This is a word-copy interface: a positive count not divisible by four still
+stores the entire last word. An unaligned-within-sector start can also issue a
+sector read for a zero or small negative count, while storing nothing. The reset
+callers use aligned offsets, destinations and word-sized counts. Do not simplify
+the signed tests or replace the sector drain with an early exit at the last store.
+
+Private `build/runtime/eur_xhigh_os_read_card_itcm/keypad65_v2.json` records an
+ordinary save-65 keypad reset. Both real reads cover 972 sectors, 7,776 command
+byte stores, 124,416 FIFO words and 124,319 destination-word stores; 97 trailing
+words are discarded. The oracle reads post-transfer CPU registers instead of
+consuming the FIFO itself, comparing every word with the ROM. The enclosing
+reset oracle still checks all 497,276 copied bytes, neighbors, header and ABI.
+The first live producer missed the nonnegative path because its observer sat
+on a conditional branch; its frame-2 failure is retained, and corrected hooks
+around the actual load/add pass without changing game code.
+
+`isolated_v1.json` executes the native reader in 360 ARM946 cases with modeled
+card status/FIFO registers and no function stubs. It covers three aligned sector
+offsets, ten signed sizes, initial busy waits, per-word readiness delays and
+two header control values. All 28,116 native stores, 52,224 FIFO reads and complete
+mapped RAM, DTCM, ITCM, scratch, I/O and FIFO regions are checked, including the
+whole final word for partial counts. Unaligned addresses, extreme overflow and
+real hardware timing are not covered by that model.
+
+The build is byte-identical with 112 tests passing; both actual reset objects
+match seven functions/940 bytes. All 43 artifacts validate, the final title is
+visible and all 104 original saves remain unchanged after checkpoint restoration.
+Input state, checked reset events and captures through frame 300 match the prior
+replay. The known late title OAM/pixel variation remains unclassified. Full evidence:
+`build/analysis/xhigh_from_55/os_read_card_itcm_validation.json`.
