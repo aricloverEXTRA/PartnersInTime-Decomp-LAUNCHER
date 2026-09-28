@@ -653,7 +653,7 @@ src/save_menu_ov008/save_write_zoom.c
 src/save_menu_ov008/save_write_setup.c
 src/save_menu_ov008/save_write_rollback.c
 src/save_menu_ov008/save_menu_control.c
-src/save_menu_ov008/save_menu_panel_text.c
+src/save_menu_ov008/save_menu_panel_resources.c
 
 src/save_menu_ov008/load_menu_control.c
 src/save_menu_ov008/load_menu_exit.c

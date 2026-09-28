@@ -1,12 +1,34 @@
 /*
- * Save panel text (overlay 8, 0x02071964-0x02071A50).
+ * Save panel resources (overlay 8, 0x02071964-0x02071AB0).
  *
- * Loads the location name for a slot and prepares the panel's text.
+ * Prepares location labels and queues copies of the location image buffers.
  */
 
 #include "save_menu_internal.h"
 
+extern u8 data_ov008_0207aa64[2];
 extern u16 data_ov008_0207aa66[3];
+void func_ov008_02071ab0(SaveMenuTransferTask *task);
+
+SaveMenuTransferTask *SaveMenu_QueueLocationPanel(int panel, int image)
+{
+    SaveMenuTransferTask *task = func_ov005_0206659c(func_ov008_02071ab0, 11, 1);
+    task->arguments[0] = panel;
+    task->arguments[1] = image;
+    return task;
+}
+
+SaveMenuTransferTask *SaveMenu_CopyLocationPanel(int panel, u32 source_panel)
+{
+    /* The first two entries track each panel's current image. Values at least
+     * two select the shared third image buffer. */
+    if (source_panel < 2)
+        source_panel = data_ov008_0207aa64[source_panel];
+    else
+        source_panel = 2;
+    data_ov008_0207aa64[panel] = source_panel;
+    return SaveMenu_QueueLocationPanel(panel, source_panel);
+}
 
 typedef struct MenuLocationEntry {
     u16 value, unused;

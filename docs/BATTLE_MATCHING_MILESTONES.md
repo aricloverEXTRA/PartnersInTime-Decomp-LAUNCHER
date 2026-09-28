@@ -11183,3 +11183,20 @@ configuration and SP/r4-r11 pass; helper internals and graphics remain
 observational. All 104 saves are intact and full RAM/DTCM checkpoints restored.
 Golden ROM, zero native differences and 112 tests pass. See the
 [progression evidence](research/RECONSTRUCTION_NOTES.md#hammer-progression).
+
+
+## Save-menu location panel requests
+
+- Reconstructed the two location-panel request functions in pure C, adding
+  96 matching bytes. Consolidated them with the adjacent label helpers in
+  `save_menu_panel_resources.c`; all four actual object functions (332 bytes)
+  match. C/C++ coverage is 871,500 / 1,563,700 bytes (55.7332%).
+- Full build: original EUR ROM hash, zero native-relink differences, 112 tests.
+  Two ordinary checkpoint-55 routes cover copy and erase requests, including
+  task creation, upload, removal and release; 1,386 frames total. All 104 saves
+  are intact and full RAM/DTCM checkpoints restored. The first erase checkpoint
+  was too late and failed coverage; its report is retained.
+- Another 164 copied-RAM ARM946 cases check unsigned source mapping, self-copy
+  and full-width factory arguments, with 3,096 ordered stores and no stubs.
+  Upload graphics remain observational. Reports and exact producer provenance:
+  `build/analysis/xhigh_from_55/save_location_requests_validation.json`.

@@ -9880,3 +9880,51 @@ All producers exit successfully, restore the full RAM/DTCM checkpoint and leave
 all 104 original saves unchanged. No live RAM fixtures are used. Full ROM/native
 verification and 112 tests pass. Invalid phases, signed-overflow timer inputs,
 zero arrival delay and alternate formations are outside this live coverage.
+
+
+## Save-menu location panel requests
+
+[Save panel resources](../../src/save_menu_ov008/save_menu_panel_resources.c)
+now includes `SaveMenu_CopyLocationPanel` and `SaveMenu_QueueLocationPanel`, the
+96-byte range `0x02071A50..0x02071AB0` in overlay 8. The former resolves source
+panels 0 and 1 through the two-byte mapping at `0x0207AA64`; every larger unsigned
+value selects image buffer 2. It updates the destination mapping before queuing
+the transfer. The factory allocates a 72-byte overlay-5 task in list 11, marker 1,
+with callback `0x02071AB0`, then stores full-width panel/image arguments at
+offsets 40 and 44. Both functions return the allocated task pointer. The upload
+callback remains native code; it narrows those arguments before selecting its
+graphics buffers. Do not interpret arbitrary factory arguments as valid uploads.
+
+The adjacent location-label helpers share the same source unit, renamed from
+`save_menu_panel_text.c` using the reorganization tool. All four functions,
+332 bytes, match in the actual compiled object. The new functions are pure C.
+The complete build reproduces the original ROM, the native relink has zero
+differing bytes, and all 112 tests pass.
+
+Private evidence is under `build/runtime/eur_xhigh_save_location_requests/`.
+`copy55_v3.json` follows ordinary buttons from the existing copy-confirmation
+checkpoint: 698 frames, one panel-0-to-panel-1 copy, followed by loading the game.
+`erase55_v3.json` starts at the second deletion confirmation: 688 frames and
+one buffer-2 request for panel 0. Each route checks one allocation, upload,
+removal mark and actual release. The oracle derives every pool/list/counter
+change, checks all allocated pool records and link records plus the complete
+10,248-byte menu workspace, and checks arguments, returned pointers and preserved
+registers/stack. The upload's 72-byte task and arguments are checked; its graphics
+writes remain observational. Main/sub VRAM, palettes and OAM are captured, and
+the copied panel, empty erased panel and resumed field were visually inspected.
+
+The first erase attempt (`erase55_v1.json`, producer exit 1) used a checkpoint
+already past deletion and correctly failed its target-coverage assertion. The
+earlier checkpoint fixes the route; no game code or live RAM fixture was needed.
+Both successful routes restore the entire checkpoint RAM and DTCM afterward.
+All 104 original save files remain unchanged. Their final producer is
+`build/analysis/xhigh_from_55/probe_save_location_requests_v3.py`.
+
+`isolated_v2.json` adds 164 ARM946 cases on copied live RAM: all nine combinations
+of the two mapping bytes, both destination panels, eight unsigned source values
+including `0xFFFFFFFF`, and twenty direct factory argument cases. Actual compiled
+requests and native allocator helpers execute without stubs. All 3,096 ordered
+stores, 636 function entries, helper arguments, returned pointers and mapped
+memory outside the 32-byte CPU stack frame are checked. These synthetic cases
+do not run the upload callback or establish live IRQ behavior. The separate
+live routes supply task-lifetime and visible-menu evidence.

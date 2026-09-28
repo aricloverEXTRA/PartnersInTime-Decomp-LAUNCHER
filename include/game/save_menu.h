@@ -107,6 +107,8 @@ void SaveMenuText_DrawBackground(SaveMenuText *context, int engine, int backgrou
                                  int x, int y);
 void SaveMenuText_BuildDialog(SaveMenuText *text, int kind, int entry);
 void SaveMenuText_PreparePanel(int panel, u16 entry);
+SaveMenuTransferTask *SaveMenu_QueueLocationPanel(int panel, int image);
+SaveMenuTransferTask *SaveMenu_CopyLocationPanel(int panel, u32 source_panel);
 void SaveMenuText_ResetDialogSprites(void);
 void SaveMenuText_ClearDialogVram(SaveMenuTransferTask *task);
 void SaveMenuText_DrawSlotChoice(SaveMenuTransferTask *task);
