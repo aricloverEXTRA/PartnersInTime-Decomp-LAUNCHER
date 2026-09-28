@@ -10388,3 +10388,32 @@ live allocation-name cases. These checks do not cover renderer or IRQ timing.
 All 32 functions in the seven affected source objects match; the full gate
 passes the golden-ROM check, zero-difference native relink and 112 tests.
 Evidence: `build/analysis/xhigh_from_55/small_helpers_validation.json`.
+
+
+## Pause status-page row cleanup
+
+`PauseStatusPage_Release` (`0x02078478..0x020784A0`, 40 bytes) marks task group 2
+for deferred removal, then unlinks the main-screen sprite allocation at
+`0x020908D0` (pause workspace `+0x2E0`). The status controller calls it during
+member changes; the page-close dispatcher calls it when returning to the menu.
+It shares the allocation with other page layouts, but has its own native entry.
+The pure C implementation uses `GameSpriteAllocation` and the existing unlink API.
+
+Private `build/runtime/eur_xhigh_pause_status_release/status65_v1.json` records
+1,340 frames of ordinary save-65 input without RAM fixtures: enter status,
+cycle right through all four members, switch left/right, return with B and exit
+with Start. Seven complete calls cover both callers and 140 task markings.
+All seven allocations are linked interior nodes on screen 0, with both neighbors
+present. Independent checks cover every marked 72-byte task, group roots, both
+complete sprite-allocation lists, unlink effects, the 90,600-byte workspace,
+party allocation/header, save prefix, display state, helper arguments and
+preserved registers/stack. Marking does not prove the subsequent pool sweep;
+head, tail and already-detached unlink cases are not covered by this route.
+
+Five captures and 20 graphics dumps are retained. The status display and final
+field screen were inspected; graphics are observational. Full checkpoint RAM
+and DTCM are restored, and all 104 original saves remain unchanged. The actual
+new source object and both migrated caller units match: eight functions,
+3,296 bytes. The full gate passes, including the golden ROM, zero native byte
+differences and 112 tests. Evidence is pinned by
+`build/analysis/xhigh_from_55/pause_status_release_validation.json`.

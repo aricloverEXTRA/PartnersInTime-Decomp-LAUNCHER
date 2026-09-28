@@ -48,6 +48,7 @@ void PauseMenu_UpdateTask(PauseMainMenuTask *task);
 void PauseMenu_GetMemberPosition(int member, int *x, int *y);
 int PauseMenu_CanSelectMember(int x, int y);
 void PauseStatusPage_UpdateTask(PauseStatusPageTask *task);
+void PauseStatusPage_Release(void);
 void PauseStarPage_UpdateTask(PausePageTask *task);
 #ifdef __cplusplus
 }

@@ -15,7 +15,6 @@ void func_ov005_020663d8(int);
 void func_ov005_02066358(PauseMenuElement *, void (*)(PauseMenuElement *), int);
 void func_ov005_02069bcc(int, u16, u16, u16);
 void func_ov007_0206f8f8(int, int);
-void func_ov007_02078478(void);
 void func_ov007_020784a0(void);
 void func_ov007_02077110(int, u8);
 void GameResource_Move16(const void *, void *, u32);
@@ -84,7 +83,7 @@ extern "C" void PauseStatusPage_UpdateTask(PauseStatusPageTask *task)
         if (alpha > 16) alpha = 16;
         REG16(0x04000052) = alpha | ((16 - alpha) << 8);
         if (alpha >= 16) {
-            func_ov007_02078478();
+            PauseStatusPage_Release();
             Overlay5DisplayBg_SetScreenBase(DISPLAY_ENGINE_MAIN, 1, 3);
             Overlay5DisplayBg_SetCharacterBase(DISPLAY_ENGINE_MAIN, 1, 4);
             task->blend = 6;

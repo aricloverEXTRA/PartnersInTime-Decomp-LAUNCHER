@@ -29,7 +29,6 @@ void func_ov005_0206650c(void *);
 void func_ov005_02069bcc(int, u16, u16, u16);
 void func_ov005_020663d8(int);
 void func_02036988(vu32 *, int, int, int, int);
-void func_ov007_02078478(void);
 void func_ov007_02078294(void);
 void func_ov007_0207f868(PausePageTask *, int);
 void func_ov007_0207fe90(int);
@@ -195,7 +194,7 @@ extern "C" void PausePage_CloseTask(PausePageTask *task)
                 PauseList_Hide((Overlay7Party *)data_ov007_0208e1e4);
                 break;
             case 1: PauseMenuLabel_ReleaseRows(); break;
-            case 2: func_ov007_02078478(); break;
+            case 2: PauseStatusPage_Release(); break;
             case 4: func_ov007_02078294(); break;
             }
             Overlay5Display_DisablePlanes(DISPLAY_ENGINE_MAIN, 2);

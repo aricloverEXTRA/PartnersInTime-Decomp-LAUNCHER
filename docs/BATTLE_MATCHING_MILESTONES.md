@@ -11349,3 +11349,16 @@ Golden ROM, zero native differences and 112 tests pass. See the
   routes; its evidence is isolated. Total isolated ARM946 cases: 275, checking
   full memory and ABI. Captures inspected, checkpoints restored, 104 saves intact.
   Evidence: `build/analysis/xhigh_from_55/small_helpers_validation.json`.
+
+
+### Status-page row cleanup
+
+- Reconstructed `PauseStatusPage_Release` and migrated both callers: 40 new
+  pure C bytes. All eight functions in the three actual source objects match.
+- Ordinary save-65 status route: seven calls across member changes and page
+  return, 140 task markings, complete sprite-list effects and ABI checks.
+  Full checkpoint restored; all 104 saves unchanged. Status/field images viewed.
+- Golden ROM, zero native differences, 112 tests. Matching C/C++:
+  880032/1563700 (56.2788%).
+- Private evidence: `eur_xhigh_pause_status_release/status65_v1.json` and
+  `xhigh_from_55/pause_status_release_validation.json`.
