@@ -10079,3 +10079,59 @@ source are retained; v2 excludes the known four-byte pool from hook discovery,
 while the complete 728-byte native guard still includes it. The isolated v1 run
 passed before final field-name cleanup; v2 pins the preserved final source object.
 Final compiled bytes equal the completed live and isolated inputs.
+
+
+## Load-menu copy confirmation
+
+[LoadMenu_UpdateCopyConfirmation](../../src/save_menu_ov008/load_copy_confirmation.c)
+reconstructs overlay 8's `0x0206DE48..0x0206E310` (1,224 bytes, pure C).
+The 72-byte task uses phase, timer and child result at offsets 32, 36 and 60.
+The shared menu workspace selects the source with signed byte `+0x19D` and the
+copy destination with signed byte `+0x19E`; the latter now has a named field while
+retaining its raw two-byte view. Panel-summary indexing uses signed loads, while
+slot lookup, write requests and preview requests explicitly convert to unsigned
+bytes. `SaveMenuWrite_Start` now declares unsigned source, destination and checksum
+arguments, consistent with their stored fields and the caller's zero-extending
+loads; the stack-passed selection mode remains signed. The complete writer and
+existing save-menu control units still match after this declaration correction.
+
+Phase 0 selects No and constructs the confirmation. Phase 100 handles input,
+with cancellation taking priority when both confirm and cancel are pressed.
+An accepted request probes storage, copies all 2,024 bytes into the destination
+RAM slot and starts the asynchronous writer. Phase 200 first counts down 60
+updates, then handles the child's result: success copies the 160-byte summary,
+clears the 24,576-byte text pixel buffer and queues the location preview; failures
+show the corresponding message, with slot failure also clearing the destination.
+Phase 201 waits another 30 updates before acknowledgement. Phase 300 hides the
+message and returns to the action menu. Probe failure disables further scrolling
+and enters the error message at phase 1000. The volatile zero used by the word-fill
+wrapper preserves the native stack temporary, as in neighboring text helpers.
+
+Private reports are in `build/runtime/eur_xhigh_load_copy/`. Ordinary buttons
+from the existing copy-confirmation checkpoint produce `copy55_v2.json` (698
+frames, 81 complete calls) and `cancel_copy55_v2.json` (838 frames, 151 calls).
+The latter cancels, reopens the dialog and completes the copy, covering phase 0
+and seven input-locked updates as well. Across both routes, all 134 caller stores
+and 29 helper entries/returns are checked. Checks include the entire receiving
+task, 10,248-byte workspace, 8,192-byte save buffer, text/live-save allocations
+and heap headers, arguments, call order and preserved registers/stack. Writer
+creation and preview allocation also check pool records, links and roots at their
+return boundary. Text effects are observed only within the first 24,624 bytes
+of the text object and the dialog's two coordinate words; resource pointers stay
+checked. Sound, other sprite pools, flash I/O, IRQ timing and rasterization remain
+outside this caller oracle. The menu after copying and the resumed field were
+visually inspected. All 104 original saves are unchanged, and each route restores
+the full checkpoint RAM/DTCM. The initial probe attempt failed before gameplay
+because its store parser lacked zero-offset addresses; its log is retained.
+
+`isolated_v1.json` adds 339 ARM946 cases using the actual compiled caller on
+copied RAM. They cover both slot directions, signed selection limits, simultaneous
+buttons, locked input, probe failure, all write results, timer values including
+`0xFFFFFFFF`, acknowledgements and inactive phases. All 216 caller stores, 156
+modeled helper calls, preserved registers and mapped memory outside the 24-byte
+stack frame are checked. Every outer callee is explicitly modeled: these cases
+do not demonstrate live storage failures, helper rendering or asynchronous task
+lifetimes. Final source/object hashes and producer exits are recorded in
+`build/analysis/xhigh_from_55/load_copy_validation.json`. The integrated build
+reproduces the original ROM, has zero native-relink differences and passes all
+112 tests.

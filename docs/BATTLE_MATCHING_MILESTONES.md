@@ -11247,3 +11247,21 @@ Golden ROM, zero native differences and 112 tests pass. See the
   All 104 saves unchanged. Detailed bounds and failed checks are in the research
   reference and private render_restore validation record.
 - Matching C/C++: 874040/1563700 (55.8956%).
+
+
+## Load-menu copy confirmation
+
+- Added 1,224 matching pure-C bytes for the copy-confirmation state machine,
+  including cancellation, asynchronous results and error messages. Corrected
+  the write factory's unsigned byte arguments and named the destination field;
+  all affected actual source objects match. Coverage: 875,264 / 1,563,700 bytes
+  (55.9739%). Overlay 8: 31,520 / 54,068 bytes (58.30%).
+- Original ROM hash, zero native-relink differences and 112 passing tests.
+  Two ordinary checkpoint routes: 1,536 frames, 232 complete calls, 134 owned
+  stores and 29 helper entries/returns. All 104 saves intact; full checkpoint
+  RAM/DTCM restored. Menu and resumed field inspected visually.
+- 339 isolated ARM946 cases add error and boundary coverage, with 216 stores
+  and 156 explicitly modeled helper calls. Text rendering and flash I/O remain
+  outside the independent caller oracle. Initial probe parser failure and
+  successful reruns are retained. Evidence: `load_copy_validation.json` under
+  `build/analysis/xhigh_from_55/`.

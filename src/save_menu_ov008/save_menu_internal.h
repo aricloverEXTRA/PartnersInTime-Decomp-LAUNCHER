@@ -19,7 +19,10 @@ typedef struct SaveMenuEntryWorkPrefix {
     s8 selection, previous_selection;
     u8 message_visible;
     s8 input_locked, selected_panel;
-    u8 unknown_19e[2];
+    union {
+        u8 unknown_19e[2];
+        struct { s8 copy_destination; u8 unknown_19f; };
+    };
 } SaveMenuEntryWorkPrefix;
 typedef char SaveMenuEntryWorkPrefixSizeCheck[
     sizeof(SaveMenuEntryWorkPrefix) == 0x1a0 ? 1 : -1];

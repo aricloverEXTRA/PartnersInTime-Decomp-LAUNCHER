@@ -49,7 +49,7 @@ typedef char SaveMenuBufferHeader_SizeCheck[sizeof(SaveMenuBufferHeader) == 12 ?
 extern "C" {
 #endif
 /* selection_mode: negative clears occupancy, zero marks occupied, positive also selects the slot. */
-int SaveMenuWrite_Start(SaveMenuWriteTask *parent, s8 source, s8 destination, s8 checksum, s8 selection_mode);
+int SaveMenuWrite_Start(SaveMenuWriteTask *parent, u8 source, u8 destination, u8 checksum, s8 selection_mode);
 void SaveMenuWrite_Update(SaveMenuWriteTask *task);
 void SaveMenuMessage_Show(SaveMenuText *text, u16 entry);
 void SaveMenuMessage_Hide(SaveMenuText *text);
