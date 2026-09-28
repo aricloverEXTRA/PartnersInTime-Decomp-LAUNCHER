@@ -28,6 +28,7 @@ typedef char GameSessionTask_SizeCheck[sizeof(GameSessionTask) == 44 ? 1 : -1];
 extern "C" {
 #endif
 void GameSession_ResetSaveState(void);
+void GameSession_ResumeField(void);
 void GameSession_InitializeSaveContext(const GameSessionSettings *settings);
 void GameSession_InitSettings(int language, u8 option_2, u8 option_3, GameSessionSettings *settings);
 void GameSession_Start(int language, u8 option_2, u8 option_3);

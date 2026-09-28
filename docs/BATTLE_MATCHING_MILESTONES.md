@@ -11362,3 +11362,14 @@ Golden ROM, zero native differences and 112 tests pass. See the
   880032/1563700 (56.2788%).
 - Private evidence: `eur_xhigh_pause_status_release/status65_v1.json` and
   `xhigh_from_55/pause_status_release_validation.json`.
+
+
+### Resume the field after loading
+
+- Reconstructed the 28-byte `GameSession_ResumeField` wrapper in pure C.
+- Ordinary cold boot/load of save 55: one complete call, full session record,
+  four ordered stores and tail-call ABI checked. Field screen inspected;
+  checkpoint RAM/DTCM restored and all 104 original saves unchanged.
+- Actual source object exact, golden ROM, zero native differences, 112 tests.
+  Matching C/C++: 880060/1563700 (56.2806%). Evidence:
+  `xhigh_from_55/session_field_resume_validation.json`.

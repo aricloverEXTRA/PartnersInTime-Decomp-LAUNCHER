@@ -10417,3 +10417,24 @@ new source object and both migrated caller units match: eight functions,
 3,296 bytes. The full gate passes, including the golden ROM, zero native byte
 differences and 112 tests. Evidence is pinned by
 `build/analysis/xhigh_from_55/pause_status_release_validation.json`.
+
+
+## Resuming the field after loading
+
+`GameSession_ResumeField` (`0x02028EF0..0x02028F0C`, 28 bytes) requests session
+state 0 through `GameSessionTask_RequestStatePhase2`. The existing session task
+then loads the field overlay and creates its owner. This wrapper has a distinct
+native entry used by the load and Game Over scene exits.
+
+Private `build/runtime/eur_xhigh_session_field_resume/cold55_v1.json` covers an
+ordinary cold boot and load of save 55 over 2,113 frames, without RAM fixtures.
+The wrapper runs once at frame 1,621. The oracle checks the full 44-byte session
+allocation/header and normal-task list, the two tail-call argument contracts,
+all four ordered stores (requested state, transition phase, active and processed
+bits), SP and preserved registers. The session is the sole normal task at entry.
+Four captures and 16 graphics dumps are retained; the final field screen was
+inspected. Full checkpoint RAM/DTCM is restored and all 104 saves are unchanged.
+This route does not exercise Game Over retry or independently check subsequent
+field initialization, IRQ timing or pixels. The actual source object matches;
+the full gate passes the golden ROM, zero native differences and 112 tests.
+Validation: `build/analysis/xhigh_from_55/session_field_resume_validation.json`.

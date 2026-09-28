@@ -600,3 +600,6 @@ src/msl/active_catch.cpp:
 
 src/nitro/fs/fs_archive_tables.c:
     .text start:0x0203e438 end:0x0203e564
+
+src/game/session_field_resume.c:
+    .text start:0x02028ef0 end:0x02028f0c
