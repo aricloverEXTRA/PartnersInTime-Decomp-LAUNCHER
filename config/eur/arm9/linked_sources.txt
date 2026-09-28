@@ -611,6 +611,7 @@ src/save_menu_ov008/erase_confirmation.cpp
 src/save_menu_ov008/game_over_models.cpp
 
 src/scene_menu_ov007/menu_springs.c
+src/scene_menu_ov007/menu_party_spring.cpp
 src/field/field_party_transition_requests.cpp
 src/battle/battle_model_afterimage.c
 src/field/field_room_interaction.cpp

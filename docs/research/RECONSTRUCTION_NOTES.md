@@ -10907,3 +10907,53 @@ objects match 70 functions/22,544 bytes. The complete build reproduces the
 original ROM, reports zero native-relink differences and passes 112 tests.
 There were no failed build or replay runs in this batch. Evidence and producer
 exits: `build/analysis/xhigh_from_55/ov25_chain_return_validation.json`.
+
+
+## Pause party spring models
+
+[`MenuSpring_UpdatePartyModel`](../../src/scene_menu_ov007/menu_party_spring.cpp)
+reconstructs overlay 7 `0x020769A4..0x02076E30` (1,164 bytes) in C++.
+It chooses the normal or low-HP animation, animates a pinned selection point,
+applies random or requested impulses, relaxes the chain and positions/rotates
+the party model. The low-HP comparison includes exactly 25 percent. Selection
+state 1 performs its first movement step immediately; state 4 releases the
+point. The existing 236-byte chain now names its four motion fields while
+preserving the raw view. The shared task remains 72 bytes.
+
+Both projection calls pass the pause-scene pointer to the progress getter.
+The getter ignores this argument and reads global progress; its corrected
+shared declaration and unchanged 16-byte body preserve that caller ABI.
+The complete switch, reused point pointer, cached Y coordinate before model
+writes and explicit sixteen-bit angle mask explain the final match. The
+actual three source objects match all 12 functions/7,628 bytes. Both complete
+build gates reproduce the golden ROM, report zero native-relink differences
+and pass 112 tests. No inline assembly was added.
+
+Private `build/runtime/eur_xhigh_menu_party_spring/ordinary65_v3.json` uses
+ordinary save-65 pause/clothing navigation. Across 1,810 frames, all 6,128
+updates complete: 1,532 for each member, all five chain states, both adult/baby
+selection offsets, four finished selections, three active modes and natural
+random-direction impulses. The oracle checks 60,541 caller stores and 60,662
+helper argument/result pairs. Independent integer models cover the shared RNG,
+Q12 projection, arctangent table, spring integration/constraints and draw-list
+insertion. Each callback checks its full 72-byte task, 336-byte pooled model,
+four-chain workspace, live save allocation, stack and preserved CPU state.
+Animation helper changes are observed only within the full model record.
+
+`thresholds65_v1.json` repeats the route with 16 guarded live fixtures: each
+member uses maximum HP 100 and current HP 0, 24, 25 and 26, with alternating
+negative/positive impulses. All twelve expected low-HP calls and both impulse
+directions pass; HP and impulse input bytes are restored at each callback
+return. This route checks another 6,128 updates, 60,589 caller stores and
+60,678 helper pairs. Each route independently models 180,960 link corrections.
+The earlier two probes failed at frame 433 because a helper-return hook also
+needed to process the following store and refresh its pending event. Their
+reports remain separate; fixing the oracle required no game-code change.
+
+All 108 artifacts and producer hashes validate. Menu and final-field captures
+were inspected; full checkpoint RAM/DTCM was restored and all 104 original
+saves are unchanged. Graphics are observational, without an independent pixel
+or IRQ-timing model. Scene-controller drawing suppression, invalid indices and
+synthetic arithmetic extremes are outside these routes. Producer versions,
+process exits and exact-object evidence are recorded in
+`build/analysis/xhigh_from_55/menu_party_spring_validation.json`.

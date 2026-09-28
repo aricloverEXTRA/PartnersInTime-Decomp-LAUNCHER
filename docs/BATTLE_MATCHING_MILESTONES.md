@@ -11541,3 +11541,21 @@ artifacts and coverage limits.
   112 tests.21 related actual objects:70 functions/22,544 bytes all exact.
 - Evidence:`build/analysis/xhigh_from_55/ov25_chain_return_validation.json`.
   Matching C/C++:885,236 /1,563,700 (56.6116%); symbolic ASM separate.
+
+
+## 2026-09-28 - Pause party spring models
+
+- Reconstructed `MenuSpring_UpdatePartyModel` (ov007 `0x020769A4..0x02076E30`,
+  1,164 bytes) in readable C++; named shared chain motion fields and preserved
+  the progress getter's unused scene argument. No new inline assembly.
+- Matching C/C++: **886,400 / 1,563,700 bytes (56.6861%)**; symbolic ASM remains
+  4,040 bytes separately. Three actual source objects match 12 functions/7,628 bytes.
+- Full build, golden-ROM packaging, zero-difference native relink and 112 tests pass.
+- Ordinary save-65 menu navigation checks 6,128 callbacks, all five states and
+  60,541 caller stores. A second live route adds 16 HP-threshold/impulse fixtures
+  and checks another 6,128 callbacks/60,589 stores. Both return to the visible field;
+  108 artifacts validate and all 104 original saves are unchanged. Animation
+  internals and pixels remain observational; drawing suppression is untested.
+- Private evidence: `build/analysis/xhigh_from_55/menu_party_spring_validation.json`
+  and `build/runtime/eur_xhigh_menu_party_spring/`. Two failed frame-433 oracle
+  versions are preserved; corrected probes pass without changing game code.
