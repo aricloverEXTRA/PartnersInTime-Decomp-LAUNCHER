@@ -11373,3 +11373,17 @@ Golden ROM, zero native differences and 112 tests pass. See the
 - Actual source object exact, golden ROM, zero native differences, 112 tests.
   Matching C/C++: 880060/1563700 (56.2806%). Evidence:
   `xhigh_from_55/session_field_resume_validation.json`.
+
+
+### C++ exception dispatch
+
+- Reconstructed `MSL_DispatchException` in pure C, including catch selection,
+  decoded landing/frame offsets and transfer to the saved ARM context.
+- 13 isolated ARM946 cases and 12 controlled live calls; 188 ordered non-stack
+  stores checked in each suite. Actual helpers, no stubs; new throw/rethrow,
+  object/pointer and SP/r11/r7 frames. No natural-exception coverage claimed.
+- Corrected an overbroad live RAM check for independently running reverb capture;
+  failed and successful reports retained. Checkpoint and all 104 saves preserved.
+- Actual source object exact; golden ROM, zero native differences, 112 tests.
+  Matching C/C++: 880288/1563700 (56.2952%). Evidence:
+  `xhigh_from_55/msl_exception_dispatch_validation.json`.

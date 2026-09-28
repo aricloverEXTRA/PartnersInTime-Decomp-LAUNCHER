@@ -10438,3 +10438,38 @@ This route does not exercise Game Over retry or independently check subsequent
 field initialization, IRQ timing or pixels. The actual source object matches;
 the full gate passes the golden ROM, zero native differences and 112 tests.
 Validation: `build/analysis/xhigh_from_55/session_field_resume_validation.json`.
+
+
+## C++ exception dispatch
+
+`MSL_DispatchException` (`0x02047234..0x02047318`, 228 bytes) finds the unwind
+record, recovers an active catch for a rethrow, selects a matching handler and
+decodes its type, landing offset and signed catch-record offset. It then unwinds,
+initializes the catch record and transfers control with the saved ARM registers
+and stack. The final helper changes SP and r4-r11 deliberately; an ordinary
+callee-preservation check would be wrong at this boundary. The frame description
+and decoded operands form one local aggregate matching the native stack layout.
+
+Private `build/runtime/eur_xhigh_msl_exception_dispatch/isolated_v1.json` passes
+13 ARM946 cases with the actual compiled dispatcher and native helpers, without
+stubs. Copied load-55 RAM/DTCM and synthetic exception tables cover new throws,
+rethrows, object/pointer catches, SP/r11/r7 frame bases and signed frame offsets.
+Checks include ordered non-stack stores, direct-call arguments, full memory
+outside 512 stack bytes, catch data, landing PC and restored SP/r4-r11. The
+missing-frame case stops at the terminate entry; shutdown itself is untested.
+
+`live55_v2.json` passes 12 controlled calls over 400 DeSmuME frames at a guarded
+battle callback. Both methods check 188 non-stack stores. The live probe checks
+main RAM and DTCM outside the bounded stack and two 6,144-byte audio-capture
+buffers, whose active ownership and extents are verified from `NNSiSndCapture`.
+Audio contents are observational; their metadata remains checked. The first
+live attempt failed because its RAM comparison included these concurrently
+changing reverb buffers; its report and producer are preserved. Every fixture
+restores the full common workspace, exception table, root, stack and registers
+before the original callback completes. Two captures and eight graphics dumps
+are retained, and the final battle screen was inspected. Full checkpoint RAM
+and DTCM are restored; all 104 original saves are unchanged. These controlled
+calls do not prove naturally raised exceptions, cross-frame unwinding, destructor
+calls, IRQ timing or pixel correctness. The actual source object is exact; the
+full gate passes the golden ROM, zero native differences and 112 tests.
+Validation: `build/analysis/xhigh_from_55/msl_exception_dispatch_validation.json`.

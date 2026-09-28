@@ -603,3 +603,6 @@ src/nitro/fs/fs_archive_tables.c:
 
 src/game/session_field_resume.c:
     .text start:0x02028ef0 end:0x02028f0c
+
+src/msl/exception_dispatch.c:
+    .text start:0x02047234 end:0x02047318
