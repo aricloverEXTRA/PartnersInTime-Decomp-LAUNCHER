@@ -4,3 +4,6 @@
 
 src/nitro/os/os_reset_itcm.c:
     .text start:0x01ff8270 end:0x01ff84c0
+
+src/nitro/mi/mi_dma_itcm.c:
+    .text start:0x01ff84c0 end:0x01ff86c8

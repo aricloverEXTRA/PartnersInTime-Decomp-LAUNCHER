@@ -5,12 +5,12 @@
  * being programmed over one that is already running.
  */
 
+#include <nitro/mi_dma.h>
 #include <nitro/os_sync.h>
 
 typedef void (*DmaCallback)(void *argument);
 extern void OS_Terminate(void);
 extern void func_02038d44(int channel, DmaCallback callback, void *argument);
-extern void MIi_DmaSetParams(u32 channel, const void *source, void *destination, u32 control);
 void MIi_CheckDma0SourceAddress(u32 channel, const void *source, u32 size, u32 mode);
 void MIi_CheckAnotherAutoDMA(u32 channel, u32 timing);
 void func_0203b310(u32 channel);

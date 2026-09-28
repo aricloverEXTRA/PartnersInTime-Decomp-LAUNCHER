@@ -7,6 +7,7 @@
  * the CPU and read by the display hardware.
  */
 
+#include <nitro/mi_dma.h>
 #include <game/battle_actor.h>
 #include <game/battle_context.h>
 #include <game/battle_effect.h>
@@ -63,7 +64,6 @@ extern const BattlePartyHpPanelTransform gBattlePartyHpPanelTransformTemplate;
 extern void func_0202cc58(const void *source, void *destination, u32 size);
 extern void func_0202cd2c(const void *source, void *destination, u32 size);
 extern void DC_FlushRange(const void *start, u32 size);
-extern void func_01ff861c(int channel, void *source, u32 size);
 
 void BattlePartyHpPanel_UpdateMember(BattlePartyHpPanelState *state) {
     int requested_layout;
@@ -376,7 +376,7 @@ void BattlePartyHpPanel_Draw(BattlePartyHpPanelState *state) {
             ((BattlePartyHpPanelDisplayList *)load_state->data)->end -
             ((BattlePartyHpPanelDisplayList *)load_state->data)->start;
         DC_FlushRange(destination, display_list_size);
-        func_01ff861c(1, destination, display_list_size);
+        MI_SendGXCommand(1, destination, display_list_size);
     } else {
         BattleSprite_DrawFrame(
             actor_frame, intensity, &transform.value,

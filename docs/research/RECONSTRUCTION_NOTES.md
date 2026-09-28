@@ -11076,3 +11076,53 @@ visible and all 104 original saves remain unchanged after checkpoint restoration
 Input state, checked reset events and captures through frame 300 match the prior
 replay. The known late title OAM/pixel variation remains unclassified. Full evidence:
 `build/analysis/xhigh_from_55/os_read_card_itcm_validation.json`.
+
+
+## ITCM DMA register programming and geometry FIFO
+
+[`mi_dma_itcm.c`](../../src/nitro/mi/mi_dma_itcm.c) reconstructs the five
+functions at `0x01FF84C0..0x01FF86C8`: 520 pure C bytes. The shared
+[`mi_dma.h`](../../include/nitro/mi_dma.h) gives the resident transfer routines
+and battle renderers one interface. All seven affected source objects match,
+covering 30 functions and 8,264 bytes; only the new ITCM range adds progress.
+
+The four setters write source, destination and control in that order. Raw
+variants rely on the caller's IRQ state; the others disable and restore IRQs.
+The reset variants perform two reads of DMA0's source register even for other
+channels, then replace channel 0's parameters with `0, 0, 0x81400001` when
+selected. The raw reset variant performs two further reads. These accesses
+must not be removed or redirected to the selected channel.
+
+`MI_SendGXCommand` returns immediately for zero bytes, checks the DMA0 source
+restriction, waits for the channel, and submits chunks of at most **472 bytes**
+(`0x1D8`) to FIFO `0x04000400`. Each control word is `0x84400000 | (chunk >> 2)`;
+the source advances by the byte chunk size. It waits for completion after the
+last chunk. The tested submission sizes are word-aligned.
+
+Private evidence is `build/analysis/xhigh_from_55/mi_dma_itcm_validation.json`
+and `build/runtime/eur_xhigh_mi_dma_itcm/`. `boot55_v3.json` records 1,200
+ordinary cold-boot frames: 10,793 completed target calls, all five functions,
+23,220 ordered register stores and 5,423 GX chunks. `battle103_v1.json` adds
+180 neutral frames at the unmodified Elder Princess Shroob checkpoint:
+12,120 calls, 18,720 stores and 5,880 chunks. Both check read addresses,
+helper arguments/returns, IRQ state, stack and preserved registers. Their
+final title and battle images were inspected; 84 memory/image artifacts were
+validated, all 104 original saves remained unchanged, and the battle checkpoint's
+RAM/DTCM was restored. DMA destination contents and rasterization remain
+observational; the independent checks cover CPU-side register programming.
+
+`isolated_v2.json` executes 320 ARM946 cases on copied RAM: 128 setter cases
+across all channels, four control words and both IRQ states, plus 192 GX cases
+covering zero, 4, 468, 472, 476, 944, 948 and 1,024 bytes with three busy
+profiles. The actual source-check and IRQ helpers execute without stubs.
+Checks cover 16 DMA0 resets, 312 chunks, 1,368 ordered MMIO stores, 976 reads,
+1,232 helper returns and full copied memory except the bounded CPU stack's
+contents. Readiness is an explicit register model; DMA transfers and real
+hardware timing are not simulated.
+
+The first two cold-boot probes failed at frame 821 because their oracle used
+468 instead of the native 472-byte limit. The third probe corrects that constant;
+the already exact game function did not change. The first isolated runner failed
+before execution on an incorrect input path; the second corrects it. Failed
+versions and logs are preserved separately. The full build remains byte-identical,
+native relinking differs by zero bytes, and all 112 tests pass.

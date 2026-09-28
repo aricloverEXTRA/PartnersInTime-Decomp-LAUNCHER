@@ -5,6 +5,7 @@
  * that dims or brightens the HUD.
  */
 
+#include <nitro/mi_dma.h>
 #include <game/battle_context.h>
 #include <game/battle_effect.h>
 #include <game/battle_object.h>
@@ -27,7 +28,6 @@ extern BattleSpriteTransform gBattleSpriteFallbackTransform;
 extern void func_0202cc58(const void *source, void *destination, u32 size);
 extern void func_0202cd2c(const void *source, void *destination, u32 size);
 extern void DC_FlushRange(const void *start, u32 size);
-extern void func_01ff861c(int channel, void *source, u32 size);
 
 void *BattleSprite_DrawFrame(int frame, int intensity,
                              BattleSpriteTransform *transform,
@@ -107,7 +107,7 @@ void *BattleSprite_DrawFrame(int frame, int intensity,
         ((u32 *)load_state->data)[frame + 1] -
         ((u32 *)load_state->data)[frame];
     DC_FlushRange(display_list, display_list_size);
-    func_01ff861c(1, display_list, display_list_size);
+    MI_SendGXCommand(1, display_list, display_list_size);
     return transform;
 }
 
@@ -194,7 +194,7 @@ int BattleNumber_DrawDecimal(int value, int intensity,
                 ((u32 *)load_state->data)[digit + 1] -
                 ((u32 *)load_state->data)[digit];
             DC_FlushRange(display_list, display_list_size);
-            func_01ff861c(1, display_list, display_list_size);
+            MI_SendGXCommand(1, display_list, display_list_size);
 
             value /= 10;
             digit_width =

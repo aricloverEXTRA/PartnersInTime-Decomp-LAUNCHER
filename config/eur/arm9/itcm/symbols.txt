@@ -5,10 +5,10 @@ func_01ff825c kind:function(arm,size=0x14) addr:0x01ff825c
 OSi_ReadCard kind:function(arm,size=0x130) addr:0x01ff8270
 OSi_ReloadRomData kind:function(arm,size=0xe0) addr:0x01ff83a0
 OSi_DoResetSystem kind:function(arm,size=0x40) addr:0x01ff8480
-func_01ff84c0 kind:function(arm,size=0x60) addr:0x01ff84c0
-func_01ff8520 kind:function(arm,size=0x38) addr:0x01ff8520
-func_01ff8558 kind:function(arm,size=0x74) addr:0x01ff8558
+MIi_DmaSetParamsRawAndReset0 kind:function(arm,size=0x60) addr:0x01ff84c0
+MIi_DmaSetParamsRaw kind:function(arm,size=0x38) addr:0x01ff8520
+MIi_DmaSetParamsAndReset0 kind:function(arm,size=0x74) addr:0x01ff8558
 MIi_DmaSetParams kind:function(arm,size=0x50) addr:0x01ff85cc
-func_01ff861c kind:function(arm,size=0xac) addr:0x01ff861c
+MI_SendGXCommand kind:function(arm,size=0xac) addr:0x01ff861c
 data_01ff86c8 kind:data(word[2]) addr:0x01ff86c8
 GameImage_FillWordRectITCM kind:function(arm,size=0xc4) addr:0x01ff86d0

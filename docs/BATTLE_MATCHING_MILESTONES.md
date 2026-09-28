@@ -11607,3 +11607,22 @@ artifacts and coverage limits.
 - 43 artifacts validate; visible restart and full checkpoint restoration;
   104 original saves unchanged. Initial conditional-hook probe failure preserved.
 - Evidence: `build/analysis/xhigh_from_55/os_read_card_itcm_validation.json`.
+
+
+## 2026-09-28: ITCM DMA programming and GX submission
+
+- Reconstructed five ITCM DMA functions (`0x01FF84C0..0x01FF86C8`) as pure C,
+  with a shared interface for resident transfers and battle renderers.
+  Matching C/C++ reaches 887,640 / 1,563,700 bytes (56.7654%); symbolic ASM
+  remains separate. The 472-byte GX limit and DMA0 dummy reads/reset are preserved.
+- All seven affected source objects match: 30 functions, 8,264 bytes, including
+  the 520 newly reconstructed bytes. Full build, golden ROM, zero-difference
+  native relink and 112 tests pass.
+- Ordinary cold boot and battle replay check 22,913 completed target calls;
+  320 isolated ARM946 cases cover channel 0, IRQ states, zero/boundary sizes
+  and modeled busy waits. CPU register programming is independently checked;
+  hardware DMA data movement and rasterization remain observational.
+- Both final scenes were inspected; 84 artifacts validate and 104 saves remain
+  unchanged. Failed oracle/input-path versions are retained separately.
+  See [DMA evidence](research/RECONSTRUCTION_NOTES.md#itcm-dma-register-programming-and-geometry-fifo)
+  and private `build/analysis/xhigh_from_55/mi_dma_itcm_validation.json`.
