@@ -11166,3 +11166,20 @@ Private evidence: xhigh_from_55/scene_sine_validation.json.
   build/runtime/eur_xhigh_heap_boundary/ and the private validation report.
 - Full build/golden ROM/native zero differences/112 tests pass. Matching C/C++:
   870,572 / 1,563,700 bytes (55.6739%); symbolic ASM remains separate.
+
+
+## 2026-09-28 - Hammer phase progression
+
+Reconstructed `Overlay21Attack_Advance` (832 bytes), completing overlay 21's
+5,280 mapped code bytes. Entry and approach now share `hammer_progression.cpp`.
+Eight inline-ASM instructions preserve the native boolean scheduling; all five
+actual overlay source objects match in full. Linked matching C/C++ is now
+871,404 / 1,563,700 bytes (55.7271%).
+
+Five ordinary save-22 routes exercise primary success/timeout, early input and
+secondary success/timeout: 10,050 frames, 710 updater calls, phases 0-16 and one
+impact per route. Full state between guarded helper calls, argument order,
+configuration and SP/r4-r11 pass; helper internals and graphics remain
+observational. All 104 saves are intact and full RAM/DTCM checkpoints restored.
+Golden ROM, zero native differences and 112 tests pass. See the
+[progression evidence](research/RECONSTRUCTION_NOTES.md#hammer-progression).

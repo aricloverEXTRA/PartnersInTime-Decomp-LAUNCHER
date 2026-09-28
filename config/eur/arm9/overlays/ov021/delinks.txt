@@ -10,14 +10,11 @@ src/attack_hammer_ov021/attack_phase_state.c:
 src/attack_hammer_ov021/attack_transitions.cpp:
     .text start:0x020c3380 end:0x020c3864
 
-src/attack_hammer_ov021/attack_entry.cpp:
-    .text start:0x020c395c end:0x020c39b0
-
 src/attack_hammer_ov021/hammer_lifecycle.cpp:
     .text start:0x020c3cf0 end:0x020c3f80
 
 src/attack_hammer_ov021/hammer_resolution.cpp:
     .text start:0x020c2bcc end:0x020c3380
 
-src/attack_hammer_ov021/hammer_approach.cpp:
-    .text start:0x020c3864 end:0x020c395c
+src/attack_hammer_ov021/hammer_progression.cpp:
+    .text start:0x020c3864 end:0x020c3cf0

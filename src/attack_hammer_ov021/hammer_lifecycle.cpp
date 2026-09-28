@@ -20,7 +20,6 @@ void func_0202cbd4(void *, int, u32);
 int BattleFeedback_IsEffectComplete(void), BattleFeedback_IsResourceLoadPending(void);
 void BattleFeedback_LoadResource(void);
 void BattleAttack_SetCallback(BattlePartyActor *, void (*)(BattlePartyActor *));
-void func_ov021_020c39b0(Overlay21AttackState *);
 enum {
     HAMMER_ATTACK_RESOURCE_SLOT = 52,
     HAMMER_RESOURCE_BUFFER_SIZE = 0xf000,
@@ -54,7 +53,7 @@ void Overlay21Attack_Update(BattlePartyActor *actor)
 {
     Overlay21AttackWork *work = data_ov002_020c0710;
     *(u16 *)(gBattleContext + HAMMER_INPUT_FLAGS_OFFSET) = 0;
-    func_ov021_020c39b0(&work->attack);
+    Overlay21Attack_Advance(&work->attack);
     switch (work->phase) {
     case 0:
         if (!BattleFeedback_IsResourceLoadPending()) {

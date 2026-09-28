@@ -273,7 +273,7 @@ or pointer cast. A same-sized buffer alone does not establish compatible types.
    once that gap is recovered. Shared declarations and layouts belong in headers.
    Check source basenames across all components before adding a unit. The MW
    linker script selects objects by basename, so `attack_entry.c` would collide
-   with `src/attack_hammer_ov021/attack_entry.cpp` even in a different directory.
+   with an existing `attack_entry.cpp` even in a different directory.
 4. Preserve native function order. This MWCC setup generally emits the separate
    function sections in reverse source order, so definitions usually descend
    by original address. Verify the emitted order instead of assuming it.
@@ -5222,7 +5222,7 @@ buffers. Use the recorded fixtures and uncovered branches when extending it.
 The overlay-21 input, impact, return and approach functions cover
 `0x020C2BCC..0x020C3380` and `0x020C3864..0x020C395C` (2,220 bytes).
 See [resolution](../../src/attack_hammer_ov021/hammer_resolution.cpp) and
-[approach](../../src/attack_hammer_ov021/hammer_approach.cpp).
+[progression](../../src/attack_hammer_ov021/hammer_progression.cpp).
 Primary and secondary input timers are separate. An exact-zero secondary timer
 changes phase before that call's decrement; primary timeout is strictly below
 zero. Input equality uses the complete masked button word, not a single-bit test.
@@ -9844,3 +9844,39 @@ Graphics/IRQ timing and `OS_Init` internals are outside the wrapper oracle.
 There were no RAM fixtures; pause-checkpoint RAM/DTCM was fully restored, all
 104 saves stayed unchanged, and all emulator instances were destroyed.
 Full build, golden ROM, zero-difference native relinking and 112 tests pass.
+
+
+## Hammer progression
+
+[Hammer progression](../../src/attack_hammer_ov021/hammer_progression.cpp) adds
+the 832-byte updater at overlay 21 `0x020C39B0`. It caches the scene object,
+active model and configuration before processing input, then reads the new phase.
+Impact phases count down once, dispatch with `result == 1` and `phase == 10`,
+set the timer to -1, and wait for animation completion before returning.
+Early input has its own advance and repeating sound path.
+
+Eight inline-ASM instructions preserve the native interleaving of the result
+field extraction and the two boolean tests. The pure C++ candidate is the same
+size but differs in eleven instruction words. The fragment fixes that scheduling
+and phase-register difference; the complete 832-byte function matches. Entry
+and approach are consolidated into the same contiguous unit. All five actual
+compiled overlay units, totaling 5,280 bytes, match; this completes its mapped
+code coverage, without claiming every possible runtime state is tested.
+
+Private evidence is in `build/analysis/xhigh_from_55/hammer_progression_*` and
+`build/runtime/eur_xhigh_hammer_progression/`. Five ordinary save-22 routes cover
+primary success/timeout, early input, and secondary success/timeout: 10,050 frames
+and 710 updater calls, visiting phases 0 through 16. Each route dispatches one
+impact; observed `(success, advanced)` pairs are `(1,0)`, `(0,0)` and `(0,1)`.
+The full native function and called helpers are guarded. Checks cover ordered
+call arguments, the full 28-byte attack state between helper boundaries,
+unchanged 64-byte configuration, SP and r4-r11. Helper effects are bounded
+observations; damage, RNG, graphics transfers and rasterization are not independent
+oracles. Success/early-input captures and the final battle menu were inspected.
+
+The four `*_v1` routes use `probe_hammer_progression.py`; the secondary timeout
+uses `probe_hammer_progression_v2.py`. Both use `hammer_progression_oracle.py`.
+All producers exit successfully, restore the full RAM/DTCM checkpoint and leave
+all 104 original saves unchanged. No live RAM fixtures are used. Full ROM/native
+verification and 112 tests pass. Invalid phases, signed-overflow timer inputs,
+zero arrival delay and alternate formations are outside this live coverage.

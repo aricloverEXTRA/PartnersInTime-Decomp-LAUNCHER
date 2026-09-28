@@ -2,7 +2,7 @@
 
 European overlay roles and the source currently linked into the matching build.
 Byte counts below come from [progress.json](../progress.json), checked against
-the source and link metadata on 2026-09-27.
+the source and link metadata on 2026-09-28.
 
 Each fraction is **matching C/C++ bytes / mapped code bytes**. The percentage
 uses that overlay's code size; separately maintained assembly is excluded.
@@ -35,7 +35,7 @@ The source links open each overlay's main source directory.
 | [17](../../src/attack_copy_flower_ov017/) | Copy Flowers | 6,476 / 16,784 | 38.58% | Attack round/return controller, tuning tables, target cycling, participant input and idle-slot search, hit resolution with bonus/damage/rating and target replacement, entry/return and exit arcs, home positions, animation, effect objects, display setup and model cleanup. |
 | [18](../../src/attack_pocket_chomp_ov018/) | Pocket Chomps | 10,632 / 18,036 | 58.95% | Adult input windows, support attack/swing updates and Chomp speed boosts; pursuit preparation; attack entry, repeated rounds, Chomp phases and cleanup; tuning tables, Chomp entry/exit, animation, support attachment and attacks, anchor offsets, tether setup and bounce parameters. |
 | [20](../../src/attack_jump_ov020/) | Jump attack | 2,764 / 9,204 | 30.03% | Attack allocation, resources, actor approach, support input and return, landing effects, animation timing and target-relative arcs. |
-| [21](../../src/attack_hammer_ov021/) | Hammer attack | 4,448 / 5,280 | 84.24% | Entry, input windows, approach and return movement, hit effects and damage/status dispatch, primary/secondary transitions, model flags and cleanup. |
+| [21](../../src/attack_hammer_ov021/) | Hammer attack | 5,280 / 5,280 | 100.00% | Entry, input windows, approach and return movement, per-frame animation and impact timing, hit effects and damage/status dispatch, primary/secondary and early-input transitions, model flags and cleanup. The update uses eight inline-ASM instructions for the native predicate ordering. |
 | [25](../../src/elder_princess_shroob_ov025/) | Elder Princess Shroob fight | 19,588 / 38,024 | 51.51% | Projectile preparation, orb emission controller, staggered launches, trails and impacts; enemy return trails and completion; effect approach, attachment, simultaneous projectile recall and particle-task completion; linked effects, damage, chain movement and retraction before retry, task waits and cleanup. |
 | [26](../../src/battle_item_ov026/) | Battle item use | 3,716 / 14,452 | 25.71% | Resource selection, item entry and launch, party pairing, effect allocation and cleanup, saved state and position helpers. |
 
