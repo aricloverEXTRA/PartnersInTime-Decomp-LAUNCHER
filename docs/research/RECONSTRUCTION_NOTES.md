@@ -11190,3 +11190,51 @@ functions / 8,916 bytes, of which 2,656 bytes are newly reconstructed.
 The complete second gate passes the golden ROM, zero native differences and
 112 tests. The first gate failed only the missing module-comment test.
 Validation: `build/analysis/xhigh_from_55/field_area_release_validation.json`.
+
+## Shop HBlank background bands
+
+[shop_hblank.cpp](../../src/shop_ov009/shop_hblank.cpp) reconstructs the complete
+148-byte ARM function at overlay 9 `0x0207CE1C-0x0207CEB0`, including its four
+literal words. `ShopScene_UpdateHBlank` samples the 16-bit VCOUNT register once
+and writes the signed current wave value to the sub-screen BG2 X reference
+register (`0x04001028`) in two half-open scanline bands: `[scroll+31, scroll+96)`
+and `[scroll+119, scroll+192)`. Other lines receive zero. The scroll and wave are
+signed halfwords at `0x0207F23C+196` and `0x0207EA3C+128`; the output is a full
+32-bit store, not a halfword background-scroll write. The scene installs this
+HBlank callback only for an animated, nonspecial shop. The shared scroll record
+now lives in the scene's internal header, retaining its original layout.
+
+The actual compiled callback and all five functions in the migrated scene
+lifecycle object match: six functions, 5,456 bytes. The first callback draft had
+11 register-operand differences; expressing the single VCOUNT sample before the
+ordinary scroll local recovered the native allocation without assembly.
+
+Private `build/runtime/eur_xhigh_shop_hblank/live_v3.json` records 1,342 frames
+from `eur_story_065_hud_verified.dst` (SHA-1
+`ece238ed785fda646a77cde5e886aa7da3e009d7`). A guarded, temporary decoded Field VM
+command `0x121` enters shop 2; its 72 bytes are restored at the dispatcher return.
+Ordinary B inputs leave the shop. All 66,675 admitted HBlank calls complete and
+independently check the sampled scanline, selected branch and single ordered
+32-bit register write, preserved stack/registers, unchanged complete 2,492-byte
+workspace and 200-byte scroll record, and the lower 28 bits of hardware readback.
+All five bands occur, but the live wave value remains zero.
+
+`isolated_v1.json` separately verifies 27,615 ARM946 calls on copied live RAM and
+DTCM: every real scanline 0 through 262, 15 signed scroll offsets and seven signed
+wave values, including both halfword endpoints. Its interval-membership model
+checks every memory write, complete workspace/scroll/I/O records and preserved
+stack/registers. No helper is stubbed. VCOUNT is modeled as fixed memory per
+call; these synthetic cases do not establish live IRQ timing or rendered pixels.
+
+Probe v1 failed at frame 59 because its Python memory API call was invalid;
+v2 corrected that API and completed 741 frames. V3 adds 600 neutral frames,
+preserving both earlier capture/image-buffer hashes. The shop capture is visibly
+ready. The return loads field code but remains black even after the bounded
+extension; this controlled route does not verify a visible field return. Full
+checkpoint RAM/DTCM restoration succeeds. All 104 original saves are unchanged.
+The selected reports' three images and 20 binary captures, source hashes and
+counts pass `shop_hblank_validation.json`. Producers and failed logs are retained
+separately under `build/analysis/xhigh_from_55/`.
+
+The full gate passes the golden packaged ROM, zero-difference native relink and
+all 112 tests. This contributes 148 pure C++ bytes and no symbolic assembly.

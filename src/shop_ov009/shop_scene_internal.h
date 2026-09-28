@@ -52,6 +52,13 @@ typedef struct ShopSceneWork {
 } ShopSceneWork;
 typedef char ShopSceneWorkSizeCheck[sizeof(ShopSceneWork) == 2492 ? 1 : -1];
 
+typedef struct ShopScrollState {
+    u8 unknown[196];
+    s16 sub, main;
+} ShopScrollState;
+typedef char ShopScrollStateSizeCheck[sizeof(ShopScrollState) == 200 ? 1 : -1];
+extern "C" ShopScrollState data_ov009_0207f23c;
+
 typedef struct ShopSavedState {
     u8 unknown[1370];
     u8 unused : 4, shop : 4;
@@ -85,7 +92,7 @@ extern void MI_CpuFill8(void *, u8, u32);
 extern void ShopScene_LoadResources(ShopSceneTask *);
 extern ShopMenuElement *func_ov005_0206659c(void (*)(ShopMenuElement *), int, int);
 extern void func_ov009_0206abd0(ShopMenuElement *), func_ov009_0206ca78(ShopMenuElement *);
-extern void func_ov009_0207ce1c(void);
+
 extern u32 OS_DisableIrqMask(u32), OS_EnableIrqMask(u32);
 extern void OS_SetIrqFunction(u32, void (*)(void));
 extern int GX_HBlankIntr(int);

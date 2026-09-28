@@ -24,6 +24,8 @@ ShopSceneTask *ShopScene_Delete(ShopSceneTask *task);
 ShopSceneTask *ShopScene_Destroy(ShopSceneTask *task);
 void ShopScene_LoadBackgrounds(ShopSceneTask *task);
 void ShopScene_UploadFrame(void);
+/* HBlank callback: gate the sub-screen BG2 X origin by scanline. */
+void ShopScene_UpdateHBlank(void);
 int ShopScene_CanSelectMember(int column, int row);
 void ShopScene_GetMemberGridPosition(int member, int *column, int *row);
 u32 ShopScene_GetSellBonus(ShopSceneTask *scene, u8 factor);

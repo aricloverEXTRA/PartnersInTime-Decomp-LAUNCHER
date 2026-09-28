@@ -11659,3 +11659,8 @@ native functions while hooking only code. One-way room_v1 remains separate.
 
 New matching C/C++: 2656 bytes. Total: 890296 / 1563700 (56.9352%).
 Symbolic ASM remains separate at 4040 bytes.
+
+
+## 2026-09-28: Shop HBlank background bands
+
+Reconstructed ShopScene_UpdateHBlank (overlay 9, 0x0207CE1C, 148 bytes) in pure C++. Shared signed scroll record and callback registration retain their native layout and behavior. Six actual source-object functions / 5,456 bytes match. Full gate: golden ROM, zero native differences, 112 tests. Live controlled shop route: 66,675 completed HBlank checks, all five bands, wave zero. Copied-RAM ARM946 checks: 27,615 cases with signed extremes and every real scanline. Shop visibly ready; field reload remains black after bounded extension, so no visible field-return claim. All 104 saves unchanged; 23 artifacts validated. Evidence: build/runtime/eur_xhigh_shop_hblank/{live_v3,isolated_v1}.json and build/analysis/xhigh_from_55/shop_hblank_validation.json. Matching C/C++ is 890,444 / 1,563,700 (56.9447%); symbolic ASM remains separate.
