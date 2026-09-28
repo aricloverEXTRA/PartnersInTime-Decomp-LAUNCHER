@@ -11427,3 +11427,16 @@ restore MPU state before gameplay resumes. All 104 saves remain unchanged.
 Matching C/C++ is 881040/1563700 (56.3433%); symbolic ASM remains separate.
 See the SDK user exception callback section of the reconstruction reference and
 private os_user_exception_dispatch_validation.json for coverage limits/artifacts.
+
+
+### SDK exception vector initialization
+
+Reconstructed OS_InitException and joined it with the adjacent callback unit.
+The new 144-byte initializer uses five explained ASM instructions for the native
+shared-RAM/DTCM vector stores. All 252 bytes in the merged unit and its 76-byte
+caller compare exactly; golden ROM, zero native differences, 112 tests pass.
+Thirty-two isolated cases cover debugger bounds and console flags; a 1200-frame
+ordinary cold boot verifies installation without RAM edits. All 104 saves intact.
+Matching C/C++: 881184/1563700 (56.3525%); symbolic ASM remains separate.
+See SDK exception vector initialization in the reconstruction reference and
+private os_exception_initialize_validation.json for artifacts and limits.

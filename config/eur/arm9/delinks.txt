@@ -610,5 +610,5 @@ src/msl/exception_dispatch.c:
 src/msl/handler_search.cpp:
     .text start:0x02047388 end:0x020475d4
 
-src/nitro/os/os_exception_callback.c:
-    .text start:0x0203a600 end:0x0203a66c
+src/nitro/os/os_exception.c:
+    .text start:0x0203a600 end:0x0203a6fc

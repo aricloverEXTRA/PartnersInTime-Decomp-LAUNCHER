@@ -10580,3 +10580,39 @@ and pixel correctness are untested. The integrated object reproduces the same
 108 bytes as the runtime candidate; the full gate passes the golden ROM,
 zero native differences and 112 tests. Validation:
 `build/analysis/xhigh_from_55/os_user_exception_dispatch_validation.json`.
+
+
+## SDK exception vector initialization
+
+`OS_InitException` (`0x0203A66C..0x0203A6FC`, 144 bytes) accepts the shared
+exception vector as a debugger entry only inside `[0x02600000, 0x02800000)`.
+It records that pointer or zero at `0x02062F68`. With no accepted debugger, or
+without console-type bit `0x40000000`, it installs native entry `0x0203A4E8`
+in both the shared-RAM slot `0x027FFD9C` and DTCM slot `0x027E3FDC`. It then
+clears the user callback at `0x02062F60`; user argument and context are preserved.
+The initializer and preceding callback now share `src/nitro/os/os_exception.c`.
+
+The retained C-only draft differs in two words: MWCC folds DTCM page base plus
+`0xFDC` into the final address. A five-instruction ASM block preserves the native
+two-slot installation. The complete 252-byte unit and its 76-byte `OS_Init`
+caller compare exactly; only the initializer's 144 bytes add progress.
+
+Private `build/runtime/eur_xhigh_os_exception_initialize/isolated_v1.json`
+passes 32 cases over eight debugger values and four cached console types.
+They include both address boundaries, an unaligned accepted value, invalid
+values, 24 installations and eight retained-vector cases. The real cached
+console getter runs 16 times, without stubs. Shared high RAM aliases the final
+main-RAM page in Unicorn; full RAM, DTCM and scratch comparisons include every
+CPU stack write. All 176 ordered stores, SP, preserved registers and CPSR control
+are checked. Uncached console hardware detection is outside this fixture.
+
+`cold55_v1.json` follows 1,200 ordinary DeSmuME boot frames using save 55, without
+RAM edits. At frame 1, an absent debugger causes one installation and four
+verified stores. It checks both vector slots and their neighbors, all 140 bytes
+of exception globals/context, console-cache preservation, the main-RAM alias,
+SP, registers and return. The console getter is correctly skipped. Two captures,
+eight graphics dumps and initial RAM/DTCM snapshots are retained; the final title
+screen was inspected. All 104 original saves remain unchanged. Actual exceptions,
+debugger execution, IRQ/ARM7 timing and pixel correctness remain untested. The
+full gate passes the golden ROM, zero native differences and 112 tests.
+Validation: `build/analysis/xhigh_from_55/os_exception_initialize_validation.json`.
