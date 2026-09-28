@@ -11440,3 +11440,16 @@ ordinary cold boot verifies installation without RAM edits. All 104 saves intact
 Matching C/C++: 881184/1563700 (56.3525%); symbolic ASM remains separate.
 See SDK exception vector initialization in the reconstruction reference and
 private os_exception_initialize_validation.json for artifacts and limits.
+
+
+### Runtime array deletion
+
+Added the pure-C MSL_DeleteArray wrapper and shared pool-caller declaration.
+The new 72-byte function and affected caller units are exact: 34 functions,
+2092 bytes checked. Golden ROM, zero native differences and 112 tests pass.
+Ordinary pause teardown verifies 288 reverse-order element destructors and two
+array frees; 146 isolated cases cover null/empty arrays, optional callbacks and
+heap merges. All 104 saves remain unchanged. Matching C/C++ is now
+881256/1563700 (56.3571%); symbolic ASM remains separate.
+See Runtime array deletion in the reconstruction reference and private
+msl_delete_array_validation.json for artifacts and coverage limits.

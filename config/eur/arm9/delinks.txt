@@ -612,3 +612,6 @@ src/msl/handler_search.cpp:
 
 src/nitro/os/os_exception.c:
     .text start:0x0203a600 end:0x0203a6fc
+
+src/msl/array_delete.c:
+    .text start:0x02048874 end:0x020488bc

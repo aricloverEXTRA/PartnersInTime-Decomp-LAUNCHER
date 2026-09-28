@@ -9,6 +9,7 @@
 #include <nitro.h>
 #include <game/overlay005_pools.h>
 #include <game/heap.h>
+#include <msl/array.h>
 #include <game/overlay005_resource.h>
 
 /* A pooled 64-byte overlay-5 item. */
@@ -54,7 +55,6 @@ extern void func_02009138(Overlay5Item *item);
 extern void func_02009148(Overlay5Item *item);
 extern void *func_02048aac(void *memory, u32 count, u32 size, u32 header,
                            void *(*construct)(void *), void *(*destroy)(void *));
-extern void func_02048874(void *array, u32 size, u32 header, void *(*destroy)(void *));
 extern void func_ov005_02069a54(void *entry);
 
 Overlay5Item *func_ov005_0206968c(Overlay5Item *item);
@@ -146,7 +146,7 @@ Overlay5Item *func_ov005_020697b8(Overlay5ItemPool *pool) {
 
 void func_ov005_02069754(Overlay5ItemPool *pool) {
     if (pool->items) {
-        func_02048874(pool->items, sizeof(Overlay5Item), 8,
+        MSL_DeleteArray(pool->items, sizeof(Overlay5Item), 8,
                       (void *(*)(void *))func_ov005_0206988c);
         pool->items = 0;
     }

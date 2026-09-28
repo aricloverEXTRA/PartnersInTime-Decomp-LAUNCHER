@@ -1068,3 +1068,4 @@ src/msl/exception_dispatch.c
 src/msl/handler_search.cpp
 src/field/field_timed_renderer_delete.cpp
 src/nitro/os/os_exception.c
+src/msl/array_delete.c

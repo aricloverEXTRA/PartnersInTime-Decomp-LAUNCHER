@@ -10616,3 +10616,39 @@ screen was inspected. All 104 original saves remain unchanged. Actual exceptions
 debugger execution, IRQ/ARM7 timing and pixel correctness remain untested. The
 full gate passes the golden ROM, zero native differences and 112 tests.
 Validation: `build/analysis/xhigh_from_55/os_exception_initialize_validation.json`.
+
+
+## Runtime array deletion
+
+`MSL_DeleteArray` (`0x02048874..0x020488BC`, 72 bytes) returns for null arrays.
+When a destructor is supplied, it reads the element count one word before the
+array and calls the native reverse-order destructor helper. It then subtracts
+the caller's header size and frees the original allocation. The implementation
+is pure C. Both overlay-5 pool callers use the shared `msl/array.h` declaration.
+The new function and all 33 functions in the two affected caller units compare
+exactly: 2,092 bytes checked, with only 72 newly reconstructed.
+
+Private `build/runtime/eur_xhigh_msl_delete_array/pause_v1.json` passes 591
+ordinary frames from the verified Younger Princess Shroob field checkpoint,
+opening and closing pause without RAM edits. At frame 300, it deletes the
+256-element item array (64-byte stride, 16,392-byte allocation) and 32-sprite
+array (336-byte stride, 10,760-byte allocation), each with an eight-byte header.
+All 288 element destructors run last-to-first before either allocation is freed.
+The independent model checks full array allocations/cookies, vtable transitions,
+complete sprite-allocation lists/roots, neighboring heap headers/regions,
+helper arguments, 752 ordered stores, SP and preserved registers. Neither live
+free merges neighbors. Each allocation is checked through the wrapper return
+and retired before reuse. Three captures and 12 graphics dumps are retained;
+the final field screen was inspected. Checkpoint RAM/DTCM are restored and all
+104 saves remain unchanged.
+
+`isolated_v1.json` adds 146 ARM946 cases on copied pause-exit RAM/DTCM: two null
+cases and 144 combinations of header size, element stride/count, absent/native
+no-op destructor and free/allocated neighbors. Its synthetic three-block heap
+exists only in the copied RAM. Real vector-delete, free and merge routines run
+without stubs, checking 576 ordered non-stack stores, all memory outside 512
+stack bytes, helper arguments and preserved registers. The cases include zero
+count, 120 no-op destructor calls and 144 merges. Destructor exceptions, IRQ
+timing and pixel correctness remain untested. The full gate passes the golden
+ROM, zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/msl_delete_array_validation.json`.
