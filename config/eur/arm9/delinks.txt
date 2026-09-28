@@ -529,14 +529,8 @@ src/game/session_init.c:
 src/game/session_save_context.cpp:
     .text start:0x02005ba8 end:0x02005d74
 
-src/game/session_requests.c:
-    .text       start:0x02005d74 end:0x02005da4
-
-src/game/session_update.c:
-    .text start:0x02005da4 end:0x020062ec
-
 src/game/session_task.c:
-    .text       start:0x020062ec end:0x020063a4
+    .text start:0x02005d74 end:0x020063a4
 
 src/game/system_init.c:
     .text       start:0x02005114 end:0x02005214

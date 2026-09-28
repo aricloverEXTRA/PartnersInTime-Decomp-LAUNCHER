@@ -1617,7 +1617,7 @@
 <rect class="cell" x="563.44" y="515.88" width="24.48" height="21.32" fill="#263244"><title>ARM9 resident · func_0201d320 · 1.5 KiB · remaining</title></rect>
 <rect class="cell" x="587.92" y="260.87" width="20.79" height="24.90" fill="#263244"><title>ARM9 resident · func_0201c65c · 1.5 KiB · remaining</title></rect>
 <rect class="cell" x="587.92" y="285.77" width="20.79" height="23.15" fill="#263244"><title>ARM9 resident · RTCi_FifoCallback · 1.4 KiB · remaining</title></rect>
-<rect class="cell" x="587.92" y="308.92" width="20.79" height="21.98" fill="#2dd4a0"><title>ARM9 resident · session_update · 1.3 KiB · matching C/C++</title></rect>
+<rect class="cell" x="587.92" y="308.92" width="20.79" height="21.98" fill="#2dd4a0"><title>ARM9 resident · session_task · 1.3 KiB · matching C/C++</title></rect>
 <rect class="cell" x="587.92" y="330.89" width="20.79" height="21.91" fill="#263244"><title>ARM9 resident · _ddiv · 1.3 KiB · remaining</title></rect>
 <rect class="cell" x="587.92" y="352.81" width="20.79" height="20.61" fill="#2dd4a0"><title>ARM9 resident · matrix_animation · 1.2 KiB · matching C/C++</title></rect>
 <rect class="cell" x="587.92" y="373.42" width="20.79" height="19.38" fill="#263244"><title>ARM9 resident · func_02013f8c · 1.2 KiB · remaining</title></rect>
@@ -2956,8 +2956,8 @@
 <rect class="cell" x="831.47" y="518.77" width="2.86" height="3.31" fill="#2dd4a0"><title>ARM9 resident · object_lifetime · 28 B · matching C/C++</title></rect>
 <rect class="cell" x="831.47" y="522.08" width="2.86" height="3.31" fill="#263244"><title>ARM9 resident · func_02048918 · 28 B · remaining</title></rect>
 <rect class="cell" x="831.47" y="525.39" width="2.86" height="3.31" fill="#263244"><title>ARM9 resident · func_02048bc4 · 28 B · remaining</title></rect>
-<rect class="cell" x="831.47" y="528.69" width="2.86" height="2.84" fill="#2dd4a0"><title>ARM9 resident · session_requests · 24 B · matching C/C++</title></rect>
-<rect class="cell" x="831.47" y="531.53" width="2.86" height="2.84" fill="#2dd4a0"><title>ARM9 resident · session_requests · 24 B · matching C/C++</title></rect>
+<rect class="cell" x="831.47" y="528.69" width="2.86" height="2.84" fill="#2dd4a0"><title>ARM9 resident · session_task · 24 B · matching C/C++</title></rect>
+<rect class="cell" x="831.47" y="531.53" width="2.86" height="2.84" fill="#2dd4a0"><title>ARM9 resident · session_task · 24 B · matching C/C++</title></rect>
 <rect class="cell" x="831.47" y="534.36" width="2.86" height="2.84" fill="#2dd4a0"><title>ARM9 resident · battle_model_state · 24 B · matching C/C++</title></rect>
 <rect class="cell" x="834.33" y="498.92" width="2.75" height="2.95" fill="#2dd4a0"><title>ARM9 resident · model_resource_controls · 24 B · matching C/C++</title></rect>
 <rect class="cell" x="837.08" y="498.92" width="2.75" height="2.95" fill="#2dd4a0"><title>ARM9 resident · graphics_texture_offsets · 24 B · matching C/C++</title></rect>

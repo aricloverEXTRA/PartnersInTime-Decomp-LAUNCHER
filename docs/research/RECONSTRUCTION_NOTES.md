@@ -9974,7 +9974,7 @@ cases do not establish live IRQ, resource lifetime or rendering behavior.
 
 ## Session overlay transitions
 
-[Session transitions](../../src/game/session_update.c) reconstructs the resident
+[Session transitions](../../src/game/session_task.c) reconstructs the resident
 dispatcher `0x02005DA4..0x020062EC` (1,352 bytes, pure C). Request phases 0 and 2
 reserve RAM and begin loading the selected overlay; phases 1 and 3 poll its
 completion, disable the session task and construct the child state. Phase 4 is
@@ -10018,3 +10018,10 @@ stubs that clobber volatile registers. All 122 ordered stores, helper arguments,
 full mapped memory outside eight stack bytes and preserved registers are checked.
 These fixtures verify dispatch decisions, not real loader waiting, heap failure,
 child lifetimes, IRQ behavior or rendering.
+
+
+The now-contiguous request, update and lifecycle functions are consolidated in
+`session_task.c` using the source reorganization tool. All six functions in its
+1,584-byte range match in the actual compiled object; this consolidation adds no
+matching bytes. The full ROM/native gate and 112 tests pass again. The dispatcher
+bytes remain identical to the completed replay and isolated-check inputs above.

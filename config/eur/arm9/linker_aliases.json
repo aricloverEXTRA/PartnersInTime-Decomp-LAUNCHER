@@ -19,7 +19,7 @@
     }
   },
   {
-    "source": "src/game/session_update.c",
+    "source": "src/game/session_task.c",
     "constants": {
       "SDK_OVERLAY_ov000_ID": "0x0",
       "SDK_OVERLAY_ov002_ID": "0x2",

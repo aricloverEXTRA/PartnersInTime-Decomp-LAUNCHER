@@ -307,8 +307,6 @@ src/game/field_background_origin.cpp
 src/game/sprite_image_decode_wide.c
 src/game/session_init.c
 src/game/session_save_context.cpp
-src/game/session_requests.c
-src/game/session_update.c
 src/game/session_task.c
 src/game/system_init.c
 src/nitro/os/os_owner.c
