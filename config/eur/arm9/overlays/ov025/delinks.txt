@@ -34,8 +34,8 @@ src/elder_princess_shroob_ov025/enemy_segment_chain_preparation.cpp:
 src/elder_princess_shroob_ov025/ov25_enemy_wait_animation.cpp:
     .text start:0x020c7210 end:0x020c7268
 
-src/elder_princess_shroob_ov025/ov25_enemy_finish_attached_effect.cpp:
-    .text start:0x020c822c end:0x020c8268
+src/elder_princess_shroob_ov025/enemy_chain_target.cpp:
+    .text start:0x020c822c end:0x020c85f0
 
 src/elder_princess_shroob_ov025/enemy_chain_landing.cpp:
     .text start:0x020c85f0 end:0x020c877c

@@ -10266,3 +10266,64 @@ corrected complete check reproduces the original ROM, reports zero native-relink
 differences and passes all 112 tests. Final whitespace cleanup leaves all three
 compiled objects identical and passes `ninja objects`/`ninja check`. Evidence and
 producer exits: `build/analysis/xhigh_from_55/auxiliary_cursor_validation.json`.
+
+
+## Elder Princess Shroob chain target selection
+
+[`Overlay25Enemy_PrepareChainTarget`](../../src/elder_princess_shroob_ov025/enemy_chain_target.cpp)
+reconstructs `0x020C8268..0x020C85F0` (904 bytes) in C++. Its unit also contains
+the existing 60-byte attached-effect completion callback. Phase zero starts
+sprite effect 520 and attached model effect 816, then waits for the latter to
+clear its owner. Phase one selects a chain from the pair flag, variant bit 16
+and enemy target ID. If necessary it tries the partner (`index ^ 1`) and then
+the opposite pair (`index ^ 3`). All three eligibility calls still occur when
+the initial target is valid. Failure clears the callback and returns before
+the common phase write. Success records party target 56/57, clears angle/mode,
+binds resource 40 and installs the next callback. Phase two waits for animation;
+other phases clear the callback. The common exit writes phase one.
+
+The enemy actor's target field is shared with signed consumers, but this caller
+uses native `LDRH`. A corresponding unsigned halfword view preserves that load;
+casting a signed field afterward still generated `LDRSH`. No inline assembly
+is required. Work remains a 7,088-byte resource-arena allocation, identified by
+its 12-byte slot and actor owner; the primary task is at `work + 6800`. Context
+`+27108/+27112` are the reused pair/phase words in this sequence.
+
+Private `build/runtime/eur_xhigh_ov25_chain_prepare/live103_v1.json` uses the
+previous controlled giant-phase checkpoint derived from save 103. At guarded
+dispatcher `0x020B60FC`, frame 320 selects this native callback and changes the
+phase from four to zero, requiring an empty attached-effect owner. This is a
+controlled partial sequence, not ordinary attack-script coverage. Over 1,870
+frames, one complete phase-zero call verifies ordered arguments, both caller
+stores, property-12 cleanup, projection, sprite/model pool allocation, active
+lists and attached ownership. The 56-byte model track is checked again at its
+guarded release at frame 350: its owner reference becomes null while the track
+bytes remain unchanged. The old completion callback is observed 31 times; those
+observations are separate from the new caller's independent output check.
+
+The oracle checks the full work/arena/scene records, bounded party/enemy input
+views, pointer tables, hit descriptors and effect pools. Animation writes in the
+receiving object and actual primary/alternate model allocations are bounded
+observations; animation pools, palette internals, audio, rendering and IRQ
+timing are not independently modeled. Main/sub graphics, palettes and OAM are
+captured. Frames 330 and 1870 were visually inspected and show the fight, followed
+by the party action menu. Full checkpoint RAM/DTCM is restored; all 104 original
+saves retain their hashes. The first discovery used an incorrect context root
+and failed before either fixture write; the corrected discovery and oracle use
+the verified battle root `0x020C0718`.
+
+`isolated_v1.json` adds 796 copied-state ARM946 cases: 768 selection combinations,
+24 effect/projection cases and four other-state cases. These cover all 16 HP
+masks, baby eligibility, both variant values, zero/nonzero pair flags, unsigned
+target IDs, zero/nonzero property 12 and signed projection boundaries. Results
+include 592 selected targets and 176 no-target returns. The native caller,
+lookup/eligibility, property cleanup, projection and both factories execute;
+sound/resource binding are guarded no-op stubs and animation changes only the
+animation ID. All 6,824 ordered caller stores and 7,648 helper pairs, full main
+RAM, DTCM outside the observed stack and preserved registers are checked.
+These synthetic cases do not establish live gameplay or renderer coverage.
+
+Both functions in the actual source object match all 964 bytes. The complete
+build reproduces the original ROM, reports zero native-relink differences and
+passes 112 tests. Source, artifact and producer-exit evidence is pinned in
+`build/analysis/xhigh_from_55/ov25_chain_target_validation.json`.

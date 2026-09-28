@@ -11310,3 +11310,17 @@ Golden ROM, zero native differences and 112 tests pass. See the
   explicit helper models. Captures inspected; checkpoint RAM/DTCM restored;
   all 104 original saves unchanged. Evidence:
   `build/analysis/xhigh_from_55/auxiliary_cursor_validation.json`.
+
+
+## Elder Princess Shroob chain target selection
+
+- Reconstructed the 904-byte chain-target initializer and selector in C++.
+  The renamed unit includes the existing 60-byte completion callback; both are
+  exact without inline ASM. Matching C/C++: 879,836 / 1,563,700 (56.2663%);
+  overlay 25: 20,492 / 38,024 (53.89%).
+- Golden ROM, zero native-relink differences, 112 tests. Controlled giant-phase
+  live route verifies effect creation and subsequent owner release; 796 isolated
+  ARM946 cases check remaining states, eligibility and projection boundaries.
+  Captures inspected, checkpoint RAM/DTCM restored, all 104 saves unchanged.
+  Rendering/animation internals remain outside the independent oracle. Evidence:
+  `build/analysis/xhigh_from_55/ov25_chain_target_validation.json`.
