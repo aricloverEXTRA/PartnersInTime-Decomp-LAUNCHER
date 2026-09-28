@@ -537,3 +537,6 @@ src/field/field_corner_correction.c:
 
 src/field/field_timed_renderer_delete.cpp:
     .text start:0x02080ec4 end:0x02080efc
+
+src/field/field_planar_screen_position.cpp:
+    .text start:0x020a4940 end:0x020a4a1c

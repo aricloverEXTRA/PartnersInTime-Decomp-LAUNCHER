@@ -10751,3 +10751,42 @@ failed source parsing before executing any case; the successful producer is
 `check_field_party_animation_isolated_v3.py`. Hashes, extents, producer versions
 and exit statuses are recorded in `field_party_animation_validation.json` under
 `build/analysis/xhigh_from_55/`.
+
+
+## Planar entity screen positions
+
+[FieldEntity2D_UpdateScreenPosition](../../src/field/field_planar_screen_position.cpp)
+reconstructs `0x020A4940..0x020A4A1C` (220 bytes, overlay 0). When animation is
+enabled, it converts Q12 X/Y to signed-halfword screen coordinates by division
+toward zero. A bound renderer receives those coordinates plus its signed offsets.
+Its packed order uses `8192 - (position_y + interaction_min_y) / 4096`, narrowed
+to 22 bits, followed by a separate six-bit entity-index store. Upper layer bits
+are preserved. Planar coordinates already use screen space; the camera arguments
+from the shared virtual interface are unused. All entity accesses fit the actual
+688-byte allocation despite the larger shared `FieldRuntimeEntity` view.
+
+The native code reads both Y values before the first renderer store. Caching
+those two values fixes the previous draft's alias-sensitive load order and makes
+the entire function exact. No inline ASM or compiler-flag changes are needed.
+The actual source object matches, the full EUR ROM hash and native relink pass,
+and all 112 tests pass.
+
+Private `build/runtime/eur_xhigh_planar_screen/save83_v1.json` checks 396 ordinary
+calls over 413 frames: 264 renderer updates and 132 disabled returns, with 1,584
+ordered stores. Each call checks the complete 688-byte entity, 316-byte renderer
+and their heap headers, arithmetic, both packed-key stores and SP/r4-r11/CPSR
+control. No helpers or stubs are involved. Three screenshots and 27 graphics
+captures retain mapped BG/OBJ VRAM, palette/OAM and display-bank registers; the
+final Star Shrine field capture was inspected. These captures are observational,
+not a pixel oracle. Checkpoint RAM/DTCM was restored and all 104 saves are intact.
+
+`field_planar_screen_isolated_v1.json` adds 268 ARM946 cases on copied RAM/DTCM:
+disabled and null-renderer gates, positive/negative Q12 fractional boundaries,
+signed-halfword limits and offsets, all 16 layer values, and index truncation.
+Distinct camera values also verify that those inputs are ignored. The compiled
+function executes without stubs; whole 4 MiB expected RAM, every ordered
+nonstack store, DTCM, unused stack and preserved registers are checked. Maximum
+stack use is eight bytes. These cases do not add live rendering or IRQ coverage.
+Private producers and validation live under `build/analysis/xhigh_from_55/`:
+`probe_field_planar_screen_v1.py`, `field_planar_screen_oracle_v1.py`,
+`check_field_planar_screen_isolated_v1.py` and `field_planar_screen_validation.json`.

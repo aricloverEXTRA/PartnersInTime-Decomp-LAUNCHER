@@ -828,6 +828,7 @@ void FieldEntity_RestoreRenderSnapshot(FieldRuntimeEntity *entity, const FieldRe
 FieldEntity *FieldEntity_CopyState(FieldEntity *entity, const FieldEntity *source);
 FieldRuntimeEntity *FieldEntity_CopyPlanarState(FieldRuntimeEntity *entity, const FieldRuntimeEntity *source);
 FieldRuntimeEntity *FieldEntity_CopySpatialState(FieldRuntimeEntity *entity, const FieldRuntimeEntity *source);
+void FieldEntity2D_UpdateScreenPosition(FieldRuntimeEntity *entity, s16 camera_x, s16 camera_y);
 void FieldEntity3D_UpdateScreenPosition(FieldRuntimeEntity *entity, s16 camera_x, s16 camera_y);
 void FieldEntity3D_UpdateShadow(FieldRuntimeEntity *entity);
 int FieldEntity3D_ShouldShowShadow(FieldRuntimeEntity *entity);

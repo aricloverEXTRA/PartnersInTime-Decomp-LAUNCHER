@@ -11487,3 +11487,18 @@ artifacts and coverage limits.
   **195,712 / 366,712 bytes (53.37%)**. Symbolic ASM remains separate.
   All 104 original saves are unchanged. Details and coverage limits:
   [party animation selection](research/RECONSTRUCTION_NOTES.md#party-animation-selection).
+
+
+### 2026-09-28: Planar field screen coordinates
+
+- Reconstructed the 220-byte `FieldEntity2D_UpdateScreenPosition`, including
+  signed Q12 division, cached Y offsets and separate depth/index stores.
+  Actual source object and complete ROM are exact; native relink reports zero
+  differences and all 112 tests pass. No inline ASM.
+- Ordinary checkpoint83 navigation checks 396 calls and 1,584 ordered writes
+  over 413 frames. Another 268 copied-RAM ARM946 cases cover arithmetic, packed
+  fields and disabled/null-renderer boundaries without stubs. Full allocations,
+  preserved registers, captures and all104 original save hashes are verified.
+- Matching C/C++: **883,564 / 1,563,700 bytes (56.5047%)**; overlay0:
+  **195,932 / 366,712 bytes (53.43%)**. Symbolic ASM remains separate.
+  [Evidence and limits](research/RECONSTRUCTION_NOTES.md#planar-entity-screen-positions).
