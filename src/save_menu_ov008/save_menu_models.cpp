@@ -13,7 +13,6 @@ void Overlay5ResourceA_ApplySelector(SaveMenuTransferTask *);
 BattleModel *Overlay5ResourceA_Attach(SaveMenuTransferTask *, BattleModel *, int);
 void func_ov005_02068908(BattleModel *, int, void *, int, int);
 void func_ov008_0206c078(SaveMenuTransferTask *);
-void func_ov008_0206ee58(SaveMenuTransferTask *);
 
 void SaveMenu_CreateModels(void)
 {

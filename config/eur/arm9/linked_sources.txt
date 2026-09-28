@@ -511,7 +511,7 @@ src/battle/battle_texture_catalog_load.c
 src/battle/battle_map_transfer.c
 src/save_menu_ov008/save_menu_models.cpp
 src/save_menu_ov008/load_menu_models.cpp
-src/save_menu_ov008/load_menu_motion.c
+src/save_menu_ov008/load_menu_cursor.c
 src/save_menu_ov008/load_menu_panels.c
 src/battle/battle_mesh_transform.c
 src/battle/battle_mesh_hit_task.c

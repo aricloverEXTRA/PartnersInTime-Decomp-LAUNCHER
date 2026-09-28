@@ -11280,3 +11280,17 @@ Golden ROM, zero native differences and 112 tests pass. See the
   and boundary paths with explicitly modeled helpers. Empty menu inspected;
   full checkpoint RAM/DTCM restored, all 104 saves unchanged. Evidence:
   `build/analysis/xhigh_from_55/load_delete_validation.json`.
+
+
+## Load-menu cursor transitions
+
+- Added 1,356 matching C bytes for save-slot, action and confirmation cursor
+  transitions. No inline ASM. Consolidated with the existing motion helpers:
+  three functions, 1,588 exact bytes. Coverage reaches 878,184 / 1,563,700 bytes
+  (56.1606%); overlay 8 reaches 63.70%.
+- Both complete build checks pass: original ROM, zero native-relink differences,
+  112 tests. Two ordinary routes check 1,026 cursor calls, 3,639 owned stores
+  and 2,054 helper entry/return pairs. Another 354 isolated ARM946 cases use
+  explicit helper models for boundary paths. Cursor/menu captures inspected;
+  checkpoint RAM/DTCM restored, all 104 original saves unchanged. Evidence:
+  `build/analysis/xhigh_from_55/load_cursor_validation.json`.

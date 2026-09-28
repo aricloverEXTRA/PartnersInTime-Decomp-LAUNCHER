@@ -10171,3 +10171,49 @@ The original-ROM hash and native relink pass. The first overall check caught a
 stale documentation link after the source rename; the corrected run passes all
 112 tests. Exact objects, source/report hashes, failed and successful producer
 exits are retained in `build/analysis/xhigh_from_55/load_delete_validation.json`.
+
+
+## Load-menu cursor transitions
+
+[LoadMenu_UpdateCursor](../../src/save_menu_ov008/load_menu_cursor.c) reconstructs
+`0x0206EE58..0x0206F3A4` (1,356 bytes, pure C). The contiguous motion helpers remain
+byte-identical; the renamed unit owns three functions totaling 1,588 bytes.
+The shared 72-byte cursor task now names velocities and accelerations while
+retaining its raw tail. Workspace anchors at `+0x1A0/+0x1A4` position confirmation
+rows; `+0x1A8/+0x1AC` position action rows. The hidden-cursor flag retains signed
+and unsigned byte views. The attached ResourceA sprite occupies a 336-byte pool
+slot; this callback uses only its 96-byte position prefix.
+
+The controller moves among save slots, actions and both delete prompts. Motion
+starts with eight remaining updates and unlocks input when decrementing to one.
+Arrival can fall through to stationary handling in the same call. Panel arrival
+also snaps to the table position. Action rows are 18 pixels apart; confirmation
+rows are 16. Q12 positions divide toward zero before halfword truncation and
+submission to draw list 8. The table's two byte aliases retain their native
+loads before motion-field stores through volatile reads. Caching the completed
+return-to-action coordinate explains the remaining register-lifetime difference;
+no inline assembly is used.
+
+Private `build/runtime/eur_xhigh_load_cursor/` contains two ordinary routes:
+`cold55_v1.json` (1,823 frames, 590 calls) covers initial placement, both slot switches,
+action entry and return; `delete55_v1.json` (436 frames/calls) covers cancellation,
+reopening, both prompts and deletion. Across 1,026 complete cursor calls, the
+oracle checks 3,639 ordered caller stores and 2,054 helper entry/return pairs,
+including 964 draw submissions and 62 hidden updates. It checks full tasks,
+workspace and attached sprites, current pool/list membership, arguments and ABI.
+Motion and draw-pool/list outputs are derived independently. Renderer pixels,
+resource initialization/release and IRQ timing are outside this caller oracle.
+The confirmation, restored slot selection and post-deletion menu were visually
+inspected. All 104 original saves are unchanged; checkpoint RAM/DTCM is restored.
+
+`isolated_v1.json` adds 354 ARM946 cases using copied live RAM and explicitly
+modeled outer helpers. These check all cursor phases, mode/selection boundaries,
+completion timers and negative-coordinate truncation, with 1,351 owned stores
+and 839 modeled calls. All mapped memory outside the 16-byte stack frame and
+preserved registers are checked. These cases do not establish live invalid-input
+or graphics behavior. The final object has different compiler metadata after
+adding layout assertions, but all three functions remain byte-identical and the
+cursor bytes equal the completed replays. Both complete build checks reproduce
+the original ROM, report zero native-relink differences and pass 112 tests.
+Hashes and producer exits are in
+`build/analysis/xhigh_from_55/load_cursor_validation.json`.

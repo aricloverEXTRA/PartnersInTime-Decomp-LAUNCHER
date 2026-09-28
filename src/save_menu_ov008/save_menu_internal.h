@@ -17,7 +17,7 @@ typedef struct SaveMenuEntryWorkPrefix {
     u8 unknown_140[0x50];
     u8 menu_mode, exit_mode, unknown_192[6], scroll_locked;
     s8 selection, previous_selection;
-    u8 message_visible;
+    union { u8 message_visible; s8 cursor_hidden; };
     s8 input_locked, selected_panel;
     union {
         u8 unknown_19e[2];

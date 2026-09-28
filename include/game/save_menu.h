@@ -48,9 +48,17 @@ typedef struct SaveMenuCursorTask {
     int state, counter;
     u8 selection, unknown_29[3];
     int x, y;
-    u8 unknown_34[20];
+    union {
+        u8 unknown_34[20];
+        struct {
+            int velocity_x, velocity_y, acceleration_x, acceleration_y;
+            u8 unknown_44[4];
+        };
+    };
 } SaveMenuCursorTask;
 typedef char SaveMenuCursorTaskSizeCheck[sizeof(SaveMenuCursorTask) == 72 ? 1 : -1];
+typedef char SaveMenuCursorTaskMotionOffsetCheck[
+    (u32)&((SaveMenuCursorTask *)0)->velocity_x == 52 ? 1 : -1];
 
 typedef struct SaveSceneTask {
     GameTask base;
@@ -127,6 +135,7 @@ void EraseMenu_DrawCursor(SaveMenuCursorTask *task);
 void GameOverMenu_CreateModels(int show_cursor);
 void SaveMenu_CreateModels(void);
 void LoadMenu_CreateModels(void);
+void LoadMenu_UpdateCursor(SaveMenuTransferTask *element);
 int LoadMenuMotion_Update(SaveMenuMotion *motion);
 int SaveMenuMotion_Update(SaveMenuMotion *motion);
 void LoadMenuMotion_Initialize(SaveMenuMotion *motion, int x, int y);

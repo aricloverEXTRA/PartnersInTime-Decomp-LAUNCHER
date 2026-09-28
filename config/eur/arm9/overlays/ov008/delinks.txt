@@ -73,8 +73,8 @@ src/save_menu_ov008/save_menu_models.cpp:
 src/save_menu_ov008/load_menu_models.cpp:
     .text start:0x0206ed44 end:0x0206ee58
 
-src/save_menu_ov008/load_menu_motion.c:
-    .text start:0x0206f3a4 end:0x0206f48c
+src/save_menu_ov008/load_menu_cursor.c:
+    .text start:0x0206ee58 end:0x0206f48c
 
 src/save_menu_ov008/save_menu_scroll.cpp:
     .text start:0x020716e0 end:0x02071964
