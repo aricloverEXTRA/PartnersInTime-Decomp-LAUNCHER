@@ -19,7 +19,6 @@ extern "C" {
 #include <game/graphics_resource.h>
 #include <nitro/gx_init.h>
 void func_02009058(int);
-void func_0202974c(u32);
 void func_0202cbd4(void *, int, u32);
 void func_0202cc58(const void *, void *, u32);
 void func_0202cd2c(const void *, void *, u32);
@@ -85,7 +84,7 @@ extern "C" BattleFrameContextView *BattleMain_Create(u32 heap_start)
     /* Main-heap storage starts beyond the resident battle overlay allocation. */
     if (heap_start < 0x020CBFE0)
         heap_start = 0x020CBFE0;
-    func_0202974c(heap_start);
+    GameHeap_RebaseMain(heap_start);
     BattleScheduler *system = (BattleScheduler *)GameHeap_New(sizeof(BattleScheduler), 0, data_ov002_020beb24, 0);
     if (system)
         BattleScheduler_Init(system, 8, (u32)data_ov002_020beb24);

@@ -9801,3 +9801,46 @@ route does not claim runtime coverage of nonzero reserved-bit preservation.
 The full build, golden ROM hash, zero-difference native relink and 112 tests
 pass. This is game allocator setup; SDK arena definitions supplied context,
 while all arithmetic and matching came from PiT's binary.
+
+
+## Moving the main heap boundary
+
+`GameHeap_RebaseMain` (`0x0202974C`, 188 bytes) moves the main region's first
+block past scene storage. It saves all four header words before moving them,
+updates the first/search pointers, adjusts both the region size and the first
+block's payload size by the old-minus-new address difference, and repairs the
+back-link at heap 1's cursor. `GameHeapBlock.heap_flags` provides a raw view
+alongside the existing five-bit heap ID, preserving the other header bits.
+
+The native boundary expression is `(boundary + 1023) & ~511`, with unsigned
+wrapping. Zero first substitutes that expression applied to the EUR main arena
+low address, then applies it again: the resulting default is `0x020CC400`,
+512 bytes above the initial `0x020CC200` block. Do not simplify this to ordinary
+512-byte alignment. Native dataflow also computes the boundary before copying
+the header; this ends the incoming argument's lifetime before the four-register
+copy. Those facts produce an exact pure-C reconstruction without register hints.
+
+The adjacent `GameHeap_InitializeSystem` (`0x02029730`, 28 bytes) calls `OS_Init`
+before `GameHeap_Initialize`. Both extend the existing allocator unit. Its 12
+actual compiled functions total 1,716 matching bytes; the migrated battle
+creator's five-function unit also matches completely (2,512 bytes).
+
+Private `build/runtime/eur_xhigh_heap_boundary/boot55_v1.json` checks the startup
+wrapper's call order, return stack and preserved registers, repeats the complete
+heap-initializer oracle, and checks three boundary moves during a normal
+1,200-frame boot. `pause65_v1.json` checks three more during a 440-frame ordinary
+pause-menu round trip. Each mover check covers the full 512-byte region table,
+the complete contiguous main-heap span containing both headers and the end
+cursor, the copied header, all 32 stack-frame bytes, SP and r4-r11. Together the
+routes exercise expanding/shrinking moves and explicit/default boundaries.
+They do not cover identical source/destination headers or arithmetic overflow.
+
+The title, pause menu and field return were inspected. A repeated unchanged
+boot (`boot55_v2.json`) passes again with equal initializer inputs, initialized
+table, mover inputs and resulting tables. Its title image and OAM capture differ;
+both BG captures and palettes match. Earlier boot captures also differed. These
+are preserved observations, with no confirmed cause or claim of pixel equality.
+Graphics/IRQ timing and `OS_Init` internals are outside the wrapper oracle.
+There were no RAM fixtures; pause-checkpoint RAM/DTCM was fully restored, all
+104 saves stayed unchanged, and all emulator instances were destroyed.
+Full build, golden ROM, zero-difference native relinking and 112 tests pass.

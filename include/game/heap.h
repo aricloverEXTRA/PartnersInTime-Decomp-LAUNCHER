@@ -22,8 +22,11 @@ struct GameHeapBlock {
        available and may be merged with a free neighbour. */
     u32 size_flags;
     /* Which heap the block belongs to, so freeing needs only the pointer. */
-    u32 heap : 5;
-    u32 reserved : 27;
+    union {
+        /* Whole-word view used when moving a header, including reserved bits. */
+        u32 heap_flags;
+        struct { u32 heap : 5; u32 reserved : 27; };
+    };
 };
 
 /* One numbered heap. `cursor` is where the next search starts, so allocation
@@ -44,6 +47,11 @@ typedef char GameHeapRegionSizeCheck[(sizeof(GameHeapRegion) == 16) ? 1 : -1];
    parameter the original API carries but never reads. */
 /* Establish the five initial regions during boot, before allocations. */
 void GameHeap_Initialize(void);
+/* Startup wrapper: initialize the SDK before the game regions. */
+void GameHeap_InitializeSystem(void);
+/* Move the main heap's first block beyond a scene's loaded storage.
+ * A zero boundary selects the default main arena before native rounding. */
+void GameHeap_RebaseMain(u32 boundary);
 void GameHeap_Destroy(int heap);
 int GameHeap_Create(int parent, u32 size, u32 unused, int mode);
 void *GameHeap_Allocate(int heap, u32 size, void *unused, int mode);

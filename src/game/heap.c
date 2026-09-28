@@ -1,5 +1,5 @@
 /*
- * Heap allocator (ARM9 resident, 0x02029808-0x02029DE4).
+ * Heap allocator (ARM9 resident, 0x02029730-0x02029DE4).
  *
  * The allocator itself: carving a heap out of its parent, serving an allocation
  * from either end of the region, and freeing by merging with the free
@@ -205,4 +205,36 @@ void GameHeap_Destroy(int heap)
     data_02060b6c[heap].first = 0;
     data_02060b6c[heap].cursor = 0;
     data_02060b6c[heap].size = 0;
+}
+
+void GameHeap_RebaseMain(u32 boundary)
+{
+    GameHeapBlock saved;
+    GameHeapBlock *first;
+    u32 difference;
+    if (!boundary)
+        boundary = ((u32)GameHeap_MainArenaLow + 1023) & ~511;
+    /* Form the new boundary before copying the header: the native copy
+     * consumes r0-r3, so the incoming boundary is no longer live there. */
+    first = (GameHeapBlock *)((boundary + 1023) & ~511);
+    saved = *data_02060b6c[0].first;
+    difference = (u32)data_02060b6c[0].first - (u32)first;
+    data_02060b6c[0].first = first;
+    data_02060b6c[0].cursor = first;
+    data_02060b6c[0].size += difference;
+    /* Preserve all four header words, even when old and new blocks overlap. */
+    first->previous = saved.previous;
+    first->next = saved.next;
+    first->size_flags = saved.size_flags;
+    first->heap_flags = saved.heap_flags;
+    data_02060b6c[0].first->size_flags += difference;
+    data_02060b6c[1].cursor->previous = data_02060b6c[0].first;
+}
+
+extern void OS_Init(void);
+
+void GameHeap_InitializeSystem(void)
+{
+    OS_Init();
+    GameHeap_Initialize();
 }

@@ -11149,3 +11149,20 @@ Private evidence: xhigh_from_55/scene_sine_validation.json.
   remain untested. Evidence: build/runtime/eur_xhigh_heap_initialize/boot55_v2.json
   and build/analysis/xhigh_from_55/heap_initialize_validation.json.
 - Matching C/C++: 870,356 / 1,563,700 bytes (55.6600%); symbolic ASM stays separate.
+
+
+## 2026-09-28: Main-heap boundary changes and startup
+
+- Added GameHeap_RebaseMain (188 bytes) and GameHeap_InitializeSystem (28 bytes)
+  as pure C in the allocator unit. All 12 compiled allocator functions and five
+  migrated battle-lifecycle functions match (1,716 and 2,512 bytes respectively).
+- Cold boot and ordinary pause round trip check six main-heap moves, including
+  both directions and the double-rounded zero-boundary path. Complete region
+  table, affected main-heap span, copied headers, stack and preserved registers
+  checked. Startup call order and full initializer oracle also pass.
+- Unchanged repeated boot passes heap checks but has different title/OAM pixels;
+  BG/palette captures match. The variation is preserved without claiming a cause.
+  No RAM fixtures; pause RAM/DTCM restored; all 104 saves unchanged. Evidence:
+  build/runtime/eur_xhigh_heap_boundary/ and the private validation report.
+- Full build/golden ROM/native zero differences/112 tests pass. Matching C/C++:
+  870,572 / 1,563,700 bytes (55.6739%); symbolic ASM remains separate.
