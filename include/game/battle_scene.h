@@ -22,15 +22,43 @@ typedef char ModelRenderSortKey_SizeCheck[sizeof(ModelRenderSortKey) == 10 ? 1 :
 typedef struct BattleModelVTable BattleModelVTable;
 typedef struct GamePaletteEffectController GamePaletteEffectController;
 
+/* A 96-byte 3D resource descriptor. Bytes 0x2C..0x57 restore the model's
+ * presentation state; the final pointer supplies optional texture offsets. */
 typedef struct ModelRenderDescriptor {
-    u8 unknown_00[0x54];
+    union {
+        u8 unknown_00[0x54];
+        struct {
+            const GameGraphicsResource *animation;
+            u32 primary_id, secondary_id;
+            const void *graphics, *secondary_data, *conversion_buffer;
+            u32 graphics_size;
+            u16 palette_bytes;
+            struct {
+                u8 shared_palette : 1, offsets_ready : 1, screen : 2;
+                u8 shared_texture : 1, unknown_05_07 : 3;
+            } resource_flags;
+            u8 unknown_1f;
+            u32 first_texture_tile, texture_tile_count;
+            GameSpritePalette *palette;
+            s16 resource_animation, animation_id, unknown_30, animation_speed;
+            s16 animation_offset_x, animation_offset_y;
+            u8 unknown_38[0x14];
+            s16 scale_x, scale_y, rotation;
+            u16 unknown_52;
+        };
+    };
     union {
         u32 flags;
         struct { u32 overlap_priority : 2, unknown_02_31 : 30; } flag_bits;
+        struct {
+            u32 unknown_00_15 : 16, texture_allocation : 3;
+            u32 palette_allocation : 3, unknown_22_31 : 10;
+        } allocation_flags;
     };
-    u8 unknown_58, unknown_59;
+    union { u8 unknown_58; u8 palette_offset; };
+    union { u8 unknown_59; u8 palette_slot; };
     u16 unknown_5a;
-    void *unknown_5c;
+    union { void *unknown_5c; u16 *texture_offsets; };
 } ModelRenderDescriptor;
 typedef char ModelRenderDescriptor_SizeCheck[sizeof(ModelRenderDescriptor) == 0x60 ? 1 : -1];
 
@@ -306,7 +334,10 @@ struct BattleModel {
     u8 unk_12c[4];
     GameTextureAllocation render_texture;
     GameTexturePalette render_palette;
-    u8 unknown_160[2];
+    union {
+        u8 unknown_160[2];
+        struct { u8 texture_allocation_result, palette_allocation_result; };
+    };
     union {
         u16 animation_state;
         struct {
@@ -316,7 +347,8 @@ struct BattleModel {
         } animation_state_bits;
     };
     u16 owner_render_state;
-    u8 unk_166[6];
+    u16 unknown_166;
+    const u16 *render_texture_offsets;
     u16 unknown_16c, unknown_16e;
     u32 unknown_170;
     MtxFx44 transform;
@@ -400,7 +432,10 @@ struct BattleModel {
     u8 unk_12c[4];
     GameTextureAllocation render_texture;
     GameTexturePalette render_palette;
-    u8 unknown_160[2];
+    union {
+        u8 unknown_160[2];
+        struct { u8 texture_allocation_result, palette_allocation_result; };
+    };
     union {
         u16 animation_state;
         struct {
@@ -410,7 +445,8 @@ struct BattleModel {
         } animation_state_bits;
     };
     u16 owner_render_state;
-    u8 unk_166[6];
+    u16 unknown_166;
+    const u16 *render_texture_offsets;
     u16 unknown_16c, unknown_16e;
     u32 unknown_170;
     MtxFx44 transform;
@@ -687,6 +723,7 @@ void BattleRenderModels_UpdateTextures(const u32 *banks, u8 filter);
 int BattleRenderModel_GetTextureConversionSize(const GameGraphicsResource *resource, u32 alternate);
 int BattleRenderModel_RestoreController(BattleModel *model, const void *descriptor, void *controller, s16 animation);
 void BattleRenderModel_ReleaseResources(BattleModel *model);
+void BattleRenderModel_RestoreResources(BattleModel *model, const ModelRenderDescriptor *descriptor);
 void BattleRenderModel_UpdateTexture(BattleModel *model, const u32 *banks);
 void BattleRenderModel_NoOp(BattleModel *model);
 u32 BattleRenderModel_GetObjectSize(BattleModel *model);

@@ -11232,3 +11232,18 @@ Golden ROM, zero native differences and 112 tests pass. See the
   child/loader helpers are explicit stubs. All 104 original saves remain intact.
 - Matching C/C++: 873312/1563700 (55.8491%). Detailed limits and the SDK
   reference are recorded in the session overlay-transitions research section.
+
+
+## 3D model resource restoration
+
+- Reconstructed ARM9 `0200F85C..0200FB34`: 728 bytes of pure matching C++.
+  Named the shared 96-byte descriptor fields and the model's 3D offset pointer.
+- Final compiled unit: four functions, 816 exact bytes. Original ROM hash,
+  zero differing native bytes and 112 tests pass.
+- Ordinary save-65 replay: 2,917 frames, 22 complete calls, 194 caller stores
+  and 194 helper calls; complete model/header/descriptor checks with explicitly
+  bounded animation and allocation observations. Title and field viewed.
+- 160 copied-RAM ARM946 cases: 1,536 stores, 1,408 modeled helper calls.
+  All 104 saves unchanged. Detailed bounds and failed checks are in the research
+  reference and private render_restore validation record.
+- Matching C/C++: 874040/1563700 (55.8956%).

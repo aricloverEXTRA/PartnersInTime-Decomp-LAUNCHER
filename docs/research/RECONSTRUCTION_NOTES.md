@@ -10025,3 +10025,57 @@ The now-contiguous request, update and lifecycle functions are consolidated in
 1,584-byte range match in the actual compiled object; this consolidation adds no
 matching bytes. The full ROM/native gate and 112 tests pass again. The dispatcher
 bytes remain identical to the completed replay and isolated-check inputs above.
+
+
+## 3D model resource restoration
+
+[BattleRenderModel_RestoreResources](../../src/game/model_texture_restore.cpp)
+owns ARM9 `0x0200F85C..0x0200FB34` (728 bytes), now matching in ordinary C++.
+It restores 44 presentation bytes from a 96-byte descriptor, restarts the
+primary animation, allocates texture/palette records, selects or builds texture
+offsets and checks animation/frame bounds. The descriptor's halfword at +0x1C
+is a byte count: the palette allocator receives that value divided by two.
+Resource tile counts are selected by the alternate-resource and color-depth
+flags unless the descriptor supplies an explicit count.
+
+The shared descriptor retains its old raw views. The complete model is 440
+bytes; its texture and palette nodes are embedded at +0x130 and +0x148, and
+the 3D texture-offset pointer is at +0x168. The related 2D model pointer at
++0x50 is a distinct field. Four functions in the final compiled source object
+match all 816 bytes. Full builds reproduce the original ROM, native relinking
+reports zero differing bytes, and 112 tests pass.
+
+Private `build/runtime/eur_xhigh_render_restore/boot65_v2.json` follows ordinary
+save-65 boot, loading, movement, pause and return for 2,917 frames. All 22
+restoration calls are checked, including 194 ordered caller stores and 194
+helper entries/returns. Checks cover each full model allocation and its header,
+the 96-byte descriptor, touched list records/roots, arguments, stack and r4-r11.
+Resource section setup, the 44-byte copy and lookup/count results are derived
+independently. Primary animation effects remain observations within 220 bytes
+at model +0x54. Allocation helper observations are limited to the receiving
+24-byte node, existing link pairs and roots; placement and external animation
+tracks are outside this caller oracle. The route selects resource-derived sizes
+22 times, queries embedded offsets 18 times (all return null) and reuses supplied
+offsets four times.
+It does not build new offset tables. Title and final field captures were viewed;
+VRAM, palettes and OAM are retained as observations. All 104 saves are unchanged.
+
+`isolated_v2.json` adds 160 ARM946 cases using the actual compiled caller on
+copied RAM and synthetic descriptors/resources. It covers both resource/color
+variants, explicit sizes, boundary/embedded/built/reused/missing offset paths,
+allocation return states, signed speeds and animation/frame limits. All 1,536
+caller stores, 1,408 modeled helper calls, full mapped RAM/DTCM/scratch outside
+the 40-byte stack frame and preserved registers are checked. Helpers are explicit
+models that clobber volatile registers; an animation fixture changes speed and
+accumulator before the caller resumes. These checks do not execute native
+allocators or texture conversion and add no live lifetime or rendering coverage.
+
+Producers are `probe_render_restore_v2.py`, `render_restore_oracle.py` and
+`check_render_restore_isolated_v2.py` under `build/analysis/xhigh_from_55/`.
+The first build failed because the new function was ordered before its three
+neighbors; correcting source order fixed it. The first live probe rejected a
+literal-pool word decoded as an instruction before gameplay began. Its log and
+source are retained; v2 excludes the known four-byte pool from hook discovery,
+while the complete 728-byte native guard still includes it. The isolated v1 run
+passed before final field-name cleanup; v2 pins the preserved final source object.
+Final compiled bytes equal the completed live and isolated inputs.
