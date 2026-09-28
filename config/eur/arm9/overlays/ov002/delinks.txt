@@ -450,7 +450,7 @@ src/battle/battle_reward_items_status.c:
     .text       start:0x0206ce30 end:0x0206ced4
 
 src/battle/battle_reward_items_initialize.c:
-    .text       start:0x0206e4f8 end:0x0206e578
+    .text       start:0x0206e4dc end:0x0206e578
 
 src/battle/battle_sound.c:
     .text start:0x02076178 end:0x02076584

@@ -11336,3 +11336,16 @@ Golden ROM, zero native differences and 112 tests pass. See the
   24 copied-RAM ARM946 cases check complete memory and ordered stores.
   Capture inspected, checkpoint restored, 104 saves unchanged. Evidence:
   `build/analysis/xhigh_from_55/gx_list_begin_validation.json`.
+
+
+## Motion limits, formatting and reward status
+
+- Reconstructed the directional clamp, variadic formatting wrapper and reward
+  completion query in pure C. New code: 124 bytes; matching C/C++ is now
+  879,992 / 1,563,700 (56.2763%). Shared declarations replace old local prototypes.
+- All 32 functions in the seven affected objects match. Full gate: golden ROM,
+  zero native-relink differences, 112 tests. Live checks cover 20 formatter and
+  two reward-query calls. The clamp was not reached by the attempted Shell
+  routes; its evidence is isolated. Total isolated ARM946 cases: 275, checking
+  full memory and ABI. Captures inspected, checkpoints restored, 104 saves intact.
+  Evidence: `build/analysis/xhigh_from_55/small_helpers_validation.json`.

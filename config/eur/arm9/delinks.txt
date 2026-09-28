@@ -273,7 +273,7 @@ src/nitro/gx/gx_init.c:
     .text start:0x020350d0 end:0x02035444
 
 src/game/format_string.c:
-    .text start:0x0202a944 end:0x0202aa74
+    .text start:0x0202a914 end:0x0202aa74
 
 src/game/format_binary.c:
     .text start:0x0202abf4 end:0x0202acc8
@@ -563,7 +563,7 @@ src/game/inventory.c:
     .text start:0x02018f48 end:0x020196f8
 
 src/game/interval.c:
-    .text start:0x020108f0 end:0x02010960
+    .text start:0x020108f0 end:0x02010990
 
 src/nitro/mi/mi_card_dma.c:
     .text start:0x0203bcbc end:0x0203bd48

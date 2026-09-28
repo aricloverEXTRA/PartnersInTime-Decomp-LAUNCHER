@@ -10349,3 +10349,42 @@ Both functions in the actual source object match all 964 bytes. The complete
 build reproduces the original ROM, reports zero native-relink differences and
 passes 112 tests. Source, artifact and producer-exit evidence is pinned in
 `build/analysis/xhigh_from_55/ov25_chain_target_validation.json`.
+
+
+## Motion limits, formatting and reward status
+
+Three small functions add 124 bytes of matching C:
+
+- [`GameMotion_ClampToLimit`](../../src/game/interval.c), ARM9
+  `0x02010960..0x02010990`, bounds an already-updated signed value above or below
+  its target according to the direction's sign. Zero direction preserves it.
+  Shell offset and support-speed callers now share its declaration.
+- [`GameFormat_Write`](../../src/game/format_string.c), ARM9
+  `0x0202A914..0x0202A944`, forwards optional arguments as contiguous 32-bit words
+  through MWCC's spilled-register/stack layout. It returns the cursor after the
+  terminating NUL. The native parser is now named `GameFormat_WriteArguments`;
+  that 256-byte parser remains unreconstructed and is not counted as new C.
+  Battle allocation names and the debug console share the corrected prototype.
+- [`BattleRewardItems_IsDone`](../../src/battle/battle_reward_items_initialize.c),
+  overlay 2 `0x0206E4DC..0x0206E4F8`, reads bit zero of the reward work's 32-bit
+  flags at offset `0x4D8`. The containing allocation is 1,344 bytes.
+
+Private `build/runtime/eur_xhigh_small_helpers/format55_v2.json` checks 20
+complete calls during the established controlled battle-entry route. It verifies
+`ds(%d)` output across the entire 36-byte caller buffer, the optional-argument
+pointer/words and the returned cursor. `reward55_v2.json` uses the guarded
+victory-phase fixture and checks two completed queries returning one, preserving
+the entire reward allocation. Both captures were inspected; both checkpoints
+were fully restored and all 104 saves retain their hashes.
+
+The attempted Shell routes, including guarded automatic support-button inputs,
+did not call the clamp. Its runtime evidence is therefore isolated ARM946
+execution: 245 signed boundary/order cases. `isolated_v1.json` also checks 18
+reward-record/flag cases, including zero results, and 12 variadic forwarding
+cases with register and stack arguments. All 275 cases use actual compiled
+source functions and compare full RAM/DTCM plus preserved registers. The isolated
+formatter helper is an explicit stub; the real parser is exercised only by the
+live allocation-name cases. These checks do not cover renderer or IRQ timing.
+All 32 functions in the seven affected source objects match; the full gate
+passes the golden-ROM check, zero-difference native relink and 112 tests.
+Evidence: `build/analysis/xhigh_from_55/small_helpers_validation.json`.

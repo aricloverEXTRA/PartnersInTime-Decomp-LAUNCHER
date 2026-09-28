@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
 <title id="title">Mario &amp; Luigi: Partners in Time decompilation progress</title>
-<desc id="desc">A treemap of mapped ARM9 code. 56.27 percent is matching C/C++ and 56.53 percent has matching C/C++ or maintained symbolic assembly.</desc>
+<desc id="desc">A treemap of mapped ARM9 code. 56.28 percent is matching C/C++ and 56.53 percent has matching C/C++ or maintained symbolic assembly.</desc>
 <style>
 .bg{fill:#0d1117}.title{fill:#f0f6fc;font:700 27px system-ui,sans-serif}
 .eyebrow{fill:#8b949e;font:600 12px system-ui,sans-serif;letter-spacing:1.5px}
@@ -18,14 +18,14 @@
 <text x="1172.0" y="63.0" class="subtitle" text-anchor="end">56.53% source-understood</text>
 <text x="1172.0" y="88.0" class="subtitle" text-anchor="end">1.49 MiB mapped ARM9 code</text>
 <rect x="28" y="130" width="1144" height="22" rx="5" fill="#263244"/>
-<rect x="28" y="130" width="643.710" height="22" rx="5" fill="#2dd4a0"/>
-<rect x="671.710" y="130" width="2.956" height="22" fill="#38bdf8"/>
+<rect x="28" y="130" width="643.801" height="22" rx="5" fill="#2dd4a0"/>
+<rect x="671.801" y="130" width="2.956" height="22" fill="#38bdf8"/>
 <rect x="28" y="170" width="12" height="12" rx="2" fill="#2dd4a0"/>
-<text x="47.0" y="181.0" class="legend">Matching C/C++  859.2 KiB</text>
+<text x="47.0" y="181.0" class="legend">Matching C/C++  859.4 KiB</text>
 <rect x="248" y="170" width="12" height="12" rx="2" fill="#38bdf8"/>
 <text x="267.0" y="181.0" class="legend">Symbolic ASM  3.9 KiB</text>
 <rect x="468" y="170" width="12" height="12" rx="2" fill="#263244"/>
-<text x="487.0" y="181.0" class="legend">Remaining  663.9 KiB</text>
+<text x="487.0" y="181.0" class="legend">Remaining  663.7 KiB</text>
 <text x="1172.0" y="181.0" class="legend" text-anchor="end">Rectangle area = code bytes</text>
 <rect class="cell" x="30.00" y="226.00" width="119.37" height="80.75" fill="#263244"><title>Overlay 00 · func_ov000_0209418c · 27.8 KiB · remaining</title></rect>
 <rect class="cell" x="149.37" y="226.00" width="98.54" height="80.75" fill="#2dd4a0"><title>Overlay 00 · field_vm_dispatch · 22.9 KiB · matching C/C++</title></rect>
@@ -1532,7 +1532,7 @@
 <rect class="cell" x="547.49" y="674.35" width="3.19" height="3.40" fill="#2dd4a0"><title>Overlay 02 · battle_display_capture · 32 B · matching C/C++</title></rect>
 <rect class="cell" x="550.67" y="674.35" width="3.19" height="3.40" fill="#2dd4a0"><title>Overlay 02 · battle_flexible_link_actor · 32 B · matching C/C++</title></rect>
 <rect class="cell" x="553.86" y="674.35" width="2.79" height="3.40" fill="#2dd4a0"><title>Overlay 02 · battle_reward_items_status · 28 B · matching C/C++</title></rect>
-<rect class="cell" x="556.65" y="674.35" width="2.79" height="3.40" fill="#263244"><title>Overlay 02 · func_ov002_0206e4dc · 28 B · remaining</title></rect>
+<rect class="cell" x="556.65" y="674.35" width="2.79" height="3.40" fill="#2dd4a0"><title>Overlay 02 · battle_reward_items_initialize · 28 B · matching C/C++</title></rect>
 <rect class="cell" x="537.92" y="677.75" width="3.12" height="3.04" fill="#2dd4a0"><title>Overlay 02 · battle_attack_loader · 28 B · matching C/C++</title></rect>
 <rect class="cell" x="537.92" y="680.79" width="3.12" height="3.04" fill="#2dd4a0"><title>Overlay 02 · battle_window_transfers · 28 B · matching C/C++</title></rect>
 <rect class="cell" x="537.92" y="683.83" width="3.12" height="3.04" fill="#2dd4a0"><title>Overlay 02 · battle_entry_capture_wait · 28 B · matching C/C++</title></rect>
@@ -1859,7 +1859,7 @@
 <rect class="cell" x="669.56" y="373.90" width="9.35" height="9.26" fill="#2dd4a0"><title>ARM9 resident · system_init · 256 B · matching C/C++</title></rect>
 <rect class="cell" x="669.56" y="383.16" width="9.35" height="9.26" fill="#2dd4a0"><title>ARM9 resident · graphics_texture_offsets · 256 B · matching C/C++</title></rect>
 <rect class="cell" x="669.56" y="392.42" width="9.35" height="9.26" fill="#2dd4a0"><title>ARM9 resident · matrix_animation · 256 B · matching C/C++</title></rect>
-<rect class="cell" x="669.56" y="401.67" width="9.35" height="9.26" fill="#263244"><title>ARM9 resident · func_0202a814 · 256 B · remaining</title></rect>
+<rect class="cell" x="669.56" y="401.67" width="9.35" height="9.26" fill="#263244"><title>ARM9 resident · GameFormat_WriteArguments · 256 B · remaining</title></rect>
 <rect class="cell" x="669.56" y="410.93" width="9.35" height="9.26" fill="#2dd4a0"><title>ARM9 resident · fs_overlay · 256 B · matching C/C++</title></rect>
 <rect class="cell" x="669.56" y="420.19" width="9.35" height="9.26" fill="#263244"><title>ARM9 resident · CARDi_ReadCard · 256 B · remaining</title></rect>
 <rect class="cell" x="669.56" y="429.44" width="9.35" height="9.26" fill="#2dd4a0"><title>ARM9 resident · runtime · 256 B · matching C/C++</title></rect>
@@ -2696,7 +2696,7 @@
 <rect class="cell" x="799.58" y="533.05" width="4.24" height="4.15" fill="#263244"><title>ARM9 resident · func_02045f24 · 52 B · remaining</title></rect>
 <rect class="cell" x="803.82" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · battle_model_state · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="807.96" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · model_texture_updates · 48 B · matching C/C++</title></rect>
-<rect class="cell" x="812.10" y="466.68" width="4.14" height="3.92" fill="#263244"><title>ARM9 resident · func_02010960 · 48 B · remaining</title></rect>
+<rect class="cell" x="812.10" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · interval · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="816.25" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · field_background_controls · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="820.39" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · field_background_palettes · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="824.53" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · localized_text_resources · 48 B · matching C/C++</title></rect>
@@ -2705,7 +2705,7 @@
 <rect class="cell" x="836.96" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · save_storage · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="841.11" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · save_storage · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="845.25" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · heap · 48 B · matching C/C++</title></rect>
-<rect class="cell" x="849.39" y="466.68" width="4.14" height="3.92" fill="#263244"><title>ARM9 resident · func_0202a914 · 48 B · remaining</title></rect>
+<rect class="cell" x="849.39" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · format_string · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="853.54" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · frame_heap · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="857.68" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · snd_player_api · 48 B · matching C/C++</title></rect>
 <rect class="cell" x="861.82" y="466.68" width="4.14" height="3.92" fill="#2dd4a0"><title>ARM9 resident · snd_stream · 48 B · matching C/C++</title></rect>
