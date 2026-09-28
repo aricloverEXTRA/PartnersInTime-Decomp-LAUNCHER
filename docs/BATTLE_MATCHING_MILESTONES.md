@@ -11502,3 +11502,22 @@ artifacts and coverage limits.
 - Matching C/C++: **883,564 / 1,563,700 bytes (56.5047%)**; overlay0:
   **195,932 / 366,712 bytes (53.43%)**. Symbolic ASM remains separate.
   [Evidence and limits](research/RECONSTRUCTION_NOTES.md#planar-entity-screen-positions).
+
+
+### Battle chain relaxation (2026-09-28)
+
+- Reconstructed `BattleChain_RelaxSegments`, overlay 2 `0x020B710C..0x020B7448`,
+  as 828 bytes of exact C++; shared twelve-byte joint displacement fields named.
+- Live controlled save-103 boss route: 4,678 calls, 42,823 segments, 256,938
+  joint stores, 161,062 square-root register stores, 80,531 roots and 412,885
+  checked division pairs. Both correction outcomes; full work/owner/arena slot.
+- 488 copied-RAM ARM946 cases cover zero and signed boundaries, strict radius
+  comparison and modeled square-root busy loops. Actual compiled function and
+  division helper execute; all 49,504 non-stack stores and whole RAM checked.
+- 32 artifacts validated, two gameplay captures inspected, checkpoint RAM/DTCM
+  restored, 104 saves unchanged. No independent pixel/IRQ or ordinary attack
+  selection claim. Related actual objects: 69 functions, 21,700 matching bytes.
+- Gate v1 caught the unavailable standard header; corrected gate v2 passes:
+  original ROM hash, zero native-relink differences, 112 tests.
+- Evidence: `build/analysis/xhigh_from_55/battle_chain_relax_validation.json`.
+  Matching C/C++: 884,392 / 1,563,700 (56.5577%); symbolic ASM remains separate.

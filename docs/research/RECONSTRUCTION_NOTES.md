@@ -10790,3 +10790,62 @@ stack use is eight bytes. These cases do not add live rendering or IRQ coverage.
 Private producers and validation live under `build/analysis/xhigh_from_55/`:
 `probe_field_planar_screen_v1.py`, `field_planar_screen_oracle_v1.py`,
 `check_field_planar_screen_isolated_v1.py` and `field_planar_screen_validation.json`.
+
+
+## Battle chain relaxation
+
+[`BattleChain_RelaxSegments`](../../src/battle/battle_chain_relaxation.cpp)
+reconstructs overlay 2 `0x020B710C..0x020B7448` (828 bytes) in C++.
+It updates the twelve-byte joints used by Elder Princess Shroob's chains.
+The first three signed halfwords hold a Q8 segment vector; the last three
+hold cumulative original-minus-relaxed displacement in whole units. The
+shared joint retains its raw array view and checks the displacement offset.
+
+Each segment accumulates the original vectors, limits its difference from
+the preceding relaxed vector, applies Q12 smoothing and redistributes drift.
+The allowed difference is `4 * length * (count - index) / count`. Correction
+runs only when its squared radius is strictly smaller than the signed squared
+difference. Hardware integer square roots select the correction and normalized
+length; a zero final norm skips normalization. Signed divisions truncate toward
+zero. Running vectors and sums remain full-width even after halfword stores.
+The native multiply/add grouping matters for matching; no inline assembly or
+source permutation search was needed. Nonpositive counts still read the first
+joint, then return without writes. All six native callers ignore the residual
+count in `r0`; the public interface is void.
+
+Private `build/runtime/eur_xhigh_chain_relax/live103_v1.json` checks 4,678 calls
+and 42,823 segments over 1,170 frames. It uses the existing giant-phase checkpoint
+derived from save 103. Before the new fixture, 1,280 calls and 11,520 segments
+are already checked. At guarded dispatcher `0x020B60FC`, frame 320 selects the
+native tracking initializer and sets its contact count to one. This is controlled
+attack selection, not ordinary story/attack-script coverage. No target arguments
+or executable bytes are edited. Calls from the rig, tracking, landing and final
+chain callbacks cover both correction outcomes. The oracle verifies all 256,938
+joint stores, 161,062 square-root register stores, 80,531 integer roots and
+412,885 signed-division argument/result pairs. Each return checks the full
+7,088-byte work allocation, 260-byte scene owner, twelve-byte resource-arena slot,
+context root, stack pointer, preserved registers and CPU control bits.
+
+`build/analysis/xhigh_from_55/battle_chain_relax_isolated_v1.json` adds 488 ARM946
+cases on copied live RAM. The actual compiled function and original division
+helper execute without call stubs. Fixtures cover nonpositive counts, zero
+vectors and lengths, signed halfword endpoints, negative smoothing/length,
+interior pointers, and the radius immediately below, equal to and above its
+threshold. The square-root device model returns integer roots after zero, one
+or three busy polls; this does not establish real hardware latency or IRQ
+behavior. All 49,504 non-stack stores, the complete 4 MiB RAM, DTCM, unused stack,
+preserved registers and modeled I/O page are checked. Maximum stack use is 104
+bytes. Overflow fixtures describe native ARM arithmetic rather than portable
+signed-overflow C semantics.
+
+All 32 capture/RAM artifacts and source hashes were validated. Frames 500 and
+1170 were visually inspected and show the active boss fight; graphics capture
+is observational, without an independent pixel oracle. The full checkpoint RAM
+and DTCM are restored, including fixture-induced changes, and all 104 original
+saves retain their hashes. The actual new source object matches all 828 bytes;
+21 related source objects match 69 functions/21,700 bytes. The first gate caught
+an unavailable standard header in the offset assertion; using the project's
+existing assertion idiom fixed it. The complete subsequent gate reproduces the
+original ROM, reports zero native-relink differences and passes 112 tests.
+Producer exits and artifact checks are recorded in
+`build/analysis/xhigh_from_55/battle_chain_relax_validation.json`.

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
 <title id="title">Mario &amp; Luigi: Partners in Time decompilation progress</title>
-<desc id="desc">A treemap of mapped ARM9 code. 56.50 percent is matching C/C++ and 56.76 percent has matching C/C++ or maintained symbolic assembly.</desc>
+<desc id="desc">A treemap of mapped ARM9 code. 56.56 percent is matching C/C++ and 56.82 percent has matching C/C++ or maintained symbolic assembly.</desc>
 <style>
 .bg{fill:#0d1117}.title{fill:#f0f6fc;font:700 27px system-ui,sans-serif}
 .eyebrow{fill:#8b949e;font:600 12px system-ui,sans-serif;letter-spacing:1.5px}
@@ -13,19 +13,19 @@
 <rect class="bg" width="1200" height="760" rx="12"/>
 <text x="28.0" y="34.0" class="eyebrow">DECOMPILATION PROGRESS · EUROPEAN ROM</text>
 <text x="28.0" y="68.0" class="title">Mario &amp; Luigi: Partners in Time</text>
-<text x="28.0" y="113.0" class="percent">56.5%</text>
+<text x="28.0" y="113.0" class="percent">56.6%</text>
 <text x="145.0" y="110.0" class="subtitle">matching C/C++</text>
-<text x="1172.0" y="63.0" class="subtitle" text-anchor="end">56.76% source-understood</text>
+<text x="1172.0" y="63.0" class="subtitle" text-anchor="end">56.82% source-understood</text>
 <text x="1172.0" y="88.0" class="subtitle" text-anchor="end">1.49 MiB mapped ARM9 code</text>
 <rect x="28" y="130" width="1144" height="22" rx="5" fill="#263244"/>
-<rect x="28" y="130" width="646.414" height="22" rx="5" fill="#2dd4a0"/>
-<rect x="674.414" y="130" width="2.956" height="22" fill="#38bdf8"/>
+<rect x="28" y="130" width="647.020" height="22" rx="5" fill="#2dd4a0"/>
+<rect x="675.020" y="130" width="2.956" height="22" fill="#38bdf8"/>
 <rect x="28" y="170" width="12" height="12" rx="2" fill="#2dd4a0"/>
-<text x="47.0" y="181.0" class="legend">Matching C/C++  862.9 KiB</text>
+<text x="47.0" y="181.0" class="legend">Matching C/C++  863.7 KiB</text>
 <rect x="248" y="170" width="12" height="12" rx="2" fill="#38bdf8"/>
 <text x="267.0" y="181.0" class="legend">Symbolic ASM  3.9 KiB</text>
 <rect x="468" y="170" width="12" height="12" rx="2" fill="#263244"/>
-<text x="487.0" y="181.0" class="legend">Remaining  660.2 KiB</text>
+<text x="487.0" y="181.0" class="legend">Remaining  659.4 KiB</text>
 <text x="1172.0" y="181.0" class="legend" text-anchor="end">Rectangle area = code bytes</text>
 <rect class="cell" x="30.00" y="226.00" width="119.37" height="80.75" fill="#263244"><title>Overlay 00 · func_ov000_0209418c · 27.8 KiB · remaining</title></rect>
 <rect class="cell" x="149.37" y="226.00" width="98.54" height="80.75" fill="#2dd4a0"><title>Overlay 00 · field_vm_dispatch · 22.9 KiB · matching C/C++</title></rect>
@@ -852,7 +852,7 @@
 <rect class="cell" x="319.07" y="509.04" width="16.30" height="17.62" fill="#263244"><title>Overlay 02 · func_ov002_020bbc4c · 848 B · remaining</title></rect>
 <rect class="cell" x="319.07" y="526.66" width="16.30" height="17.28" fill="#263244"><title>Overlay 02 · func_ov002_020acd18 · 832 B · remaining</title></rect>
 <rect class="cell" x="319.07" y="543.94" width="16.30" height="17.20" fill="#2dd4a0"><title>Overlay 02 · battle_map_transfer · 828 B · matching C/C++</title></rect>
-<rect class="cell" x="319.07" y="561.14" width="16.30" height="17.20" fill="#263244"><title>Overlay 02 · func_ov002_020b710c · 828 B · remaining</title></rect>
+<rect class="cell" x="319.07" y="561.14" width="16.30" height="17.20" fill="#2dd4a0"><title>Overlay 02 · battle_chain_relaxation · 828 B · matching C/C++</title></rect>
 <rect class="cell" x="319.07" y="578.34" width="16.30" height="17.03" fill="#2dd4a0"><title>Overlay 02 · battle_reward_counter_update · 820 B · matching C/C++</title></rect>
 <rect class="cell" x="319.07" y="595.38" width="16.30" height="17.03" fill="#2dd4a0"><title>Overlay 02 · battle_entry_transition · 820 B · matching C/C++</title></rect>
 <rect class="cell" x="319.07" y="612.41" width="16.30" height="17.03" fill="#38bdf8"><title>Overlay 02 · BattleCollision_TestObjects · 820 B · symbolic ASM</title></rect>
