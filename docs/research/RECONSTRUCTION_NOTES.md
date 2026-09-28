@@ -10473,3 +10473,41 @@ calls do not prove naturally raised exceptions, cross-frame unwinding, destructo
 calls, IRQ timing or pixel correctness. The actual source object is exact; the
 full gate passes the golden ROM, zero native differences and 112 tests.
 Validation: `build/analysis/xhigh_from_55/msl_exception_dispatch_validation.json`.
+
+
+## Catch selection and exception specifications
+
+`MSL_FindCatchHandler` (`0x02047388..0x02047568`, 480 bytes) scans a private
+136-byte cursor, skips cleanup actions, matches catch types and checks exception
+specifications. `MSL_DispatchExceptionSpecification` (`0x02047568..0x020475D4`,
+108 bytes) unwinds to a rejected specification, writes its object/type/destructor
+and action pointer into a 24-byte frame record, then enters its landing pad.
+The two middle words are preserved. Search context, cursor and specification
+layouts are shared with the existing active-catch and specification helpers.
+The search's seven previous instruction differences were resolved by expressing
+the native unsuccessful-match branch as a switch break; no ASM was needed.
+The first full build caught reversed function-section order, despite both
+functions comparing exactly on their own. Reversing definitions corrected it.
+Four actual source objects now contain five exact functions totaling 1,296 bytes.
+
+Private `build/runtime/eur_xhigh_msl_exception_dispatch/search_isolated_v1.json`
+passes 62 ARM946 cases: cleanup kinds 2-11, 13 and 16-19; encoded operand lengths;
+jumps; a rejected first catch; catch-all, object/base and pointer/base matches;
+and accepted specifications with one or two types. It checks full copied RAM,
+DTCM and scratch outside 512 stack bytes, ordered adjustment writes, direct-call
+arguments, selected handler and preserved SP/r4-r11. Invalid kind 14 stops at
+terminate entry. `handler_isolated_v2.json` adds 17 complete dispatch cases,
+including four rejected specifications with zero, one or two types, through
+the real unwind and landing-transfer helpers. No helper is stubbed.
+
+`handler_live55_v1.json` repeats 16 controlled dispatches in 400 DeSmuME frames:
+12 ordinary catch transfers and four specification transfers. It checks 238
+ordered non-stack stores, decoded specification arguments, catch/frame data,
+landing PC and restored registers/stack. All 16 original battle callbacks then
+complete. The previous section's bounded audio-capture exception and restoration
+protocol apply. Two captures and eight graphics dumps are retained; the final
+battle screen was inspected. Checkpoint RAM/DTCM and all 104 saves are preserved.
+Natural exceptions, cross-frame unwinding, destructor calls, termination, IRQ
+timing and pixels remain outside these checks. The complete gate passes the
+golden ROM, zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/msl_handler_search_validation.json`.

@@ -606,3 +606,6 @@ src/game/session_field_resume.c:
 
 src/msl/exception_dispatch.c:
     .text start:0x02047234 end:0x02047318
+
+src/msl/handler_search.cpp:
+    .text start:0x02047388 end:0x020475d4

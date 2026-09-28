@@ -8,32 +8,7 @@
  * saved block includes registers and frame metadata from unwind_internal.h.
  * Preserve scalar copies followed by the saved block's aggregate copy.
  */
-extern "C" {
-#include "unwind_internal.h"
-}
-struct MslSearchSavedState {u32 words[21];};
-struct MslSearchContext {
-    const u8 *type;
-    void *object;
-    void *destructor;
-    void *active_catch;
-    u32 address, stack_pointer;
-    u8 *frame_pointer;
-    MslSearchSavedState state;
-};
-struct MslSearchRecord {
-    MslUnwindRecord lookup;
-    u32 unknown20;
-};
-struct MslSearchCursor {
-    MslSearchRecord record;
-    MslSearchContext context;
-};
-struct MslActiveCatch {void *object; const u8 *type;};
-typedef char MslSearchContextSize[sizeof(MslSearchContext) == 112 ? 1 : -1];
-typedef char MslSearchRecordSize[sizeof(MslSearchRecord) == 24 ? 1 : -1];
-typedef char MslSearchCursorSize[sizeof(MslSearchCursor) == 136 ? 1 : -1];
-typedef char MslSearchSavedOffset[(u32)&((MslSearchContext *)0)->state == 28 ? 1 : -1];
+#include "exception_search_internal.h"
 extern "C" {
 int func_0204803c(MslSearchCursor *);
 void MSL_Terminate(void);

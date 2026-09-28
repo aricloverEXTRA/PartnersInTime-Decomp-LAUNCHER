@@ -25,7 +25,7 @@ typedef char MslCatchFrameSize[sizeof(MslCatchFrame) == 28 ? 1 : -1];
 
 void MSL_Terminate(void);
 void *MSL_FindActiveCatch(MslDispatchContext *, const MslCatchFrame *);
-const u8 *func_02047388(MslDispatchContext *, MslCatchFrame *, s32 *);
+const u8 *MSL_FindCatchHandler(MslDispatchContext *, MslCatchFrame *, s32 *);
 const u8 *MSL_DecodeSigned(const u8 *, s32 *);
 void func_020477b4(MslDispatchContext *, MslCatchFrame *, const u8 *);
 void MSL_SetupCatchRecord(MslDispatchContext *, s32, s32);
@@ -49,7 +49,7 @@ void MSL_DispatchException(MslDispatchContext *context)
         context->exception.active_catch = 0;
     else
         context->exception.active_catch = MSL_FindActiveCatch(context, &decoded.frame);
-    handler = func_02047388(context, &decoded.frame, &adjustment);
+    handler = MSL_FindCatchHandler(context, &decoded.frame, &adjustment);
     decoded.frame.catch_type = (const u8 *)((u32)handler[1] | (u32)handler[2] << 8
         | (u32)handler[3] << 16 | (u32)handler[4] << 24);
     input = MSL_DecodeUnsigned(handler + 5, &decoded.landing_offset);

@@ -11387,3 +11387,18 @@ Golden ROM, zero native differences and 112 tests pass. See the
 - Actual source object exact; golden ROM, zero native differences, 112 tests.
   Matching C/C++: 880288/1563700 (56.2952%). Evidence:
   `xhigh_from_55/msl_exception_dispatch_validation.json`.
+
+
+### Catch selection and exception-specification transfer
+
+- Reconstructed `MSL_FindCatchHandler` and `MSL_DispatchExceptionSpecification`
+  in C++, with shared search/specification layouts and no ASM.
+- 62 isolated search cases, 17 isolated dispatch cases and 16 controlled live
+  transfers. Real helpers, matching/skip/specification branches, complete checked
+  memory ranges, ordered stores, landing addresses and register/stack contracts.
+  No natural-exception or cross-frame-unwind claim; all 104 saves preserved.
+- Corrected reversed function-section order before the successful full gate.
+  Five affected functions (1,296 bytes) exact in actual source objects;
+  golden ROM, zero native differences, 112 tests.
+- Matching C/C++: 880876/1563700 (56.3328%). Evidence:
+  `xhigh_from_55/msl_handler_search_validation.json`.
