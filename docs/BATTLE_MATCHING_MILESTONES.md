@@ -11413,3 +11413,17 @@ Golden ROM, zero native differences and 112 tests pass. See the
 - Actual source object exact; golden ROM, zero native differences, 112 tests.
   Matching C/C++: 880932/1563700 (56.3364%). Evidence:
   `xhigh_from_55/field_timed_renderer_delete_validation.json`.
+
+
+### SDK user exception callback
+
+Reconstructed the 108-byte ARM9 user-handler dispatcher with four explained
+mode-switch instructions in inline ASM. Corrected two native MPU helper names
+using PiT instructions and the cross-game NitroSDK reference; those renames add
+no C bytes. Actual compiled object and golden ROM are exact, native differences
+zero, all 112 tests pass. Isolated verification covers 32 cases with explicitly
+modeled CP15 writes; four live controlled calls verify the real CP15 effects and
+restore MPU state before gameplay resumes. All 104 saves remain unchanged.
+Matching C/C++ is 881040/1563700 (56.3433%); symbolic ASM remains separate.
+See the SDK user exception callback section of the reconstruction reference and
+private os_user_exception_dispatch_validation.json for coverage limits/artifacts.

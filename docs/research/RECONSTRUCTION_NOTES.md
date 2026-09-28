@@ -10538,3 +10538,45 @@ Screenshots are observational; IRQ timing and pixels are not independently
 modeled. The actual source object is exact, and the complete gate passes the
 golden ROM, zero native differences and 112 tests. Validation:
 `build/analysis/xhigh_from_55/field_timed_renderer_delete_validation.json`.
+
+
+## SDK user exception callback
+
+`OSi_CallUserExceptionHandler` (`0x0203A600..0x0203A66C`, 108 bytes) returns
+when no callback is installed. Otherwise it carries the current stack into
+System mode, masks IRQs, enables the MPU, calls the handler with the saved
+context and user argument, then disables the MPU. Four inline-ASM instructions
+preserve the banked SP while writing CPSR `0x9F`; C expresses the remaining
+control flow. The returning exception path does not restore the previous CPU
+mode or MPU state. The context layout remains opaque here.
+
+The [manual's protection-unit section](https://inf.gg/mlbis/manual/nitrosdk#os-pu)
+helped correct two old symbol names: PiT `0x0203A4B0` and `0x0203A4C0` set and
+clear CP15 control bit 0, so they are `OS_EnableProtectionUnit` and
+`OS_DisableProtectionUnit`, not exception-vector selectors. Those native helpers
+remain unreconstructed and add no C bytes. PiT instructions establish this
+mapping; the manual does not document the callback dispatcher.
+
+Private `build/runtime/eur_xhigh_os_user_exception_dispatch/isolated_v3.json`
+checks 32 ARM946 cases over copied RAM/DTCM: System, Supervisor, Abort and
+Undefined modes; absent/present callback; MPU initially off/on; flags and user
+argument variants. It checks full memory including the saved LR store, helper
+order/arguments, CPSR, banked stacks, SP and preserved registers. Unicorn 2.1.3
+ignored the native CP15 control writes in two retained failed attempts; v3
+explicitly models those two side effects per nonnull call. It uses the actual
+compiled dispatcher and native helpers, including a no-op user callback.
+
+`live55_v1.json` passes four controlled calls in 400 DeSmuME frames from the
+save-55 battle checkpoint. Real MRC/MCR instructions confirm control `0x5707D`
+becomes `0x5707C` after a nonnull callback, then is restored to `0x5707D` before
+the original battle callback resumes. All four original callbacks complete.
+Full RAM/DTCM are checked outside 512 stack bytes and two validated 6,144-byte
+audio buffers; callback/context data are unchanged. Fixture globals, stack,
+registers and MPU state are restored. Two captures/eight graphics dumps are
+retained; the final battle screen was inspected. Checkpoint RAM/DTCM and all
+104 saves are preserved. These are controlled calls, not naturally raised
+exceptions; custom handler logic, FIQ banking, protection faults, IRQ timing
+and pixel correctness are untested. The integrated object reproduces the same
+108 bytes as the runtime candidate; the full gate passes the golden ROM,
+zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/os_user_exception_dispatch_validation.json`.
