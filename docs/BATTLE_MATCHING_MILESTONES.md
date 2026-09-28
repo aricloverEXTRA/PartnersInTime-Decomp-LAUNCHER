@@ -11402,3 +11402,14 @@ Golden ROM, zero native differences and 112 tests pass. See the
   golden ROM, zero native differences, 112 tests.
 - Matching C/C++: 880876/1563700 (56.3328%). Evidence:
   `xhigh_from_55/msl_handler_search_validation.json`.
+
+
+### Timed field renderer deletion
+
+- Reconstructed the complete 56-byte `FieldTimedRenderer_Delete` wrapper in C++.
+- Ordinary pause/back route: 41 complete renderer releases, 581 ordered stores,
+  both sprite lists, heap metadata, 43 merges and return/stack/register checks.
+  No RAM fixtures; field return inspected and all 104 saves preserved.
+- Actual source object exact; golden ROM, zero native differences, 112 tests.
+  Matching C/C++: 880932/1563700 (56.3364%). Evidence:
+  `xhigh_from_55/field_timed_renderer_delete_validation.json`.

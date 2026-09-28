@@ -534,3 +534,6 @@ src/field/field_time_hole_arrival.cpp:
 
 src/field/field_corner_correction.c:
     .text start:0x020aa30c end:0x020aa5b0
+
+src/field/field_timed_renderer_delete.cpp:
+    .text start:0x02080ec4 end:0x02080efc

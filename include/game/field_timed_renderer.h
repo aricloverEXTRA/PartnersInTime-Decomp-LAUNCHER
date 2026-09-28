@@ -39,6 +39,7 @@ FieldAnimationRenderer *FieldAnimationRenderer_Init(FieldAnimationRenderer *mode
 FieldAnimationRenderer *FieldAnimationRenderer_InitBase(FieldAnimationRenderer *model);
 FieldAnimationRenderer *FieldAnimationRenderer_DestroyBase(FieldAnimationRenderer *model);
 FieldTimedRenderer *FieldTimedRenderer_DestroyBase(FieldTimedRenderer *model);
+FieldTimedRenderer *FieldTimedRenderer_Delete(FieldTimedRenderer *model);
 void FieldAnimationRenderer_RestoreController(FieldRenderObject *model,
     const struct ModelRenderDescriptor *descriptor, void *controller, s16 animation);
 u8 FieldAnimationRenderer_GetOverlapPriority(const FieldRenderObject *model,

@@ -10511,3 +10511,30 @@ Natural exceptions, cross-frame unwinding, destructor calls, termination, IRQ
 timing and pixels remain outside these checks. The complete gate passes the
 golden ROM, zero native differences and 112 tests. Validation:
 `build/analysis/xhigh_from_55/msl_handler_search_validation.json`.
+
+
+## Timed field renderer deletion
+
+`FieldTimedRenderer_Delete` (`ov000 0x02080EC4..0x02080EFC`, 56 bytes) restores
+the timed and animation renderer vtables, calls the shared controller/resource
+base destructors, frees the allocation and returns its former address. The base
+chain unlinks the embedded sprite allocation at offset 20 before heap release.
+The wrapper uses the existing 320-byte `FieldTimedRenderer` layout.
+
+Private `build/runtime/eur_xhigh_field_timed_renderer_delete/pause_v1.json`
+passes 591 ordinary frames from the verified Younger Princess Shroob field
+checkpoint, opening and closing pause without RAM fixtures. At frames 48-49,
+41 complete 320-byte renderers are released: 23 from heap 1 and 18 from heap 0.
+The oracle checks full renderer allocations/headers, both complete sprite lists
+and roots, render-list roots, neighboring heap headers/regions, helper arguments,
+581 ordered stores, return value, SP and preserved registers. Linked head, tail,
+interior and singleton removal occur; 43 heap merges include forward, backward
+and both-neighbor cases. It checks each freed record through the wrapper return,
+before any subsequent allocation can reuse it. Detached sprite removal and a
+free with neither neighbor available are outside this route's coverage.
+Three captures and 12 graphics dumps are retained; the final field screen was
+inspected. Full checkpoint RAM/DTCM and all 104 original saves are preserved.
+Screenshots are observational; IRQ timing and pixels are not independently
+modeled. The actual source object is exact, and the complete gate passes the
+golden ROM, zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/field_timed_renderer_delete_validation.json`.

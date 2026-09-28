@@ -1066,3 +1066,4 @@ src/scene_menu_ov007/pause_status_release.c
 src/game/session_field_resume.c
 src/msl/exception_dispatch.c
 src/msl/handler_search.cpp
+src/field/field_timed_renderer_delete.cpp
