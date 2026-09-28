@@ -249,3 +249,9 @@ src/scene_menu_ov007/pause_menu_cursor_close.cpp:
 
 src/scene_menu_ov007/pause_text_panel_close.cpp:
     .text start:0x0207b2c8 end:0x0207b2dc
+
+src/scene_menu_ov007/pause_selection_close.cpp:
+    .text start:0x0207b864 end:0x0207b88c
+
+src/scene_menu_ov007/pause_bitmap_close.cpp:
+    .text start:0x02079d08 end:0x02079d1c

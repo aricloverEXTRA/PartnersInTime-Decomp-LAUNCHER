@@ -9722,3 +9722,35 @@ visually inspected. Eight screenshot/graphics captures are retained. Checkpoint
 RAM/DTCM is restored and all 104 saves remain unchanged. All three actual source
 objects and every function in the three migrated caller units match; the full
 ROM, native relink and 107 tests pass. The bean-digit creator remains native.
+
+
+## Pause equipment dismissal
+
+`MenuEquipment_RequestClose` (`0x02079D08`, 20 bytes) clears the workspace word
+at `+0x2C0`, which the equipment/status display tasks consume to begin closing.
+`PauseEquipment_CloseItemSelection` (`0x0207B864`, 40 bytes) marks task group 3
+and unlinks the shared sub-screen tile allocation at workspace `+0x2F8`.
+Both are pure C++; the status-page caller uses the named close API.
+
+Private `build/runtime/eur_xhigh_pause_cleanup/combined_v3.json` records an
+ordinary 1,730-frame save-65 route through status and clothing selection, with
+no RAM fixtures. Each helper executes once. The oracle checks the cleared flag,
+13 marked tasks and the group roots, the entire 90,600-byte workspace, party
+allocation and header, save prefix and display records. At the unlink call it
+checks all 31 sprite-allocation records on both screen lists and their roots.
+The target allocation is already detached, with zero neighbors and its linked
+bit clear; the native helper tolerates this. This route does not cover unlinking
+a currently linked allocation or prove subsequent task-pool cleanup.
+
+The clothing-selection and final field screens were inspected. Nine screenshots
+and 36 graphics dumps are retained; graphics are observational. Helper arguments,
+stack and preserved registers pass; full checkpoint RAM/DTCM is restored and all
+104 saves are unchanged. Both actual source objects and the migrated caller unit
+match completely. Golden ROM, zero native differences and 107 tests pass.
+
+Two failed probes remain recorded. `combined_v1` reached the status helper but
+used the consumable-item route and missed equipment cleanup; its planned HP
+fixture never ran. `combined_v2` reached cleanup but incorrectly required a
+linked tile allocation. Native inspection explained the detached case; the
+corrected oracle in `combined_v3` preserves all seven earlier captures and
+their 28 graphics hashes. Both failures restored the checkpoint and saves.

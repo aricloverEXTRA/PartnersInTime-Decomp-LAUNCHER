@@ -6,6 +6,7 @@
 
 #include "pause_scene_internal.h"
 #include <game/pause_text_panel.h>
+#include <game/menu_equipment.h>
 #include <game/pause_navigation.h>
 #include <game/pause_background.h>
 
@@ -13,7 +14,6 @@ extern "C" {
 void func_ov005_020663d8(int);
 void func_ov005_02066358(PauseMenuElement *, void (*)(PauseMenuElement *), int);
 void func_ov005_02069bcc(int, u16, u16, u16);
-void func_ov007_02079d08(void);
 void func_ov007_0206f8f8(int, int);
 void func_ov007_02078478(void);
 void func_ov007_020784a0(void);
@@ -40,7 +40,7 @@ extern "C" void PauseStatusPage_UpdateTask(PauseStatusPageTask *task)
                 (void (*)(PauseMenuElement *))PauseScene_PrepareExitTask, 0);
         } else if ((INPUT_PRESS & 0x802) || task->queued_direction == -1) {
             WORK.initialized = 1;
-            func_ov007_02079d08();
+            MenuEquipment_RequestClose();
             WORK.selected[3] = ACTIVE_MEMBER;
             func_ov005_02066358((PauseMenuElement *)task,
                 (void (*)(PauseMenuElement *))PausePage_CloseTask, 0);

@@ -11118,3 +11118,16 @@ Private evidence: xhigh_from_55/scene_sine_validation.json.
   differences and 107 tests passed. Matching C/C++: 869816/1563700 (55.6255%).
 - Private evidence: `eur_xhigh_pause_menu_tails/keys_v1.json` and
   `xhigh_from_55/pause_menu_tails_validation.json`.
+
+
+### Equipment selection and status dismissal
+
+- Reconstructed the equipment/status close request and equipment-selection
+  cleanup (60 pure C++ bytes), including the named status-page caller.
+- Ordinary save-65 replay: both helpers executed, 13 tasks marked, all 31 live
+  sprite-allocation list records checked. The shared allocation was already
+  detached. No RAM fixtures; checkpoint restored and all 104 saves unchanged.
+- Actual objects/caller exact, golden ROM, zero native differences, 107 tests.
+  Matching C/C++: 869876/1563700 (55.6293%).
+- Private evidence: `eur_xhigh_pause_cleanup/combined_v3.json` and
+  `xhigh_from_55/pause_cleanup_validation.json`; failed v1/v2 probes retained.

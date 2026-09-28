@@ -1059,3 +1059,5 @@ src/scene_menu_ov007/pause_text_panel.cpp
 src/scene_menu_ov007/pause_bean_digit.cpp
 src/scene_menu_ov007/pause_menu_cursor_close.cpp
 src/scene_menu_ov007/pause_text_panel_close.cpp
+src/scene_menu_ov007/pause_selection_close.cpp
+src/scene_menu_ov007/pause_bitmap_close.cpp

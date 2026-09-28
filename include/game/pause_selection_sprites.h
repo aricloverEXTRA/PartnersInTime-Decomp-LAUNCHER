@@ -25,6 +25,7 @@ typedef char PauseListArrowTaskSize[sizeof(PauseListArrowTask) == 72 ? 1 : -1];
 #ifdef __cplusplus
 extern "C" {
 #endif
+void PauseEquipment_CloseItemSelection(void);
 void PauseList_UpdateItemHeading(MenuEquipmentTask *task);
 void PauseList_UpdateScrollArrow(PauseListArrowTask *task);
 void PauseList_CreateSelectionSprites(PausePageTask *parent, int suppress_heading);

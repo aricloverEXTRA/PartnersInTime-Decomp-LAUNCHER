@@ -53,6 +53,7 @@ typedef char MenuEquipmentTask_SizeCheck[sizeof(MenuEquipmentTask) == 72 ? 1 : -
 #ifdef __cplusplus
 extern "C" {
 #endif
+void MenuEquipment_RequestClose(void);
 void MenuEquipment_CreateHeading(void);
 void MenuEquipment_UpdateComparisonArrow(MenuEquipmentTask *task);
 void MenuEquipment_UpdateNumberStrip(MenuEquipmentTask *task);
