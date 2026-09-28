@@ -27,10 +27,19 @@ typedef struct Overlay25ChainState {
     s16 unknown_308, amplitude_q8, unknown_30c;
     s16 offset_x, offset_y, offset_z;
     s16 unknown_314, counter, unknown_318, unknown_31a;
-    u16 object_id;
-    u8 unknown_31e[26];
+    union {
+        struct { u16 object_id; u8 unknown_31e[26]; };
+        struct {
+            u8 unknown_31c[4];
+            /* Chain sum plus its world-space Q8 anchor. */
+            s32 endpoint_x_q8, endpoint_y_q8, endpoint_z_q8;
+            u8 unknown_32c[12];
+        };
+    };
     s32 x_q8, y_q8, z_q8;
 } Overlay25ChainState;
+typedef char Overlay25ChainState_EndpointOffsetCheck[
+    (u32)&((Overlay25ChainState *)0)->endpoint_x_q8 == 800 ? 1 : -1];
 typedef char Overlay25ChainState_SizeCheck[sizeof(Overlay25ChainState)==836?1:-1];
 typedef struct Overlay25ChainMotionParameters {
     u16 phase;
@@ -166,6 +175,7 @@ void Overlay25Enemy_WaitAttachedEffect(Overlay25Task *task, BattleSceneObject *o
                                        Overlay25WorkPrefix *work);
 void Overlay25Task_WaitSibling(Overlay25Task *task, BattleSceneObject *, Overlay25WorkPrefix *work);
 void Overlay25Chain_RetractForRetry(Overlay25Task *task, BattleSceneObject *enemy, Overlay25WorkPrefix *work);
+void Overlay25Chain_ReturnParty(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Chain_ApplyLandingDamage(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25LinkedEffect_ApplyPartyLandingDamage(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25LinkedEffect_ApplyReflectedDamage(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);

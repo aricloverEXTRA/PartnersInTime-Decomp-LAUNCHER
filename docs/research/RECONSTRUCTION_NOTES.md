@@ -10849,3 +10849,61 @@ existing assertion idiom fixed it. The complete subsequent gate reproduces the
 original ROM, reports zero native-relink differences and passes 112 tests.
 Producer exits and artifact checks are recorded in
 `build/analysis/xhigh_from_55/battle_chain_relax_validation.json`.
+
+
+## Chain-held party return
+
+[`Overlay25Chain_ReturnParty`](../../src/elder_princess_shroob_ov025/enemy_chain_landing.cpp)
+reconstructs overlay 25 `0x020C877C..0x020C8AC8` (844 bytes) in C++ and extends
+the existing contiguous landing unit to 1,240 bytes. It retracts at most one
+segment per update, raises smoothing by 32 while below 2048, and rotates the
+first Q8 segment along a cosine-shaped arc. The smoothing increment can pass
+2048; it is not a clamp. After relaxation, it sums all but the final three
+segments and adds the chain anchor. The resulting endpoint at work offsets
+800/804/808 places the held party member. Named endpoint fields preserve the
+existing raw view and 836-byte chain stride.
+
+The unsigned phase advances by 1024 while below `0xFC00`. On reaching that
+threshold, the battle variant selects either the member's home coordinates or
+the other adult member's home. The full-width movement arguments include the
+three deltas and `(signed)(integer_root << 8) / 2048` as duration. The callback
+then clears the member's vertical visual offset, starts a completion task in
+slot five or six, and advances to landing damage. Native addressing forms the
+fixed slot-five base before adding the parity-selected task stride. Endpoint
+layout, late ID narrowing and stack-argument evaluation explain the matching
+corrections; no inline assembly is used.
+
+Private `build/runtime/eur_xhigh_chain_return/live103_v1.json` repeats the
+controlled save-103 tracking route described above. Across 1,170 frames it
+independently checks 126 return callbacks, 1,277 caller stores and 764 helper
+argument/result pairs. Both completed arcs select the original home and start
+timed movement. The checks cover chain count changes and retention, smoothing
+updates and retention, endpoint sums, party lookup, position adjustment, motion
+list/channel changes, completion-task initialization and the callback change.
+The full chain workspace, arena slot, scene objects, 148-byte party slots,
+visited motion-list nodes/root, trig table and relevant context fields are
+checked. The nested relaxation oracle again checks 4,678 calls/42,823 segments;
+these are separate from the return-callback counts. Audio is checked at its
+argument boundary, without a global audio-memory oracle.
+
+`build/analysis/xhigh_from_55/ov25_chain_return_isolated_v1.json` adds 260 copied-
+RAM ARM946 cases. They cover all four chain indices, both adult members and
+variant values, count floors, smoothing thresholds, phases around `0xFC00`,
+return distances 0/7/8/9, and unlisted/listed objects with active or deferred
+motion channels. The compiled caller and real lookup, relaxation, division,
+sum, motion and completion-initializer helpers execute. Only audio uses a
+guarded no-op stub that clobbers caller-saved registers. Results include 16
+immediate and 180 timed returns; 80 use the alternate home. All 23,511 non-stack
+stores are checked in order by caller/helper, along with 2,208 helper pairs,
+whole 4 MiB RAM, DTCM, unused stack, preserved registers and the modeled sqrt
+register page. Maximum stack use is 152 bytes. Modeled busy polls do not prove
+hardware latency, IRQ timing or gameplay coverage.
+
+All 34 artifacts and source pins validate. The three screenshot/graphics sets
+are hash-identical to the earlier route; frame 1170 was inspected again.
+Checkpoint RAM/DTCM is fully restored and all 104 saves remain unchanged.
+The actual landing unit matches all three functions/1,240 bytes; 21 related
+objects match 70 functions/22,544 bytes. The complete build reproduces the
+original ROM, reports zero native-relink differences and passes 112 tests.
+There were no failed build or replay runs in this batch. Evidence and producer
+exits: `build/analysis/xhigh_from_55/ov25_chain_return_validation.json`.

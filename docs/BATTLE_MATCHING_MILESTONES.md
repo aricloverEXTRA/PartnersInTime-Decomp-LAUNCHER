@@ -11521,3 +11521,23 @@ artifacts and coverage limits.
   original ROM hash, zero native-relink differences, 112 tests.
 - Evidence: `build/analysis/xhigh_from_55/battle_chain_relax_validation.json`.
   Matching C/C++: 884,392 / 1,563,700 (56.5577%); symbolic ASM remains separate.
+
+
+### Chain-held party return (2026-09-28)
+
+- Added `Overlay25Chain_ReturnParty`, overlay25 `0x020C877C..0x020C8AC8`,
+  844 exact C++ bytes. The contiguous landing unit now matches 3 functions/1,240
+  bytes; named endpoint fields retain the raw view and 836-byte chain stride.
+- Controlled save103 live route: 126 return callbacks,1,277 own stores,764 helper
+  pairs and two complete landing handoffs. Nested chain oracle separately checks
+  4,678 calls/42,823 segments. Audio arguments checked; graphics observational.
+- 260 isolated ARM946 cases: both homes, count/smoothing/phase boundaries,
+  immediate/timed return and active/deferred motion channels.23,511 ordered
+  non-stack stores,2,208 helper pairs,whole copied RAM/DTCM checked; audio stub
+  explicit. Modeled sqrt waits do not prove hardware or IRQ timing.
+- 34 artifacts verified; repeated screenshot/graphics hashes identical; final
+  screenshot inspected. Whole checkpoint restored;104 saves unchanged.
+- Full gate passes first attempt: original ROM,zero native-relink differences,
+  112 tests.21 related actual objects:70 functions/22,544 bytes all exact.
+- Evidence:`build/analysis/xhigh_from_55/ov25_chain_return_validation.json`.
+  Matching C/C++:885,236 /1,563,700 (56.6116%); symbolic ASM separate.
