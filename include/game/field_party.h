@@ -331,6 +331,7 @@ void FieldPartyEntity_HideBlinkRenderers(FieldEntity *entity);
 void FieldPartyEntity_ShowBlinkRenderersWithSound(FieldEntity *entity);
 void FieldPartyEntity_CopySortKeysToAnchors(FieldPartyEntity *member);
 void FieldPartyEntity_UpdateAuxiliaryPriorities(FieldPartyEntity *member);
+void FieldPartyEntity_UpdateAnimation(FieldPartyEntity *member, int mode, u8 update_bounds);
 void FieldPartyEntity_UpdateScreenPositions(FieldPartyEntity *member, s16 camera_x, s16 camera_y);
 void FieldPartyEntity_UpdateRenderers(FieldPartyEntity *member, u8 default_priority);
 void FieldPartyEntity_CopyPartnerPlanarBounds(FieldPartyEntity *member);

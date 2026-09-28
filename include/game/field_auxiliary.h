@@ -33,7 +33,7 @@ extern "C" {
 #endif
 void FieldAuxiliary_StopSpecialRenderer(FieldAuxiliaryEntity *aux);
 void FieldAuxiliary_UpdateRenderPriority(FieldAuxiliaryEntity *aux);
-void FieldAuxiliary_UpdateAnimation(FieldAuxiliaryEntity *aux, int mode, int restart);
+void FieldAuxiliary_UpdateAnimation(FieldAuxiliaryEntity *aux, int mode, u8 update_bounds);
 void FieldAuxiliary_UpdateRendererAtOffset(FieldAuxiliaryEntity *aux, u8 default_priority);
 void FieldAuxiliary_UpdateContactsAtOffset(FieldAuxiliaryEntity *aux);
 void FieldAuxiliary_UpdateCollisionAtOffset(FieldAuxiliaryEntity *aux, int mode);

@@ -11466,3 +11466,24 @@ All 104 saves remain unchanged. Matching C/C++ is 881980/1563700 (56.4034%);
 symbolic ASM remains separate. See Pocket Chomp adult bounce exit in the
 reconstruction reference and private chomp_adult_bounce_validation.json for
 artifacts and coverage limits.
+
+
+### 2026-09-28: Party locomotion animation selection
+
+- Reconstructed `FieldPartyEntity_UpdateAnimation` in the existing party-render
+  unit: 1,364 new C++ bytes at ov000 `0x020B80A4..0x020B85F8`, without inline ASM.
+  Special locomotion states select resource groups or a base-policy mode; enabled
+  auxiliary slots receive the original refresh flag and signed playback speed.
+  Corrected the shared virtual update-bounds argument to its byte-wide contract.
+- Full gate passes: byte-identical EUR ROM, native relink with zero differing
+  bytes, 112 tests, and 34 functions/8,816 bytes exact in actual source objects.
+- Three ordinary save-65/83 routes check 2,628 calls across 25 states in 983 frames,
+  686 direct stores, 146 speed calls and 629 auxiliary calls. Both state-21 paths
+  occur live. Bounded animation-child observations are distinct from independent
+  caller and list-neighbor checks. Three final field captures were inspected.
+  Another 1,002 copied-RAM ARM946 cases cover dispatch and parameter boundaries;
+  animation children are explicit stubs, while the speed helper executes natively.
+- Matching C/C++ reaches **883,344 / 1,563,700 bytes (56.4906%)**. Overlay 0 is
+  **195,712 / 366,712 bytes (53.37%)**. Symbolic ASM remains separate.
+  All 104 original saves are unchanged. Details and coverage limits:
+  [party animation selection](research/RECONSTRUCTION_NOTES.md#party-animation-selection).

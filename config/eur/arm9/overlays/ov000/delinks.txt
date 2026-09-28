@@ -192,7 +192,7 @@ src/field/field_auxiliary_lifecycle.cpp:
     .text start:0x020b72e0 end:0x020b756c
 
 src/field/field_party_entity_render.cpp:
-    .text start:0x020b7ef8 end:0x020b80a4
+    .text start:0x020b7ef8 end:0x020b85f8
 
 src/field/field_party_entity_bounds.cpp:
     .text start:0x020b85f8 end:0x020b86ec

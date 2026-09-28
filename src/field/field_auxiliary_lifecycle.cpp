@@ -20,7 +20,6 @@ void func_ov000_020ae6c0(FieldRuntimeEntity *, int);
 int func_ov000_020b4728(FieldRuntimeEntity *, int, int);
 
 extern const u8 data_ov000_020c0b78[];
-void func_ov000_020a4a1c(FieldRuntimeEntity *, int, int);
 
 FieldAuxiliaryEntity *FieldAuxiliary_InitPlacement(FieldAuxiliaryEntity *aux, int index, int argument,
                                                    int resource_set, int kind, FieldRuntimeEntity *owner)

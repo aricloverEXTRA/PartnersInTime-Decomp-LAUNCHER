@@ -328,7 +328,7 @@ typedef struct FieldEntity {
     virtual void cancel_orbit_movement(FieldOrbitController *controller, int snap_to_destination);
     virtual void set_visible(int visible);
     virtual void unknown_64();
-    virtual void update_animation(int mode, int restart);
+    virtual void update_animation(int mode, u8 update_bounds);
     virtual void update_screen_position(s16 camera_x, s16 camera_y);
     virtual void unknown_70();
     virtual void start_blink(int mode, const s8 *durations, u8 length,

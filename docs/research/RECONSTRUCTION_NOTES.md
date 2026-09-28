@@ -10687,3 +10687,67 @@ already-finished-bounces branch while horizontal movement is still active, or
 invalid bounce indices. The first failed probe omitted the variant object's
 palette ownership; its report and producer remain separate from the corrected
 runs. Private validation: `build/analysis/xhigh_from_55/chomp_adult_bounce_validation.json`.
+
+
+## Party animation selection
+
+[FieldPartyEntity_UpdateAnimation](../../src/field/field_party_entity_render.cpp)
+reconstructs overlay 0, `0x020B80A4..0x020B85F8` (1,364 bytes), in C++.
+It selects an animation from the member's locomotion state and facing direction,
+or delegates to the base entity policy. States with vertical movement choose
+mode 4 or 5 from the signed value at entity +868. State 21 tests bit 0 of its
+state record and bits 3..6 of an optional contact record; the latter retains a
+neutral four-byte view because its complete layout is not established here.
+Resource changes preserve the renderer's behavior field. Afterwards, six
+auxiliary slots receive their own animation updates. Following auxiliaries copy
+the member's original refresh flag and current signed animation speed, even if
+the member's animation helper has already cleared that flag.
+
+The final virtual argument is a byte-wide `update_bounds`, also forwarded to
+`FieldEntity_SetResourceAnimation`; it is not an animation-restart integer.
+The native caller forwards it without masking, and the resource helper consumes
+a byte on the stack. Keeping the caller parameter narrow preserves this ABI.
+A private full-width resource-helper prototype matched the new caller but
+changed the existing callee; that experiment was rejected. The public resource
+helper is unchanged. Initializing the handled flag before direction selection
+and retaining explicit byte casts at the renderer stores explains the remaining
+scheduling and masking differences. No inline assembly or source sweeps were used.
+All 34 functions (8,816 bytes) in six affected actual source objects compare
+exactly; the ROM hash, native relink and 112 tests pass.
+
+Private `build/runtime/eur_xhigh_field_party_animation/` contains three ordinary
+routes: `movement65_v1` (403 frames), `hammer83_v1` (231), and `roll83_v1` (349).
+They check 2,628 calls spanning 25 locomotion states, 686 ordered direct stores,
+2,156 base-policy calls, 34 resource changes, 146 speed updates and 629 auxiliary
+updates. Both state-21 outcomes, independent/following auxiliaries, and retained
+versus changed resources occur live. The first route uses
+`probe_field_party_animation_v1.py`; the other two use `probe_field_party_animation_v2.py`.
+All use `field_party_animation_oracle_v1.py`.
+
+The oracle checks whole 1,440-byte members, 1,360-byte auxiliaries, actual
+316-byte renderer allocations, their heap headers, accessed records and shared
+palette/render/texture lists. It independently checks caller decisions,
+arguments, stores, speed results, SP/r4-r11 and CPSR control bits. Animation
+children remain observational within their receiving entity, renderer and palette;
+changes to other list nodes and roots are derived from the observed placement.
+This does not verify all child internals or writes outside those records.
+Nine screenshots and 81 graphics captures preserve mapped BG/OBJ VRAM, palette,
+OAM and display-bank registers; the three final field screenshots were inspected.
+There is no independent pixel or IRQ oracle. Checkpoint RAM/DTCM was restored,
+and all 104 original saves retain their baseline hashes.
+
+`field_party_animation_isolated_v3.json` adds 1,002 ARM946 cases on copied
+RAM/DTCM, including every state 0..96, the default dispatch path, signed velocity
+boundaries, direction modes, resource equality, byte parameter values, state-21
+pointer/bit gates and all auxiliary slots. Animation children are explicit stubs
+with checked arguments, prescribed writes and caller-saved register clobbers.
+The native speed helper executes in 648 cases, including signed-halfword
+endpoints and both sides of its timer threshold. Synthetic auxiliary renderers
+use the copied owner's valid animation tables. Whole 4 MiB RAM, ordered stores,
+unused stack, DTCM and preserved registers are checked; maximum stack use is
+40 bytes. Unknown states and resource-index overflow fixtures cover caller
+arithmetic only, not valid assets or live gameplay. Earlier isolated versions
+failed source parsing before executing any case; the successful producer is
+`check_field_party_animation_isolated_v3.py`. Hashes, extents, producer versions
+and exit statuses are recorded in `field_party_animation_validation.json` under
+`build/analysis/xhigh_from_55/`.
