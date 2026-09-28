@@ -48,3 +48,26 @@ def test_rejects_duplicate_symbol_definitions(mapping):
     root, entry = mapping
     with pytest.raises(ValueError, match="already defined"):
         apply_aliases("    example.o(.text)\n    Interior = 0;", [entry], root)
+
+
+def test_link_time_constants_do_not_allocate_or_move_sections(tmp_path):
+    entry = {"source": "src/heap.c", "constants": {"ArenaLow": "0x020cbfe0", "StackSize": "0x0"}}
+    script = "SECTIONS {\n    heap.o(.text)\n    next.o(.text)\n}\n"
+    result = apply_aliases(script, [entry], tmp_path)
+    assignments = "    ArenaLow = 0x020cbfe0;\n    StackSize = 0x0;\n"
+    assert result.replace(assignments, "") == script
+    assert result.index(assignments) < result.index("next.o")
+    with pytest.raises(ValueError, match="already defined"):
+        apply_aliases(result, [entry], tmp_path)
+    with pytest.raises(ValueError, match="one text placement"):
+        apply_aliases("    unrelated.o(.text)", [entry], tmp_path)
+
+
+@pytest.mark.parametrize("name,value", [
+    ("Bad;Name", "0x0"), ("Value", "0x100000000"),
+    ("Value", "0x1; injected = 0"), ("Value", -1),
+])
+def test_rejects_invalid_link_time_constants(tmp_path, name, value):
+    entry = {"source": "src/heap.c", "constants": {name: value}}
+    with pytest.raises(ValueError, match="Invalid"):
+        apply_aliases("    heap.o(.text)", [entry], tmp_path)

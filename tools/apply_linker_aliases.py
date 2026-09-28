@@ -1,8 +1,8 @@
-"""Preserve documented interior entry labels when their owner is compiled C.
+"""Preserve interior entry labels and link-time constants used by compiled C.
 
-The assignments export addresses only; they add no instructions or sections.
-Offsets come from the original symbol map, and the normal module/symbol checks
-remain responsible for verifying the compiled owner's exact bytes and layout.
+The assignments export addresses or scalar values; they allocate no bytes.
+Interior offsets come from the symbol map; constants are explicit per-version
+values in the manifest. Module/symbol checks still verify exact bytes and layout.
 """
 
 import argparse
@@ -15,6 +15,30 @@ import subprocess
 def apply_aliases(script: str, entries: list[dict], symbols_root: Path) -> str:
     exported = set()
     for entry in entries:
+        object_name = Path(entry["source"]).with_suffix(".o").name
+        anchor = re.compile(r"^([ \t]+)" + re.escape(object_name) + r"\(\.text\)$", re.M)
+        matches = list(anchor.finditer(script))
+        if len(matches) != 1:
+            raise ValueError(f"Expected one text placement for {object_name}, found {len(matches)}")
+        if "constants" in entry:
+            # These are values, not allocated data. Keeping them at link time
+            # preserves arithmetic on arena boundaries and stack reservations.
+            if set(entry) != {"source", "constants"} or not entry["constants"]:
+                raise ValueError("A constant entry requires only source and nonempty constants")
+            lines = []
+            for name, value in entry["constants"].items():
+                if not re.fullmatch(r"[A-Za-z_]\w*", name):
+                    raise ValueError(f"Invalid linker constant name: {name}")
+                if not isinstance(value, str) or not re.fullmatch(r"0x[0-9a-fA-F]{1,8}", value):
+                    raise ValueError(f"Invalid 32-bit linker constant: {name}={value}")
+                if name in exported or re.search(r"\b" + re.escape(name) + r"\s*=", script):
+                    raise ValueError(f"Alias already defined: {name}")
+                exported.add(name)
+                lines.append(f"{name} = {value};")
+            match = matches[0]
+            insertion = "\n" + "\n".join(match[1] + line for line in lines)
+            script = script[:match.end()] + insertion + script[match.end():]
+            continue
         symbols = {}
         for line in (symbols_root / entry["symbols"]).read_text().splitlines():
             match = re.fullmatch(
@@ -28,11 +52,6 @@ def apply_aliases(script: str, entries: list[dict], symbols_root: Path) -> str:
         start, size = symbols[owner]
         if not size:
             raise ValueError(f"Alias owner is not an ARM function: {owner}")
-        object_name = Path(entry["source"]).with_suffix(".o").name
-        anchor = re.compile(r"^([ \t]+)" + re.escape(object_name) + r"\(\.text\)$", re.M)
-        matches = list(anchor.finditer(script))
-        if len(matches) != 1:
-            raise ValueError(f"Expected one text placement for {object_name}, found {len(matches)}")
         lines = []
         for name in entry["labels"]:
             address, label_size = symbols[name]

@@ -42,6 +42,8 @@ typedef char GameHeapRegionSizeCheck[(sizeof(GameHeapRegion) == 16) ? 1 : -1];
 /* `mode` selects which end of the region a request is served from, so
    long-lived and short-lived allocations can be kept apart. `unused` is a
    parameter the original API carries but never reads. */
+/* Establish the five initial regions during boot, before allocations. */
+void GameHeap_Initialize(void);
 void GameHeap_Destroy(int heap);
 int GameHeap_Create(int parent, u32 size, u32 unused, int mode);
 void *GameHeap_Allocate(int heap, u32 size, void *unused, int mode);

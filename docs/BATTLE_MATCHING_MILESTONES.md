@@ -11131,3 +11131,21 @@ Private evidence: xhigh_from_55/scene_sine_validation.json.
   Matching C/C++: 869876/1563700 (55.6293%).
 - Private evidence: `eur_xhigh_pause_cleanup/combined_v3.json` and
   `xhigh_from_55/pause_cleanup_validation.json`; failed v1/v2 probes retained.
+
+
+## 2026-09-28: Initial game heap regions
+
+- Reconstructed GameHeap_Initialize in pure C, extending the existing allocator.
+  All ten actual source-object functions (1,500 bytes) match; 480 bytes are new.
+- Recovered EUR link-time arena bounds and stack reservations. Linker constants
+  preserve the native arithmetic without adding data or inline assembly.
+- Save-55 cold boot: one initializer call, complete 512-byte table and five
+  regions (3,276,160 bytes) checked, including the overlapping 40-byte DTCM
+  stack frame, helper arguments/output and preserved registers. First probe's
+  unchanged-payload assumption failed; the preserved v2 probe models the stack
+  and passes. Title screen inspected; no RAM fixtures and 104 saves unchanged.
+- Full build and golden ROM pass; native relink differs by zero bytes; 112 tests
+  pass. Runtime nonzero reserved bits and independent graphics/IRQ behavior
+  remain untested. Evidence: build/runtime/eur_xhigh_heap_initialize/boot55_v2.json
+  and build/analysis/xhigh_from_55/heap_initialize_validation.json.
+- Matching C/C++: 870,356 / 1,563,700 bytes (55.6600%); symbolic ASM stays separate.

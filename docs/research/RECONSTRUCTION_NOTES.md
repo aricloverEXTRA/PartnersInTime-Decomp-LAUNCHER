@@ -9754,3 +9754,50 @@ fixture never ran. `combined_v2` reached cleanup but incorrectly required a
 linked tile allocation. Native inspection explained the detached case; the
 corrected oracle in `combined_v3` preserves all seven earlier captures and
 their 28 graphics hashes. Both failures restored the checkpoint and saves.
+
+
+## Initial game heap regions
+
+`GameHeap_Initialize` at resident ARM9 `0x02029C04` reconstructs 480 bytes of
+pure C and extends the existing [allocator](../../src/game/heap.c). It clears
+all 32 region records, configures the first five and initializes their block
+headers. Heap 1 is the occupied high-end sentinel linked to heap 0; the other
+initial blocks are free. The block heap ID uses five bits and preserves the
+remaining header bits.
+
+| Heap | First block | Payload bytes | Role |
+|---:|---:|---:|---|
+| 0 | `0x020CC200` | 3,227,104 | Main RAM |
+| 1 | `0x023DFFF0` | 0 | Main-RAM end sentinel |
+| 2 | `0x01FF87A0` | 30,800 | ITCM |
+| 3 | `0x027E0060` | 15,120 | DTCM |
+| 4 | `0x027FF000` | 3,056 | Shared RAM |
+
+The native literal pool retains link-time quantities: main/ITCM/DTCM low
+bounds, a 1,024-byte IRQ stack reservation and a zero system-stack reservation.
+The existing DTCM-start symbol supplies `0x027E0000`. Explicit constants in
+`config/eur/arm9/linker_aliases.json` keep this arithmetic in C without folding
+it to final addresses; the linker assigns values without allocating bytes.
+These names describe recovered roles, not recovered original symbol spellings.
+The native initializer writes first pointers, cursors, sizes and IDs in groups.
+Preserving that order reproduces every instruction and literal. All ten
+functions in the compiled allocator object, totaling 1,500 bytes, match.
+
+Private `build/runtime/eur_xhigh_heap_initialize/boot55_v2.json` records one
+ordinary initializer call at frame 5 of a 1,200-frame cold boot. Its independent
+oracle checks the complete 512-byte region table and all 3,276,160 bytes in the
+five initial regions, including headers, untouched payload and the function's
+40 stack bytes. It checks the clear helper's arguments/output, SP and r4-r11.
+The first probe failed because it assumed all payload bytes were untouched:
+the initial DTCM region includes the current boot stack, whose frame spans
+`0x027E3B4C..0x027E3B74`. The corrected probe models every saved register and
+the stack-resident zero; the failed producer and report remain separate.
+
+The title screen was inspected. Four graphics dumps are observational; this
+does not independently verify rasterization or IRQ timing. There were no RAM
+fixtures, all 104 original saves stayed unchanged, and the emulator was
+destroyed after the replay. Natural header reserved bits were zero, so this
+route does not claim runtime coverage of nonzero reserved-bit preservation.
+The full build, golden ROM hash, zero-difference native relink and 112 tests
+pass. This is game allocator setup; SDK arena definitions supplied context,
+while all arithmetic and matching came from PiT's binary.

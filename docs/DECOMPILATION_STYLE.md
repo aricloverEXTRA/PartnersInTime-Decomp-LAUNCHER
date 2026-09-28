@@ -101,6 +101,13 @@ aliases emit no bytes. They must identify aligned interior labels of the named
 owner; the normal module and symbol checks still verify the complete output.
 Do not reinterpret such a target as a different routine without native evidence.
 
+The same manifest can give a source a `constants` map of symbol names to
+32-bit hexadecimal values. This preserves arithmetic on link-time arena bounds
+and stack reservations without allocating data or folding it prematurely in C.
+Recover each value from the target binary, declare it as an external symbol,
+and use its address as the value; never dereference it. Heap initialization is
+the first user. These values are specific to the configured game version.
+
 ## Evidence levels
 
 Names and comments should distinguish three levels of knowledge:

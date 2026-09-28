@@ -237,7 +237,7 @@ src/game/archive_memory_decoder.c:
     .text start:0x0202c824 end:0x0202cb48
 
 src/game/heap.c:
-    .text start:0x02029808 end:0x02029c04
+    .text start:0x02029808 end:0x02029de4
 
 src/nitro/math/fx_atan.c:
     .text start:0x02034c34 end:0x020350d0
