@@ -125,7 +125,7 @@ src/nitro/gx/gx_blend_affine.c
 src/nitro/gx/gx_command_list.c
 src/nitro/gx/gx_geometry_state.c
 src/nitro/gx/gx_load2d.c
-src/nitro/gx/gx_command_list_end.c
+src/nitro/gx/gx_command_list_buffer.c
 src/nitro/gx/gx_load3d.c
 src/nitro/os/os_irq.c
 src/nitro/os/os_message.c

@@ -75,6 +75,28 @@ ordered archive stores and helper calls are checked. The real initializer and
 byte-fill execute; open/read/close are explicit models. These cases do not claim
 live failed cartridge I/O, asynchronous queue or hardware timing coverage.
 
+### Geometry command-buffer initialization
+
+[`GxCommandList_Begin`](../../src/nitro/gx/gx_command_list_buffer.c) reconstructs
+EUR ARM9 `0x02038AB4..0x02038AD4` in 32 bytes of pure C. It records capacity,
+sets the buffer/opcode pointers, places the parameter cursor one word ahead,
+and clears the padding flag without writing the buffer. Capacity is metadata,
+not proof of an allocation extent. The existing terminator is now named
+`GxCommandList_End`; these are descriptive project names. Battle model rebuilding
+uses the same 20-byte record, embedded at context `+0x68B4`, so its former
+`BattleResourceStream` definition is now an alias of the SDK type.
+
+The controlled save-55 battle-entry route checks 186 complete calls, all 930
+ordered stores, the entire record with neighboring guards, context ownership,
+buffer prefixes and preserved registers. The capture shows the Swiggler fight.
+Checkpoint RAM/DTCM is restored and all 104 saves are unchanged. A cold boot
+ending at the title screen observed no calls. Another 24 isolated ARM946 cases
+execute the actual compiled initializer on copied RAM, checking full memory
+and 120 ordered stores; graphics and IRQ timing are outside these checks.
+All 20 functions in the three affected objects match, and the full ROM/relink
+and 112 tests pass. Private evidence:
+`build/analysis/xhigh_from_55/gx_list_begin_validation.json`.
+
 ## Locating evidence and comparing candidates
 
 Old milestone notes describe the state at the time they were written. Current

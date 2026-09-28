@@ -14,9 +14,6 @@ extern "C" {
 extern u8 data_ov002_020bf6fc[];
 extern int data_ov002_020c0c40;
 
-void func_02038ab4(BattleResourceStream *stream, u8 *destination,
-                   u32 capacity);
-u32 func_02038a04(BattleResourceStream *stream);
 void func_0202cbd4(void *destination, int value, u32 size);
 void *GameHeap_New(u32 size, u32 heap_id, void *allocator, int argument);
 void func_ov002_0206f1f0(BattleResourceModel *model,
@@ -79,9 +76,9 @@ void BattleObjectData_RebuildNextComponentTask(BattleQueuedTask *task) {
     u8 *component = ((u8 **)destination->data)[model->component_index];
     u8 *next_component;
 
-    func_02038ab4(stream, component, 0x80000);
+    GxCommandList_Begin(stream, component, 0x80000);
     model->write_component(stream);
-    next_component = component + func_02038a04(stream);
+    next_component = component + GxCommandList_End(stream);
     ++model->component_index;
     ((u8 **)destination->data)[model->component_index] = next_component;
 

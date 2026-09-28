@@ -11324,3 +11324,15 @@ Golden ROM, zero native differences and 112 tests pass. See the
   Captures inspected, checkpoint RAM/DTCM restored, all 104 saves unchanged.
   Rendering/animation internals remain outside the independent oracle. Evidence:
   `build/analysis/xhigh_from_55/ov25_chain_target_validation.json`.
+
+
+## Geometry command-buffer initialization
+
+- Reconstructed the 32-byte SDK initializer in pure C and shared its record with
+  battle model rebuilding. The existing terminator is named and kept exact.
+  Matching C/C++: 879,868 / 1,563,700 (56.2683%).
+- All 20 functions in the affected objects match. Golden ROM, zero native-relink
+  differences and 112 tests pass. Controlled battle entry checks 186 calls;
+  24 copied-RAM ARM946 cases check complete memory and ordered stores.
+  Capture inspected, checkpoint restored, 104 saves unchanged. Evidence:
+  `build/analysis/xhigh_from_55/gx_list_begin_validation.json`.

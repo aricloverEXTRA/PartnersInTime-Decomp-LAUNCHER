@@ -56,8 +56,8 @@ src/nitro/mi/mi_dma_control.c:
 src/nitro/mi/mi_dma_transfer.c:
     .text       start:0x0203b500 end:0x0203b76c
 
-src/nitro/gx/gx_command_list_end.c:
-    .text       start:0x02038a04 end:0x02038ab4
+src/nitro/gx/gx_command_list_buffer.c:
+    .text start:0x02038a04 end:0x02038ad4
 
 src/game/script_vm.c:
     .text start:0x020063a4 end:0x020072e8

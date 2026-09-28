@@ -2,6 +2,7 @@
 #define PIT_GAME_BATTLE_OBJECT_H
 
 #include <nitro.h>
+#include <nitro/gx_command_list.h>
 
 /* Loading the models and textures a battle needs. A BattleSceneResource is one
    loaded object: the archive entry it came from, the components decoded out of
@@ -11,15 +12,9 @@
    Loading runs as queued tasks, so a resource is normally seen part-built:
    check the flags before touching a component pointer. */
 
-/* Cursor over the buffer a model writes its components into. The separate word
-   cursor and pending_word exist because the encoder emits sub-word fields. */
-typedef struct BattleResourceStream {
-    u8 *cursor;
-    u32 *word_cursor;
-    u8 *start;
-    u32 capacity;
-    u32 pending_word;
-} BattleResourceStream;
+/* Model components are encoded as geometry command lists. Use the SDK record
+ * so the battle encoder and the command-list helpers share one layout. */
+typedef GxCommandList BattleResourceStream;
 
 typedef struct BattleResourceModel BattleResourceModel;
 typedef struct BattleObjectTextureSet BattleObjectTextureSet;
