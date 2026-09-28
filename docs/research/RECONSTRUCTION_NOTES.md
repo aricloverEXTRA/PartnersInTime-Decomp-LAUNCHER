@@ -11238,3 +11238,42 @@ separately under `build/analysis/xhigh_from_55/`.
 
 The full gate passes the golden packaged ROM, zero-difference native relink and
 all 112 tests. This contributes 148 pure C++ bytes and no symbolic assembly.
+
+
+## Cannonballers badge parameter adjustments
+
+[badge_tuning.cpp](../../src/attack_cannonball_ov012/badge_tuning.cpp) recovers
+`Overlay12Attack_ApplyBadgeOffsets`, overlay 12 `0x020C2AE0-0x020C2B48`
+(104 bytes, including literals). The attack initializer invokes it when the
+acting party member has badge ID 2. It subtracts 128 from the signed word at
+`0x020C5A04` through the original signed-integer-to-binary64 conversion, addition
+and truncation helpers, then increments `0x020C5A10` by 8 and `0x020C5A08` by 4.
+The source retains this conversion sequence and store order. All signed 32-bit
+inputs and these integer-valued intermediate binary64 operations are exactly
+representable; the final integer result still requires its native range.
+Unknown parameter roles retain neutral address names. The new helper and its
+migrated initializer are exact in actual compiled source objects: 1,076 bytes.
+
+Private `build/runtime/eur_xhigh_cannon_badge_tuning/{ordinary_v2,badge_v2}.json`
+records two 540-frame replays from `ov17_bros_menu83.dst` (SHA-1
+`21d2e64a24b389689627292539103880c6761b47`). The ordinary route encounters badge
+25 and skips the helper. The controlled route sets one live save byte to 2 at
+the guarded badge predicate and restores it at that predicate's return, before
+the initializer resumes. The resulting tuning remains in force for this attack
+setup. A full checkpoint reload later restores all main RAM and DTCM.
+
+The controlled call changes the three parameters from 1177/24/12 to 1049/32/16.
+Checks cover complete native guards, all three arithmetic helper arguments and
+returns, three ordered stores, the complete 96-byte parameter neighborhood,
+unchanged 452-byte attack work, 148-byte user storage and 1,380-byte save record,
+and preserved stack/callee-saved registers. Both setup captures were visually
+inspected. This verifies setup, not a complete attack result or an independent
+pixel/IRQ-timing model. Helper stack writes are outside this oracle.
+
+Probe v1 failed after 540 frames because its predicate filter used the callsite
+rather than LR (`0x020C5940`); v2 corrects only that filter. Failed source, report
+and log remain separate. Both successful producers exit zero; all 30 artifacts
+and source hashes validate, and all 104 original saves remain unchanged.
+`build/analysis/xhigh_from_55/cannon_badge_tuning_validation.json` records the
+checks. The full build gate passes the golden ROM, zero native differences and
+112 tests. This adds 104 pure C++ bytes, with no new assembly.

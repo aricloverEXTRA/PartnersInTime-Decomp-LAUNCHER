@@ -24,3 +24,6 @@ src/attack_cannonball_ov012/ov12_attack_initialize.cpp:
 
 src/attack_cannonball_ov012/landing_bounce.cpp:
     .text start:0x020c34e0 end:0x020c3888
+
+src/attack_cannonball_ov012/badge_tuning.cpp:
+    .text start:0x020c2ae0 end:0x020c2b48

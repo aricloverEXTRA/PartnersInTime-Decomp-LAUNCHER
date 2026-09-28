@@ -11664,3 +11664,20 @@ Symbolic ASM remains separate at 4040 bytes.
 ## 2026-09-28: Shop HBlank background bands
 
 Reconstructed ShopScene_UpdateHBlank (overlay 9, 0x0207CE1C, 148 bytes) in pure C++. Shared signed scroll record and callback registration retain their native layout and behavior. Six actual source-object functions / 5,456 bytes match. Full gate: golden ROM, zero native differences, 112 tests. Live controlled shop route: 66,675 completed HBlank checks, all five bands, wave zero. Copied-RAM ARM946 checks: 27,615 cases with signed extremes and every real scanline. Shop visibly ready; field reload remains black after bounded extension, so no visible field-return claim. All 104 saves unchanged; 23 artifacts validated. Evidence: build/runtime/eur_xhigh_shop_hblank/{live_v3,isolated_v1}.json and build/analysis/xhigh_from_55/shop_hblank_validation.json. Matching C/C++ is 890,444 / 1,563,700 (56.9447%); symbolic ASM remains separate.
+
+
+## 2026-09-28: Cannonballers badge parameter adjustments
+
+Reconstructed Overlay12Attack_ApplyBadgeOffsets (ov012 0x020C2AE0, 104 bytes)
+as pure C++, preserving the binary64 conversion sequence and three parameter
+stores. Actual helper and initializer objects: two functions / 1076 bytes exact.
+Full gate: golden ROM, zero native differences, 112 tests. Two 540-frame replays
+check the ordinary skip and a guarded temporary badge-2 fixture: one target call,
+three independently checked arithmetic calls and three ordered stores. Full
+parameter neighborhood and live work/user/save records checked; checkpoint
+RAM/DTCM restored. No complete attack-result claim. All 104 original saves
+unchanged; 30 artifacts validated. Failed v1 predicate filter and passing v2
+producers remain separate. Evidence: build/runtime/eur_xhigh_cannon_badge_tuning/
+{ordinary_v2,badge_v2}.json and build/analysis/xhigh_from_55/
+cannon_badge_tuning_validation.json. Matching C/C++: 890548 / 1563700 (56.9513%).
+Symbolic ASM remains separate at 4040 bytes.

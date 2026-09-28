@@ -1,4 +1,4 @@
-func_ov012_020c2ae0 kind:function(arm,size=0x68) addr:0x020c2ae0
+Overlay12Attack_ApplyBadgeOffsets kind:function(arm,size=0x68) addr:0x020c2ae0
 func_ov012_020c2b48 kind:function(arm,size=0xc8) addr:0x020c2b48
 Overlay12Attack_ShowHit kind:function(arm,size=0x27c) addr:0x020c2c10
 Overlay12Motion_UpdateDampedArc kind:function(arm,size=0x140) addr:0x020c2e8c

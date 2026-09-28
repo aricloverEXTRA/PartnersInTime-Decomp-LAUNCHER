@@ -1082,3 +1082,5 @@ src/nitro/mi/mi_dma_itcm.c
 src/field/field_area_release.cpp
 
 src/shop_ov009/shop_hblank.cpp
+
+src/attack_cannonball_ov012/badge_tuning.cpp

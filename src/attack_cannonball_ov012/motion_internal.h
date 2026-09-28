@@ -48,7 +48,7 @@ struct Overlay10ActionActor;
 struct Overlay10Work;
 Overlay10Work *Overlay10Attack_CreateWork(Overlay10ActionActor *, int, int);
 int Overlay10Party_HasBadgeTwo();
-void func_ov012_020c2ae0();
+void Overlay12Attack_ApplyBadgeOffsets();
 void func_ov012_020c5314(BattlePartyActor *);
 void Overlay10Attack_BeginEntry(BattlePartyActor *, void (*)(BattlePartyActor *));
 void BattleFeedback_LoadResource(int);
