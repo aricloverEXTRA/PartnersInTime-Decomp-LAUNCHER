@@ -34,33 +34,18 @@ int LoadMenuMotion_Update(SaveMenuMotion *motion)
     return 0;
 }
 
-typedef struct LoadMenuCursorWorkPrefix {
-    SaveMenuEntryWorkPrefix menu;
-    int confirmation_x, confirmation_y, action_x, action_y;
-} LoadMenuCursorWorkPrefix;
-/* ResourceA is a 336-byte pooled sprite. Only its position prefix is used. */
-typedef struct LoadMenuCursorSpritePrefix {
-    u8 unknown_00[92];
-    s16 x, y;
-} LoadMenuCursorSpritePrefix;
-extern LoadMenuCursorSpritePrefix *Overlay5ResourceA_Get(void *);
+extern SaveMenuCursorSpritePrefix *Overlay5ResourceA_Get(void *);
 extern void *func_ov005_02069084(void *, int);
 /* Preserve the native coordinate reads before changing the motion fields.
  * The two aliases address interleaved unsigned X/Y bytes with stride two. */
 extern volatile const u8 data_ov008_02077f30[], data_ov008_02077f31[];
-typedef char LoadMenuCursorWorkPrefixSizeCheck[
-    sizeof(LoadMenuCursorWorkPrefix) == 0x1b0 ? 1 : -1];
-typedef char LoadMenuCursorSpritePrefixSizeCheck[
-    sizeof(LoadMenuCursorSpritePrefix) == 96 ? 1 : -1];
-typedef char LoadMenuCursorWorkAnchorOffsetCheck[
-    (u32)&((LoadMenuCursorWorkPrefix *)0)->confirmation_x == 0x1a0 ? 1 : -1];
-#define WORK (*(LoadMenuCursorWorkPrefix *)data_ov008_02078290)
+#define WORK (*(SaveMenuCursorWorkPrefix *)data_ov008_02078290)
 #define MOTION ((SaveMenuMotion *)task)
 
 void LoadMenu_UpdateCursor(SaveMenuTransferTask *element)
 {
     SaveMenuCursorTask *task = (SaveMenuCursorTask *)element;
-    LoadMenuCursorSpritePrefix *sprite = Overlay5ResourceA_Get(task);
+    SaveMenuCursorSpritePrefix *sprite = Overlay5ResourceA_Get(task);
     switch (task->state) {
     case 0:
         task->selection = WORK.menu.selected_panel;

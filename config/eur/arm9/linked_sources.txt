@@ -351,7 +351,7 @@ src/field/field_camera_shake_stop.cpp
 src/field/field_resource_lookup.c
 src/field/field_room_scripts.c
 src/save_menu_ov008/save_irq_destroy.c
-src/save_menu_ov008/save_menu_motion.c
+src/save_menu_ov008/save_menu_cursor.c
 src/save_menu_ov008/save_geometry.c
 src/save_menu_ov008/save_scene_lifecycle.c
 src/save_menu_ov008/load_irq_destroy.c

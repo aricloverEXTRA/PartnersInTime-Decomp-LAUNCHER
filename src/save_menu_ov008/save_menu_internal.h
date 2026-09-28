@@ -26,6 +26,27 @@ typedef struct SaveMenuEntryWorkPrefix {
 } SaveMenuEntryWorkPrefix;
 typedef char SaveMenuEntryWorkPrefixSizeCheck[
     sizeof(SaveMenuEntryWorkPrefix) == 0x1a0 ? 1 : -1];
+/* Cursor anchors shared by the save, load and game-over menus. Save choices
+ * use three row coordinates; load choices use a fixed step from the first. */
+typedef struct SaveMenuCursorWorkPrefix {
+    SaveMenuEntryWorkPrefix menu;
+    int confirmation_x, confirmation_y, action_x;
+    union { int action_y; int action_rows[3]; };
+} SaveMenuCursorWorkPrefix;
+typedef char SaveMenuCursorWorkPrefixSizeCheck[
+    sizeof(SaveMenuCursorWorkPrefix) == 0x1b8 ? 1 : -1];
+typedef char SaveMenuCursorWorkAnchorOffsetCheck[
+    (u32)&((SaveMenuCursorWorkPrefix *)0)->confirmation_x == 0x1a0 ? 1 : -1];
+/* Native cursor code also keeps this interior row-table address as a literal. */
+extern int data_ov008_0207843c[3];
+/* ResourceA owns a 336-byte pool slot; cursor updates only use this prefix. */
+typedef struct SaveMenuCursorSpritePrefix {
+    u8 unknown_00[92];
+    s16 x, y;
+} SaveMenuCursorSpritePrefix;
+typedef char SaveMenuCursorSpritePrefixSizeCheck[
+    sizeof(SaveMenuCursorSpritePrefix) == 96 ? 1 : -1];
+
 /* Prefix through the two 14-byte panel rows at workspace offset 0x27E2. */
 typedef struct SaveMenuPanelValuesWorkPrefix {
     SaveMenuEntryWorkPrefix menu;

@@ -12,7 +12,6 @@ SaveMenuTransferTask *func_ov005_0206659c(void (*)(SaveMenuTransferTask *), int,
 void Overlay5ResourceA_ApplySelector(SaveMenuTransferTask *);
 BattleModel *Overlay5ResourceA_Attach(SaveMenuTransferTask *, BattleModel *, int);
 void func_ov005_02068908(BattleModel *, int, void *, int, int);
-void func_ov008_0206c078(SaveMenuTransferTask *);
 
 void SaveMenu_CreateModels(void)
 {
@@ -27,7 +26,7 @@ void SaveMenu_CreateModels(void)
     model->animation_offset_x = 48;
     model->animation_offset_y = 24;
     resource = func_ov005_020698dc(0);
-    task = func_ov005_0206659c(func_ov008_0206c078, 2, 1);
+    task = func_ov005_0206659c(SaveMenu_UpdateCursor, 2, 1);
     model = Overlay5ResourceA_Attach(task, 0, 1);
     func_ov005_02068908(model, 0, resource, 1, -1);
     model->set_primary_animation(0, 0, 1);

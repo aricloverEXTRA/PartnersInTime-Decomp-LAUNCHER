@@ -10217,3 +10217,52 @@ cursor bytes equal the completed replays. Both complete build checks reproduce
 the original ROM, report zero native-relink differences and pass 112 tests.
 Hashes and producer exits are in
 `build/analysis/xhigh_from_55/load_cursor_validation.json`.
+
+
+## Save and game-over cursor updates
+
+[SaveMenu_UpdateCursor](../../src/save_menu_ov008/save_menu_cursor.c) adds the
+536-byte range `0x0206C078..0x0206C290`; [GameOverMenu_UpdateCursor](../../src/save_menu_ov008/game_over_models.cpp)
+adds `0x02070688..0x0207075C` (212 bytes). Both use the shared 72-byte task,
+96-byte sprite-position prefix and menu-anchor prefix. The latter now includes
+three save-choice Y coordinates at `+0x1AC/+0x1B0/+0x1B4`; the Game Over controller
+uses at most two. The verified interior alias `data_ov008_0207843c` preserves the
+native separate table literal. Indexing through the enclosing struct instead
+changed the generated address calculation and removed that literal.
+
+The previous six-word differences in both cursor functions had the same cause
+as the load cursor: cache **both divided results** before storing either sprite
+coordinate. Caching only the raw Q12 values lets MWCC schedule the second
+conversion differently. This concrete dataflow correction makes both functions
+exact without inline assembly. The existing save motion functions remain exact
+in the renamed `save_menu_cursor.c` (768 bytes total), and the Game Over factory
+remains exact in its extended unit (508 bytes total). The load cursor unit still
+matches all 1,588 bytes after adopting the shared types.
+
+Private `build/runtime/eur_xhigh_auxiliary_cursors/save55_v1.json` checks 366
+calls over 366 frames: all three save choices, both confirmation paths, return
+motion and arrival fallthrough. `gameover86_v2.json` checks 209 calls over 701
+frames, both options and a visible return to Shroob Castle. Its checkpoint came
+from the earlier restored decoded-opcode `0x123` fixture, not a natural defeat;
+this replay adds no RAM fixture. It also checks the full native field dispatcher
+at the final boundary. Together these two routes verify 2,811 ordered caller
+stores and 1,182 helper entry/return pairs. Full task, workspace and 336-byte
+ResourceA slots, current pool/list ownership, Q12 motion, draw-list insertion and
+ABI are checked. Initialization of resources, release, IRQ timing and pixel
+rendering remain outside the caller oracle. Confirmation/menu/field captures
+were inspected; original saves are unchanged and checkpoint RAM/DTCM restored.
+The prior Game Over replay is retained separately; adding the final overlay guard
+preserves all 91 screenshot/graphics artifact pairs, without counting its calls
+again in the two-route totals.
+
+`isolated_save_v1.json` and `isolated_gameover_v1.json` add 294 and 90 ARM946
+cases, including initial placement, inactive phases, hidden flags, negative Q12
+truncation and motion-completion boundaries. Array indices stay within their
+actual row counts. All 1,325 caller stores, 797 modeled helper calls, mapped
+memory outside the respective 16/8-byte stack frames and preserved registers
+are checked. These use explicitly modeled helpers on copied RAM, not live
+invalid-state gameplay. The first build check caught a formatting error; the
+corrected complete check reproduces the original ROM, reports zero native-relink
+differences and passes all 112 tests. Final whitespace cleanup leaves all three
+compiled objects identical and passes `ninja objects`/`ninja check`. Evidence and
+producer exits: `build/analysis/xhigh_from_55/auxiliary_cursor_validation.json`.

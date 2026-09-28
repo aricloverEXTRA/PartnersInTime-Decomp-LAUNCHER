@@ -11294,3 +11294,19 @@ Golden ROM, zero native differences and 112 tests pass. See the
   explicit helper models for boundary paths. Cursor/menu captures inspected;
   checkpoint RAM/DTCM restored, all 104 original saves unchanged. Evidence:
   `build/analysis/xhigh_from_55/load_cursor_validation.json`.
+
+
+## Save and game-over cursor updates
+
+- Reconstructed 536 C bytes for save-menu cursor transitions and 212 C++ bytes
+  for Game Over cursor placement. Caching both divided coordinate results fixes
+  the inherited six-word scheduling gaps; no inline ASM. Existing factories,
+  motion helpers and the load cursor remain exact with shared cursor layouts.
+  Matching C/C++: 878,932 / 1,563,700 bytes (56.2085%); overlay 8: 65.08%.
+- Original ROM and zero native-relink differences; corrected full build passes
+  112 tests. Main live routes: 575 cursor calls, 2,811 owned stores, 1,182 helper
+  pairs. Game Over starts from the documented controlled-entry checkpoint.
+  Another 384 isolated ARM946 cases check initial/boundary/hidden paths with
+  explicit helper models. Captures inspected; checkpoint RAM/DTCM restored;
+  all 104 original saves unchanged. Evidence:
+  `build/analysis/xhigh_from_55/auxiliary_cursor_validation.json`.

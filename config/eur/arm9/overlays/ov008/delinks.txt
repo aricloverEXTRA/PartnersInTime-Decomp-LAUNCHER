@@ -7,8 +7,8 @@
 src/save_menu_ov008/save_irq_destroy.c:
     .text start:0x0206ab80 end:0x0206abd0
 
-src/save_menu_ov008/save_menu_motion.c:
-    .text start:0x0206c290 end:0x0206c378
+src/save_menu_ov008/save_menu_cursor.c:
+    .text start:0x0206c078 end:0x0206c378
 
 src/save_menu_ov008/save_geometry.c:
     .text start:0x0206c378 end:0x0206c474
@@ -89,7 +89,7 @@ src/save_menu_ov008/erase_confirmation.cpp:
     .text start:0x02076934 end:0x02076b38
 
 src/save_menu_ov008/game_over_models.cpp:
-    .text start:0x02070560 end:0x02070688
+    .text start:0x02070560 end:0x0207075c
 
 src/save_menu_ov008/save_write_brightness.c:
     .text start:0x0206b0f8 end:0x0206b1d0

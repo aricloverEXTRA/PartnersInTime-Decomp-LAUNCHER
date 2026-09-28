@@ -136,6 +136,8 @@ void GameOverMenu_CreateModels(int show_cursor);
 void SaveMenu_CreateModels(void);
 void LoadMenu_CreateModels(void);
 void LoadMenu_UpdateCursor(SaveMenuTransferTask *element);
+void SaveMenu_UpdateCursor(SaveMenuTransferTask *element);
+void GameOverMenu_UpdateCursor(SaveMenuTransferTask *element);
 int LoadMenuMotion_Update(SaveMenuMotion *motion);
 int SaveMenuMotion_Update(SaveMenuMotion *motion);
 void LoadMenuMotion_Initialize(SaveMenuMotion *motion, int x, int y);
