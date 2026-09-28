@@ -11574,3 +11574,20 @@ artifacts and coverage limits.
   The initial live probe's byte-width IRQ read failed; the corrected probe passes.
 - Evidence: `build/analysis/xhigh_from_55/os_reset_system_validation.json`;
   limitations and procedure in the reconstruction reference's SDK reset section.
+
+
+## 2026-09-28 - ITCM reset image reload
+
+- Reconstructed `OSi_ReloadRomData` and `OSi_DoResetSystem`, 288 bytes at
+  `0x01FF83A0..0x01FF84C0`. One explained inline addition; complete functions exact.
+  Both affected actual objects match six functions/636 bytes.
+- Matching C/C++: **886,816 / 1,563,700 bytes (56.7127%)**. Golden ROM,
+  zero-difference native relink and 112 tests pass.
+- Two ordinary keypad resets each compare 497,276 reloaded ROM bytes and check
+  acknowledgement, cache/read call order, header and ABI through boot handoff.
+  120 isolated cases check header replacement, secure-prefix bounds and waits;
+  card/cache/ARM7 models are explicit. Initial header-write probe failure retained.
+- 86 artifacts validated; 104 saves unchanged. An unchanged-probe repeat has
+  identical checked reset behavior but different late title OAM/pixels; cause
+  unconfirmed. Full checkpoint restoration and visible title confirmed.
+- Evidence: `build/analysis/xhigh_from_55/os_reset_itcm_validation.json`.

@@ -12,7 +12,6 @@
 
 extern void CARD_LockRom(u16 lock_id);
 extern u32 func_02038cc4(u32 mask);
-extern void func_01ff8480(void);
 extern u16 data_02063020;
 extern u16 data_02063024;
 void OSi_ResetCallback(u32 tag, u32 data, int error);
@@ -52,5 +51,5 @@ void OS_ResetSystem(u32 parameter)
     OS_ResetRequestIrqMask(~0u);
     *(vu32 *)0x027ffc20 = parameter;
     OSi_SendResetCommand(16);
-    func_01ff8480();
+    OSi_DoResetSystem();
 }

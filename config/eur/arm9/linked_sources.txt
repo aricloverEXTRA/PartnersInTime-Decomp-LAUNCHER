@@ -1074,3 +1074,5 @@ src/msl/array_delete.c
 src/field/field_planar_screen_position.cpp
 
 src/battle/battle_chain_relaxation.cpp
+
+src/nitro/os/os_reset_itcm.c

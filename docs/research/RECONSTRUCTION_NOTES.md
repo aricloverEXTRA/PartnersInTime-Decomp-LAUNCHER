@@ -10990,3 +10990,47 @@ return epilogue. The 280 ordered stores and entire mapped RAM, DTCM, ITCM and
 scratch area are checked, including the upper-main-RAM alias. These cases do
 not establish real lock-exhaustion handling or a returning ITCM reset. Live
 reboot internals, asynchronous IRQ timing and rasterization remain observational.
+
+### ITCM image reload and acknowledgement
+
+[`os_reset_itcm.c`](../../src/nitro/os/os_reset_itcm.c) reconstructs
+`OSi_ReloadRomData` and `OSi_DoResetSystem`, `0x01FF83A0..0x01FF84C0`, adding
+288 bytes in ITCM. Both functions stay executable while ARM9's resident image
+is overwritten. The waiter polls the halfword set by ARM7's FIFO callback,
+disables the interrupt master, reloads the images and enters the native boot
+routine. The loader optionally replaces the 352-byte ROM header, caches both
+processor triples, flushes/invalidates caches and skips ARM9's already present
+secure-area prefix below ROM offset `0x8000` before reading both images.
+
+One inline `add` fixes the compiler's placement of the ARM7 base adjustment
+before the ARM9 call arguments. The preserved C-only draft matches all remaining
+instructions and pools after declaring each header triple in native field order;
+the final complete function matches all 224 bytes. The 64-byte waiter is pure C.
+The actual linked resident and ITCM objects match six functions/636 bytes, and
+the full build reproduces the original ROM with 112 tests passing.
+
+Private evidence: `build/analysis/xhigh_from_55/os_reset_itcm_validation.json`
+and `build/runtime/eur_xhigh_os_reset_itcm/`. Two ordinary 1,220-frame keypad
+replays each check 442 zero-flag reads, acknowledgement, the interrupt-master
+store, all eight cache/read calls and the boot handoff. They compare all 497,276
+reloaded ARM9/ARM7 bytes against the ROM, both destination neighbors and the
+unchanged header. Both reach the visible title; 86 artifacts validate and all
+104 saves remain unchanged after complete checkpoint RAM/DTCM restoration.
+
+The unchanged probe repeat has identical target-entry registers, RAM/DTCM/ITCM,
+checked calls and reload results. Its captures match through frame 300; at frame
+1,220, OAM and the animated title picture differ, while the other eight captured
+graphics ranges agree. The earlier resident-only probe shows the same comparison
+pattern. This preserves the variation without attributing it to code or a probe
+change; its cause and final rasterization remain unverified.
+
+`isolated_v2.json` adds 120 ARM946 cases across five aligned ROM bases, four ARM9
+offsets, three acknowledgement delays and both IRQ-enable states. Native IRQ
+disable/restore helpers execute; card data, cache operations and ARM7 readiness
+are explicit models, and execution stops at the native boot entry. Different
+replacement-header triples establish that the new header is consumed. All mapped
+RAM, DTCM, ITCM, scratch and I/O bytes, the upper-RAM alias and 1,320 ordered native
+stores are checked. The first isolated version failed after 48 cases because
+Unicorn's writer requires immutable bytes for the modeled header; the corrected
+producer passes without game-code changes. Hardware cache effects, concurrent
+ARM7 timing and the final boot assembly are outside this isolated model.
