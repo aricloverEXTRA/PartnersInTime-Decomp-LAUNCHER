@@ -11559,3 +11559,18 @@ artifacts and coverage limits.
 - Private evidence: `build/analysis/xhigh_from_55/menu_party_spring_validation.json`
   and `build/runtime/eur_xhigh_menu_party_spring/`. Two failed frame-433 oracle
   versions are preserved; corrected probes pass without changing game code.
+
+
+## 2026-09-28 - SDK soft-reset entry
+
+- Added 128 exact C bytes for `OS_ResetSystem`; the complete reset unit matches
+  all four functions/348 bytes. No inline assembly. Matching C/C++ now
+  **886,528 / 1,563,700 bytes (56.6943%)**, symbolic ASM counted separately.
+- Full verification passes: golden ROM, zero native-relink differences and
+  112 tests. Ordinary save-65 keypad reset checks nine helper returns, 11 DMA
+  stores, card/lock state and the ITCM handoff; ARM7 acknowledgement and visible
+  title restart observed. 100 isolated wrapper cases use explicit helper stubs.
+- 43 artifacts validated, checkpoint restored and 104 original saves unchanged.
+  The initial live probe's byte-width IRQ read failed; the corrected probe passes.
+- Evidence: `build/analysis/xhigh_from_55/os_reset_system_validation.json`;
+  limitations and procedure in the reconstruction reference's SDK reset section.

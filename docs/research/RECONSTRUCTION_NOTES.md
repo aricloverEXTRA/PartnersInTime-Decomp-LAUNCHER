@@ -10957,3 +10957,36 @@ or IRQ-timing model. Scene-controller drawing suppression, invalid indices and
 synthetic arithmetic extremes are outside these routes. Producer versions,
 process exits and exact-object evidence are recorded in
 `build/analysis/xhigh_from_55/menu_party_spring_validation.json`.
+
+
+## SDK soft-reset entry
+
+[`OS_ResetSystem`](../../src/nitro/os/os_reset.c), resident ARM9
+`0x0203AE8C..0x0203AF0C`, adds 128 exact C bytes to the existing reset module.
+The complete four-function unit matches 348 bytes. It rejects boot mode 2,
+takes a card lock using the low halfword of a newly allocated lock ID, stops
+DMA channels 0 through 3, selects receive-FIFO IRQ mask `0x40000`, clears
+pending IRQ requests, stores the full reset parameter at `0x027FFC20`, sends
+command 16 and enters the ITCM restart routine at `0x01FF8480`.
+
+Private evidence is `build/analysis/xhigh_from_55/os_reset_system_validation.json`
+and `build/runtime/eur_xhigh_os_reset_system/`. `keypad65_v2.json` records a
+1,220-frame ordinary save-65 replay: hold L+R+Start+Select for two frames, then
+release. It checks all nine returning helper calls and the ITCM handoff, the
+parameter store and 128 surrounding shared bytes, the lock bitmap, complete
+480-byte card workspace, 64-byte command and card lock, 11 ordered DMA stores,
+IRQ enable mask, stack and preserved registers. ARM7 acknowledges the reset,
+initialization runs again and the final capture visibly shows the title screen.
+All 43 captures/dumps validate; the checkpoint RAM/DTCM is restored and all 104
+original saves are unchanged. Register checks use native halfword/word access:
+the preserved `keypad65_v1.json` failed at frame 2 because its byte reader
+returned zero for the IRQ enable register. Only the probe changed.
+
+`isolated_v1.json` checks 100 ARM946 wrapper cases on copied RAM, including
+five boot-mode values, four full-width parameters and five lock-ID returns.
+All helper calls are explicit stubs there: mode 2 stops at termination, while
+the other cases check argument truncation, call order and the otherwise unused
+return epilogue. The 280 ordered stores and entire mapped RAM, DTCM, ITCM and
+scratch area are checked, including the upper-main-RAM alias. These cases do
+not establish real lock-exhaustion handling or a returning ITCM reset. Live
+reboot internals, asynchronous IRQ timing and rasterization remain observational.
