@@ -27,10 +27,12 @@ public final class MainActivity extends Activity implements PatcherView.Callback
     private static final int REQ_OPEN_ROM = 1;
     private static final int REQ_CREATE_ROM = 2;
 
-    private static final int LOG_INFO = 0xFF7C88A8;
-    private static final int LOG_OK = 0xFF6FCF97;
-    private static final int LOG_ERROR = 0xFFE06C75;
-    private static final int LOG_WORK = 0xFFE0A458;
+    /* Log colours, matching the C renderer. From the real EUR ROM's
+     * BGR555 palettes; see pit_patcher_ui.c for the ROM offsets. */
+    private static final int LOG_INFO = 0xFF738494;
+    private static final int LOG_OK = 0xFF52C55A;
+    private static final int LOG_ERROR = 0xFFEF5A63;
+    private static final int LOG_WORK = 0xFFFF9421;
 
     private PatcherView view;
     private final Handler ui = new Handler(Looper.getMainLooper());

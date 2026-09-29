@@ -25,20 +25,33 @@
 #include "core/pit_png.h"
 #include "platform/patcher_ui.h"
 
-/* ------------------------------------------------------------------ palette */
+/* ------------------------------------------------------------------ palette
+ *
+ * Every colour below is taken from the real EUR ROM, not invented. GBA
+ * palettes are 15-bit BGR555 (bits 10-14 red, 5-9 green, 0-4 blue), expanded
+ * to 8 bits per channel with c * 255 / 31. Sources are 256-colour records
+ * found in the cartridge and confirmed by their 0x7C1F transparent index:
+ *
+ *   ROM 0x01C7420  menu UI record: deep-navy and blue-grey ramp at 1-15,
+ *                  deep blue at 16-54. Supplies the whole neutral structure.
+ *   ROM 0x13661E8  gold ramp, 0x04D12FC brighter gold. The signature PiT
+ *                  highlight colour.
+ *   ROM 0x0810934  green ramp (HP, confirmations).
+ *   ROM 0x0471400  red ramp (damage, errors).
+ */
 
-#define C_BG        PIT_ARGB(255, 0x0B, 0x0E, 0x1A)
-#define C_PANEL     PIT_ARGB(255, 0x15, 0x1B, 0x2E)
-#define C_PANEL_ALT PIT_ARGB(255, 0x1B, 0x22, 0x3A)
-#define C_EDGE      PIT_ARGB(255, 0x2E, 0x3A, 0x5C)
-#define C_EDGE_HOT  PIT_ARGB(255, 0x38, 0xE8, 0xB0)
-#define C_TEXT      PIT_ARGB(255, 0xD8, 0xE2, 0xF5)
-#define C_DIM       PIT_ARGB(255, 0x7A, 0x88, 0xA8)
-#define C_ACCENT    PIT_ARGB(255, 0x38, 0xE8, 0xB0)
-#define C_AMBER     PIT_ARGB(255, 0xFF, 0xB0, 0x3A)
-#define C_ERROR     PIT_ARGB(255, 0xFF, 0x5C, 0x7A)
-#define C_OK        PIT_ARGB(255, 0x6B, 0xE8, 0x6B)
-#define C_SHADOW    PIT_ARGB(160, 0x00, 0x00, 0x00)
+#define C_BG        PIT_ARGB(255, 0x00, 0x10, 0x29)  /* ROM 0x01C7420[35] deep navy */
+#define C_PANEL     PIT_ARGB(255, 0x00, 0x10, 0x6B)  /* ROM 0x01C7420[16] */
+#define C_PANEL_ALT PIT_ARGB(255, 0x00, 0x10, 0x94)  /* ROM 0x01C7420[18] */
+#define C_EDGE      PIT_ARGB(255, 0x52, 0x63, 0x7B)  /* ROM 0x01C7420[8]  blue grey */
+#define C_EDGE_HOT  PIT_ARGB(255, 0xFF, 0xA5, 0x21)  /* ROM 0x04D12FC bright gold */
+#define C_TEXT      PIT_ARGB(255, 0xC5, 0xDE, 0xF7)  /* ROM 0x01C7420[15] pale blue */
+#define C_DIM       PIT_ARGB(255, 0x73, 0x84, 0x94)  /* ROM 0x01C7420[9]  */
+#define C_ACCENT    PIT_ARGB(255, 0xDE, 0x94, 0x29)  /* ROM 0x13661E8[60] gold */
+#define C_AMBER     PIT_ARGB(255, 0xFF, 0x94, 0x21)  /* ROM 0x04D12FC[2]  bright gold */
+#define C_ERROR     PIT_ARGB(255, 0xEF, 0x5A, 0x63)  /* ROM 0x03BFA00 soft red */
+#define C_OK        PIT_ARGB(255, 0x52, 0xC5, 0x5A)  /* ROM 0x0810934 green */
+#define C_SHADOW    PIT_ARGB(160, 0x00, 0x00, 0x08)  /* ROM 0x01C7420[21] */
 
 #define UI_W 400
 #define UI_H 240
@@ -838,7 +851,10 @@ int pit_patcher_ui_main(int argc, char **argv)
         return 1;
     }
 
-    app.texture = SDL_CreateTexture(app.renderer, SDL_PIXELFORMAT_ARGB8888,
+    /* pit_image_to_rgba8 writes R,G,B,A bytes, so the texture format must be
+     * ABGR8888, whose in-memory order is R,G,B,A. ARGB8888 is stored as
+     * B,G,R,A and would swap the red and blue channels. */
+    app.texture = SDL_CreateTexture(app.renderer, SDL_PIXELFORMAT_ABGR8888,
                                     SDL_TEXTUREACCESS_STREAMING, UI_W, UI_H);
     if (!app.texture) {
         fprintf(stderr, "could not create the texture: %s\n", SDL_GetError());
@@ -847,6 +863,7 @@ int pit_patcher_ui_main(int argc, char **argv)
         return 1;
     }
     SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
+    SDL_RenderSetLogicalSize(app.renderer, UI_W, UI_H);
     SDL_RenderSetVSync(app.renderer, 1);
 
     app.lock = SDL_CreateMutex();
@@ -867,7 +884,7 @@ int pit_patcher_ui_main(int argc, char **argv)
         render();
         SDL_UnlockMutex(app.lock);
 
-        if (pit_image_to_rgba8(app.canvas, rgba) != 0) {
+        if (pit_image_to_rgba8(app.canvas, rgba) == 0) {
             SDL_UpdateTexture(app.texture, NULL, rgba, UI_W * 4);
         }
         SDL_RenderClear(app.renderer);

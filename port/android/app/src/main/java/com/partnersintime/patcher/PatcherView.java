@@ -35,17 +35,20 @@ public final class PatcherView extends View {
     private static final int LINE_H = 10;
     private static final int MAX_LOG_ROWS = 6;
 
-    /* Palette, matching the C renderer's colours. */
-    private static final int C_BG = 0xFF12141C;
-    private static final int C_PANEL = 0xFF1B1F2B;
-    private static final int C_PANEL_ALT = 0xFF232838;
-    private static final int C_EDGE = 0xFF39415A;
-    private static final int C_EDGE_HOT = 0xFF6C7BA6;
-    private static final int C_ACCENT = 0xFF6FCF97;
-    private static final int C_AMBER = 0xFFE0A458;
-    private static final int C_TEXT = 0xFFE6E9F2;
-    private static final int C_DIM = 0xFF7C88A8;
-    private static final int C_ERROR = 0xFFE06C75;
+    /* Palette, matching the C renderer. Every value comes from the real EUR
+     * ROM's 15-bit BGR555 palettes, expanded with c * 255 / 31. See
+     * port/src/platform/sdl2/pit_patcher_ui.c for the ROM offsets. */
+    private static final int C_BG = 0xFF001029;
+    private static final int C_PANEL = 0xFF00106B;
+    private static final int C_PANEL_ALT = 0xFF001094;
+    private static final int C_EDGE = 0xFF52637B;
+    private static final int C_EDGE_HOT = 0xFFFFA521;
+    private static final int C_ACCENT = 0xFFDE9429;
+    private static final int C_AMBER = 0xFFFF9421;
+    private static final int C_TEXT = 0xFFC5DEF7;
+    private static final int C_DIM = 0xFF738494;
+    private static final int C_ERROR = 0xFFEF5A63;
+    private static final int C_OK = 0xFF52C55A;
 
     private static final int BTN_BROWSE_SOURCE = 0;
     private static final int BTN_BROWSE_OUTPUT = 1;

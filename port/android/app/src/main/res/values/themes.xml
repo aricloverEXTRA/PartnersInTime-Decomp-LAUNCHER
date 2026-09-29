@@ -3,13 +3,14 @@
     <!--
       No action bar: the patcher screen is the whole interface, and the palette
       below matches the colours the view paints so the system bars do not clash
-      with it.
+      with it. The window colour is the ROM's deep navy and the accent is its
+      gold, so the system chrome matches the in-app menu.
     -->
     <style name="Theme.PiTPatcher" parent="@android:style/Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#12141C</item>
-        <item name="android:colorBackground">#12141C</item>
-        <item name="android:statusBarColor">#12141C</item>
-        <item name="android:navigationBarColor">#12141C</item>
-        <item name="android:colorAccent">#6FCF97</item>
+        <item name="android:windowBackground">#001029</item>
+        <item name="android:colorBackground">#001029</item>
+        <item name="android:statusBarColor">#001029</item>
+        <item name="android:navigationBarColor">#001029</item>
+        <item name="android:colorAccent">#DE9429</item>
     </style>
 </resources>
