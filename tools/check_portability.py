@@ -67,7 +67,7 @@ COMPAT_FLAGS = [
 KNOWN_DIVERGENCES = [
     {
         "id": "s64-alignment",
-        "units": 172,
+        "units": 175,
         "detail": (
             "MWCC aligns 64-bit integers to 4 bytes on ARM946E with -fp soft; "
             "clang follows AAPCS and aligns them to 8. Any struct containing "
@@ -89,7 +89,7 @@ KNOWN_DIVERGENCES = [
     },
     {
         "id": "metrowerks-inline-asm",
-        "units": 22,
+        "units": 24,
         "detail": (
             "These units contain MWCC 'asm { ... }' blocks. Clang has no "
             "equivalent MS-style ARM inline assembly, so the block cannot be "

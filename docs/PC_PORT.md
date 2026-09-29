@@ -41,13 +41,13 @@ similarity. The same holds for the 19,168-byte battle dispatcher and the
 |---|---:|
 | Mapped ARM9 code | 1,563,700 B across 22 components |
 | ARM9 function symbols | 4,956 |
-| Byte-matching C | 878,932 B (56.21%) |
+| Byte-matching C | 890,748 B (56.96%) |
 | Maintained symbolic ARM9 assembly | 4,040 B |
 | Symbolic ARM7 | 43,852 B |
 | Relink coverage | 43 components, 420 section units, 31,138 relocations, zero differing bytes |
 | Reachable VM commands | 475,711 (638 Field rooms, 14 Battle archives, 3 Scene archives) |
 | Editable data records | 10,510 strings, 98 enemies, 765 treasures, 99 items, 4 shops |
-| Linked translation units that build under clang | 748 / 943 (79.3%) |
+| Linked translation units that build under clang | 760 / 960 (79.2%) |
 
 Regenerate the code figures with `tools/generate_progress.py`; see
 [`PROGRESS.md`](PROGRESS.md) for the methodology.
@@ -225,20 +225,20 @@ later.
 
 ## Clang portability baseline
 
-`tools/check_portability.py` compiles the 943 translation units listed in
+`tools/check_portability.py` compiles the 960 translation units listed in
 `config/eur/arm9/linked_sources.txt` with clang 19 targeting `arm946e-s`,
 translating every `CC_FLAGS` entry in `tools/configure.py`: `-fshort-enums`,
 `-fsigned-char`, `-fno-merge-constants`, `-mfloat-abi=soft`, `-fno-exceptions`,
 `-fno-rtti`, `-fshort-wchar`, `-nostdinc`, and C89/C++98 dialects selected per
 file extension. It writes objects to `build/portability/` and does not link.
 
-748 of 943 units compile (432 of 511 `.c`, 316 of 432 `.cpp`). All 195 failures
-fall into three groups, and none of them is missing game logic:
+760 of 960 units compile. All 200 failures fall into the same three groups as
+before, and none of them is missing game logic:
 
 | Units | Cause |
 |---:|---|
-| 172 | 64-bit integer alignment. See below. |
-| 22 | Metrowerks `asm { ... }` blocks. |
+| 175 | 64-bit integer alignment. See below. |
+| 24 | Metrowerks `asm { ... }` blocks. |
 | 1 | Assignment to a cast expression, an MWCC extension. |
 
 ### 64-bit integer alignment is the one that matters
@@ -257,14 +257,14 @@ Measured:
 
 The `typedef char ..._SizeCheck[(sizeof(T) == N) ? 1 : -1]` asserts already in
 the tree are what surface this, and they are **correct**: they encode the layout
-the ROM actually uses, and MWCC is the compiler that produced it. The 172
+the ROM actually uses, and MWCC is the compiler that produced it. The 175
 failing units are reporting a real ABI difference, not a reconstruction defect.
 
 Two consequences for a port:
 
 - A port that adopts clang's natural layout will silently disagree with the ROM
   about the offsets of every field after a 64-bit member. `FieldRuntimeEntity` is
-  the worst case, because it is the field-entity base record and 171 units touch
+  the   worst case, because it is the field-entity base record and 174 units touch
   it.
 - Silently "fixing" the asserts to make clang happy would be a correctness
   regression in the matching build. If a port needs clang's layout, it has to
@@ -273,7 +273,7 @@ Two consequences for a port:
 
 ### Metrowerks inline assembly
 
-22 units contain `asm { ... }` blocks, which clang cannot parse on ARM; there is
+24 units contain `asm { ... }` blocks, which clang cannot parse on ARM; there is
 no MS-style inline-assembly equivalent. Some are deliberate byte-matching
 fragments, for example `src/battle/battle_capture_transform.c:29`, which keeps
 the base-buffer and sub-buffer additions separate because Metrowerks otherwise
