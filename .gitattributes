@@ -1,0 +1,26 @@
+# Line endings for the launcher tree (port/) and its CI workflows.
+#
+# These are deliberately scoped rather than a blanket "* text=auto". The
+# decompilation tree holds files with deliberate mixed and legacy encodings,
+# and a global rule would rewrite line endings across them.
+#
+# The shell script must be LF in the working tree as well as in the index: a
+# CRLF checkout produces "python3: \r: command not found" on a Linux runner, and
+# fails the Android build with an error that does not mention line endings.
+
+# Anything consumed by a POSIX shell or a YAML workflow runner.
+*.sh text eol=lf
+.github/workflows/*.yml text eol=lf
+.github/workflows/*.yaml text eol=lf
+
+# Windows-side sources: CRLF in the working tree, LF in the index.
+*.ps1 text eol=crlf
+*.c   text eol=crlf
+*.h   text eol=crlf
+CMakeLists.txt text eol=crlf
+
+# Generated data and build inputs: LF, so the Python generators' output is
+# byte-identical whichever platform runs them.
+port/tools/patch_sources/* text eol=lf
+port/android/app/src/main/java/**/*.java text eol=lf
+port/src/core/pit_patch_data.h text eol=lf

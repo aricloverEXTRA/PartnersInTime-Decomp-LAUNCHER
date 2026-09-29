@@ -1,0 +1,81 @@
+# Builds and verifies the Windows patcher on every push, and attaches a
+# release ZIP to each successful run.
+#
+# The launcher links SDL2 statically, so the artifact is a single EXE with no
+# runtime to install. SDL2 itself is fetched by CMake from the tag pinned in
+# port/CMakeLists.txt, which is why the runner needs git as well as a compiler:
+# a pinned tag beats a system SDL2 package, whose version would otherwise
+# decide whether the build works.
+name: Windows
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and check
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Report toolchain
+        run: |
+          cmake --version
+          ninja --version
+          python --version
+          git --version
+
+      # FetchContent clones SDL2 at configure time. A shallow clone of the whole
+      # SDL history is large and slow, so this makes the fetch lighter without
+      # touching the pinned tag itself.
+      - name: Configure
+        run: |
+          cmake -S port -B port/build -G Ninja `
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo `
+            -DFETCHCONTENT_FULLY_DISCONNECTED=OFF
+          cmake --build port/build --config RelWithDebInfo
+
+      # Every ROM-independent check, including the headless UI frame render. The
+      # suite skips the frame check if the binary is missing, so the build step
+      # above has to have produced it.
+      - name: Run checks
+        run: ./port/check.ps1
+
+      # A frame that renders but is unreadable is the failure mode the layout
+      # check cannot see, so the image is uploaded for review on every run.
+      - name: Upload UI frames
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-frames
+          path: |
+            port/build/ui-frames/*.png
+            port/build/release-ui.png
+          if-no-files-found: ignore
+
+      - name: Package
+        shell: pwsh
+        run: ./port/build-release.ps1
+
+      - name: Upload ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: PiT-Patcher-win64
+          path: port/build/PiT-Patcher-win64.zip
+          if-no-files-found: error

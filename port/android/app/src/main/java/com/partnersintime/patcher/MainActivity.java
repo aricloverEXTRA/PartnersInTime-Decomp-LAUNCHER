@@ -27,12 +27,12 @@ public final class MainActivity extends Activity implements PatcherView.Callback
     private static final int REQ_OPEN_ROM = 1;
     private static final int REQ_CREATE_ROM = 2;
 
-    /* Log colours, matching the C renderer. From the real EUR ROM's
-     * BGR555 palettes; see pit_patcher_ui.c for the ROM offsets. */
-    private static final int LOG_INFO = 0xFF738494;
-    private static final int LOG_OK = 0xFF52C55A;
-    private static final int LOG_ERROR = 0xFFEF5A63;
-    private static final int LOG_WORK = 0xFFFF9421;
+    /* Log levels, not colours: PatcherView maps them to the ROM palette so the
+     * colour of a line cannot drift away from the Windows build. */
+    private static final int LOG_INFO = PatcherView.LOG_INFO;
+    private static final int LOG_OK = PatcherView.LOG_OK;
+    private static final int LOG_WARN = PatcherView.LOG_WARN;
+    private static final int LOG_ERROR = PatcherView.LOG_ERROR;
 
     private PatcherView view;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -85,11 +85,12 @@ public final class MainActivity extends Activity implements PatcherView.Callback
 
         if (request == REQ_OPEN_ROM) {
             source = uri;
-            view.setPaths(name, destination == null ? "(none)" : displayName(destination));
+            /* Empty means "not chosen yet"; the view supplies its own hint. */
+            view.setPaths(name, destination == null ? "" : displayName(destination));
             view.addLog(LOG_INFO, "Source: " + name);
         } else if (request == REQ_CREATE_ROM) {
             destination = uri;
-            view.setPaths(source == null ? "(none)" : displayName(source), name);
+            view.setPaths(source == null ? "" : displayName(source), name);
             view.addLog(LOG_INFO, "Output: " + name);
         }
     }
@@ -118,12 +119,12 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         runPatch();
     }
 
-    private void log(final int color, final String message) {
+    private void log(final int level, final String message) {
         ui.post(new Runnable() {
             @Override
             public void run() {
                 if (!isFinishing()) {
-                    view.addLog(color, message);
+                    view.addLog(level, message);
                 }
             }
         });
@@ -135,7 +136,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
             public void run() {
                 if (!isFinishing()) {
                     view.setProgress(step, fraction);
-                    view.addLog(LOG_WORK, message);
+                    view.addLog(LOG_INFO, message);
                 }
             }
         });
@@ -152,7 +153,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                     view.setPatched(true);
                     view.addLog(LOG_OK, message);
                 } else {
-                    view.setError(code);
+                    view.setFailed(true);
                     view.addLog(LOG_ERROR, message);
                 }
             }
@@ -163,7 +164,6 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         cancelled = false;
         view.clearLog();
         view.setBusy(true);
-        setButtonsEnabled(false);
 
         new Thread(new Runnable() {
             @Override
@@ -191,7 +191,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                     }
 
                     if (result.code == Patcher.OK) {
-                        log(LOG_WORK, "Writing output...");
+                        log(LOG_INFO, "Writing output...");
                         if (!writeAll(destination, out)) {
                             result.code = Patcher.ERR_WRITE;
                             out = null;
@@ -204,7 +204,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                      * otherwise fine.
                      */
                     result.code = Patcher.ERR_READ;
-                    log(LOG_ERROR, "Not enough memory: 128 MiB is required.");
+                    log(LOG_WARN, "Not enough memory: 128 MiB is required.");
                     out = null;
                 } catch (Exception e) {
                     result.code = Patcher.ERR_READ;
@@ -224,25 +224,8 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                             result.recordsPatched, result.fieldsWritten, result.headerCrc));
                 }
                 finishWith(result.code, Patcher.resultText(result.code));
-                ui.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        setButtonsEnabled(true);
-                    }
-                });
             }
         }, "pit-patch").start();
-    }
-
-    private void setButtonsEnabled(final boolean enabled) {
-        ui.post(new Runnable() {
-            @Override
-            public void run() {
-                if (!isFinishing()) {
-                    view.setBusy(!enabled);
-                }
-            }
-        });
     }
 
     /** Reads the document, refusing anything larger than the expected cartridge. */

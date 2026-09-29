@@ -1,0 +1,104 @@
+# Builds the Android patcher APK with the platform tools directly.
+#
+# There is no Gradle here on purpose: the app is plain Java against the platform
+# APIs, so aapt2, javac, d8, zipalign and apksigner are the whole toolchain. The
+# script drives them in the APK's required order and stops on the first nonzero
+# exit, which a shell script would not do.
+#
+# Signing: the release key is a repository secret and is never committed. When
+# the secret is absent, as on a fork, the job still builds and uploads an
+# unsigned APK rather than failing, so a pull request from a fork is useful.
+# An unsigned APK will not install; that is stated in the job summary.
+name: Android
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up the Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept SDK licenses
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager 'platform-tools' 'platforms;android-34' 'build-tools;34.0.0'
+
+      - name: Report toolchain
+        run: |
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+
+      - name: Run checks
+        # The same suite the Windows job runs. The launcher frame check is
+        # skipped there because it needs a Windows build of pit_patcher.exe;
+        # everything else, including the C/Java font parity and the
+        # Windows/Android layout parity, is platform independent.
+        run: pwsh ./port/check.ps1
+
+      - name: Build the APK
+        id: build
+        # Invoked through bash explicitly rather than as an executable: a
+        # checkout on a runner that does not preserve the file mode would fail
+        # with "permission denied" rather than a build error.
+        run: |
+          if [ -n "${ANDROID_KEYSTORE:-}" ]; then
+            bash ./port/android/build-apk.sh
+          else
+            echo "No signing secret; building an unsigned APK."
+            echo "unsigned=true" >> "$GITHUB_OUTPUT"
+            bash ./port/android/build-apk.sh --unsigned
+          fi
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+
+      - name: Summarise
+        run: |
+          apk=$(ls -1 port/android/app/build/pit-patcher-*.apk)
+          echo "### Android APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Built \`$apk\` ($(du -h "$apk" | cut -f1))." >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.build.outputs.unsigned }}" = "true" ]; then
+            echo "This APK is **unsigned** and will not install until it is signed." \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "The APK contains no ROM data. It needs the user's own EUR cartridge." \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pit-patcher-apk
+          path: port/android/app/build/pit-patcher-*.apk
+          if-no-files-found: error
+          retention-days: 14

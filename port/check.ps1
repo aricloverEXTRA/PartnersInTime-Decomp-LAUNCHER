@@ -17,7 +17,11 @@ separately:
 #>
 [CmdletBinding()]
 param(
-    [switch] $SkipJava
+    [switch] $SkipJava,
+    # The launcher frame check needs a built pit_patcher.exe. It is skipped with a
+    # message rather than failing when the binary is absent, so a fresh checkout
+    # without a toolchain still runs the rest.
+    [switch] $SkipUi
 )
 
 $ErrorActionPreference = 'Stop'
@@ -55,6 +59,41 @@ function Invoke-Python {
 Invoke-Check 'generated patch data is current' {
     Push-Location $portRoot
     try { Invoke-Python @('tools\gen_patchplan.py', '--check') } finally { Pop-Location }
+}
+
+Invoke-Check 'font glyphs are valid and match the generated tables' {
+    Push-Location $portRoot
+    try { Invoke-Python @('tools\check_font.py') } finally { Pop-Location }
+}
+
+Invoke-Check 'Windows and Android layouts match' {
+    # Needs the Android SDK: aapt2 resolves the classpath so the view's Canvas
+    # calls are type-checked. Skipped with a message when it is absent, since a
+    # developer without the SDK should still get the rest of the suite.
+    $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME }
+           elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT }
+           else { 'C:\Users\ruthi\AppData\Local\Temp\opencode\toolchain\android-sdk' }
+    $androidJar = Get-ChildItem (Join-Path $sdk 'platforms') -Directory -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending | Select-Object -First 1 |
+        ForEach-Object { Join-Path $_.FullName 'android.jar' }
+    $javac = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin\javac.exe' }
+             else { (Get-Command javac -ErrorAction SilentlyContinue).Source }
+
+    if (-not $androidJar -or -not (Test-Path $androidJar) -or -not $javac) {
+        Write-Host '    (no Android SDK or JDK; Android sources not type-checked)'
+        return
+    }
+    $viewClasses = Join-Path $buildDir 'android-view'
+    New-Item -ItemType Directory -Force $viewClasses | Out-Null
+    $pkgDir = Join-Path $portRoot 'android\app\src\main\java\com\partnersintime\patcher'
+    & $javac -nowarn -encoding UTF-8 -classpath $androidJar -d $viewClasses `
+        (Join-Path $pkgDir 'PatchData.java') (Join-Path $pkgDir 'PatcherView.java')
+    if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
+}
+
+Invoke-Check 'Windows and Android layout constants agree' {
+    Push-Location $portRoot
+    try { Invoke-Python @('tools\check_ui_parity.py') } finally { Pop-Location }
 }
 
 Invoke-Check 'no ROM or extracted game data in the tree' {
@@ -101,6 +140,40 @@ if (-not $SkipJava) {
         }
         Invoke-Check 'Java patcher unit tests' {
             & $java -cp $buildDir com.partnersintime.patcher.PitUnitTest
+        }
+    }
+}
+
+if ($SkipUi) {
+    Write-Host ''
+    Write-Host '--- Launcher frame check SKIPPED (-SkipUi)'
+} else {
+    $patcherExe = Join-Path $portRoot 'build\pit_patcher.exe'
+    if (-not (Test-Path $patcherExe)) {
+        Write-Host ''
+        Write-Host '--- Launcher frame check SKIPPED (build\pit_patcher.exe not built; run cmake --build build --target pit_patcher)'
+    } else {
+        $frameDir = Join-Path $portRoot 'build\ui-frames'
+        New-Item -ItemType Directory -Force $frameDir | Out-Null
+
+        # Two frames: idle and mid-patch. Both are drawn by the same render() the
+        # window uses, so these catch layout and legibility regressions without a
+        # display.
+        Invoke-Check 'launcher frame: idle layout and legibility' {
+            & $patcherExe --screenshot (Join-Path $frameDir 'idle.png')
+            if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
+            Push-Location $portRoot
+            try {
+                Invoke-Python @('tools\check_ui.py', 'build\ui-frames\idle.png')
+            } finally { Pop-Location }
+        }
+        Invoke-Check 'launcher frame: mid-patch state' {
+            & $patcherExe --screenshot (Join-Path $frameDir 'busy.png') --simulate
+            if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
+            Push-Location $portRoot
+            try {
+                Invoke-Python @('tools\check_ui.py', 'build\ui-frames\busy.png', '--expect-half')
+            } finally { Pop-Location }
         }
     }
 }

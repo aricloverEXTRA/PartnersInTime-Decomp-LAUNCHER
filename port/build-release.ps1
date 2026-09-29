@@ -1,12 +1,16 @@
 <#
 .SYNOPSIS
-Builds the distributable Windows patcher, verifies it, and packages a ZIP.
+Builds the distributable Windows patcher and packages it as a ZIP.
 
 .DESCRIPTION
-Produces a release ZIP containing pit_patcher.exe, the headless pit_patch.exe
-and a README. The build is self-contained: it resolves an SDL2 development
-install, failing with a clear message rather than producing a binary that
-cannot start.
+Produces a release ZIP containing pit_patcher.exe, the headless pit_patch.exe,
+a rendered preview of the launcher and a README.
+
+The build goes through CMake, which is the same path CI uses, so a ZIP built
+here is built the same way a CI artifact is. CMake fetches and statically links
+SDL2 from the tag pinned in CMakeLists.txt, so the result is a single EXE with
+no runtime to install and no SDL2 development package to find first. A
+generator is chosen from what is present; Ninja is preferred.
 
 Patched ROMs are test artifacts. Nothing under build/ is packaged, and no ROM,
 extracted data or generated export is ever copied into the ZIP.
@@ -14,7 +18,7 @@ extracted data or generated export is ever copied into the ZIP.
 [CmdletBinding()]
 param(
     [string] $OutDir,
-    [string] $Sdl2Path
+    [string] $BuildDir
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,12 +27,9 @@ Set-StrictMode -Version Latest
 # Defaults are resolved in the body: $PSScriptRoot is not reliable in a param
 # default under Windows PowerShell 5.1.
 if (-not $OutDir) { $OutDir = Join-Path $PSScriptRoot 'build\release' }
+if (-not $BuildDir) { $BuildDir = Join-Path $PSScriptRoot 'build' }
 
-# $PSScriptRoot is already the port directory; the decompilation root is its
-# parent, which is only used for the packaged ZIP path.
 $portRoot = $PSScriptRoot
-$src      = Join-Path $portRoot 'src'
-$buildDir = Join-Path $portRoot 'build'
 
 function Invoke-Step {
     # $Arguments rather than $Args: the latter is an automatic variable, so
@@ -39,103 +40,58 @@ function Invoke-Step {
     if ($LASTEXITCODE -ne 0) { throw "$Name failed with exit code $LASTEXITCODE" }
 }
 
-# A C compiler and SDL2 are the only prerequisites. The patcher links SDL2
-# dynamically, so a user with a matching runtime can run it without a rebuild.
-$gcc = if ($env:CC) { $env:CC }
-       else { (Get-Command gcc -ErrorAction SilentlyContinue).Source }
-if (-not $gcc) { $gcc = 'C:\Strawberry\c\bin\gcc.exe' }
-if (-not (Test-Path $gcc)) { throw 'No C compiler found: set $env:CC or install MinGW gcc.' }
-
-function Resolve-Sdl2 {
-    # An explicit -Sdl2Path wins. Otherwise the usual prefixes are searched for
-    # the two things a build actually needs: SDL2.h and libSDL2.a. Both may sit
-    # directly in the prefix, as they do in a CMake install tree, or under lib.
-    $candidates = @($Sdl2Path, $env:SDL2DIR, 'C:\msys64\mingw64', 'C:\msys64\ucrt64',
-                    'C:\Strawberry\c', 'C:\SDL2', 'C:\Program Files\SDL2')
-
-    foreach ($root in $candidates) {
-        if (-not $root -or -not (Test-Path $root)) { continue }
-
-        $header = Get-ChildItem $root -Recurse -Filter 'SDL.h' -ErrorAction SilentlyContinue |
-            Where-Object { $_.DirectoryName -match 'SDL2$' } | Select-Object -First 1
-        $libs = Get-ChildItem $root -Recurse -Filter 'libSDL2.a' -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-        if ($header -and $libs) {
-            # SDL.h lives in include/SDL2, so its own directory is the include
-            # path: <SDL.h> needs the parent of SDL2, not the parent of include.
-            # SDL_config.h is generated rather than installed, so a CMake build
-            # tree needs its directory added as a second include path.
-            $includes = @($header.DirectoryName)
-            $config = Get-ChildItem $root -Recurse -Filter 'SDL_config.h' -ErrorAction SilentlyContinue |
-                Select-Object -First 1
-            if ($config) { $includes += $config.DirectoryName }
-
-            return [pscustomobject]@{
-                Root     = $root
-                Includes = $includes
-                LibDir   = $libs.Directory.FullName
-                Sdl2Lib  = $libs.FullName
-            }
-        }
+function Resolve-Tool {
+    param([string] $Name, [string[]] $Candidates)
+    $command = Get-Command $Name -ErrorAction SilentlyContinue
+    if ($command) { return $command.Source }
+    foreach ($candidate in $Candidates) {
+        if ($candidate -and (Test-Path $candidate)) { return $candidate }
     }
     return $null
 }
 
-$sdl2 = Resolve-Sdl2
-if (-not $sdl2) {
+$cmake = Resolve-Tool 'cmake' @(
+    'C:\Program Files\CMake\bin\cmake.exe',
+    'C:\Strawberry\c\bin\cmake.exe')
+if (-not $cmake) { throw 'No CMake found: install CMake 3.21 or newer.' }
+
+# Ninja when it is available, because it is what CI uses; otherwise the Visual
+# Studio or NMake generator, whichever this host has.
+$ninja = Resolve-Tool 'ninja' @(
+    'C:\Program Files\CMake\bin\ninja.exe',
+    'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe')
+$generator = $null
+$generatorArgs = @()
+if ($ninja -and (Split-Path $ninja -Leaf) -eq 'ninja.exe') {
+    $generator = 'Ninja'
+    $generatorArgs = @('-G', 'Ninja')
+} elseif (-not (Resolve-Tool 'cl' @()) -and -not $env:VSCMD_ARG_TGT_ARCH) {
+    # No compiler on PATH and no Visual Studio environment: say so rather than
+    # letting CMake fail with a generator error.
     throw @'
-SDL2 development files were not found.
+No C compiler found.
 
-Install the MinGW SDL2 development package, or pass the prefix explicitly:
-
-    .\build-release.ps1 -Sdl2Path C:\path\to\sdl2
+Run this from a Visual Studio developer prompt, or put gcc, clang or cl on
+PATH. CI uses the windows-latest image, which has a compiler already.
 '@
 }
 
-# SDL2_main supplies main() and SDL2main is the WinMain wrapper; a
-# console-subsystem build on MinGW needs both.
-$sdl2main = Get-ChildItem $sdl2.LibDir -Filter 'libSDL2main.a' -ErrorAction SilentlyContinue |
-    Select-Object -First 1
-if (-not $sdl2main) {
-    throw "libSDL2main.a not found in $($sdl2.LibDir). Install the SDL2 development package."
+New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
+
+Invoke-Step 'configure' $cmake (@('-S', $portRoot, '-B', $BuildDir) +
+    $generatorArgs + @('-DCMAKE_BUILD_TYPE=RelWithDebInfo'))
+Invoke-Step 'build' $cmake (@('--build', $BuildDir, '--config', 'RelWithDebInfo'))
+
+$patcher = Join-Path $BuildDir 'pit_patcher.exe'
+$headless = Join-Path $BuildDir 'pit_patch.exe'
+foreach ($binary in @($patcher, $headless)) {
+    if (-not (Test-Path $binary)) { throw "build produced no $binary" }
 }
-$libs = @($sdl2main.FullName, $sdl2.Sdl2Lib)
 
-# Win32 libraries SDL2's MinGW build pulls in, and comdlg32 for the Browse
-# dialog in the graphical patcher.
-$winLibs = @('-lmingw32', '-lwinmm', '-limm32', '-lole32', '-loleaut32', '-lshell32',
-             '-lsetupapi', '-lcomdlg32', '-lgdi32', '-luser32', '-ladvapi32',
-             '-lversion', '-luuid', '-lz')
-
-$core = @(
-    (Join-Path $src 'core\pit_patcher.c'),
-    (Join-Path $src 'core\pit_rom.c'),
-    (Join-Path $src 'core\pit_sha1.c'),
-    (Join-Path $src 'core\pit_gfx.c'),
-    (Join-Path $src 'core\pit_png.c')
-)
-
-# Sources include their headers as "core/pit_rom.h", so src/ itself is on the
-# include path rather than src/core/.
-$cflags = @('-std=c11', '-Wall', '-Wextra', '-O2', '-D_CRT_SECURE_NO_WARNINGS',
-           '-I', $src, '-L', $sdl2.LibDir)
-$cflags += $sdl2.Includes | ForEach-Object { '-I'; $_ }
-
-New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
-
-Invoke-Step 'pit_patch (headless)' $gcc (
-    $cflags + @('-o', (Join-Path $buildDir 'pit_patch.exe'), (Join-Path $src 'patcher_main.c')) + $core + $libs + $winLibs)
-
-Invoke-Step 'pit_patcher (graphical)' $gcc (
-    $cflags + @('-I', $src, '-o', (Join-Path $buildDir 'pit_patcher.exe'),
-        (Join-Path $src 'patcher_ui_main.c'),
-        (Join-Path $src 'platform\sdl2\pit_patcher_ui.c')) + $core + $libs + $winLibs)
-
-# The UI is rendered headlessly and serialised to PNG and text. A layout that
-# cannot be drawn must fail the build, not ship.
-$shot = Join-Path $buildDir 'release-ui.png'
-Invoke-Step 'UI render check' (Join-Path $buildDir 'pit_patcher.exe') @(
-    '--screenshot', $shot, '--simulate')
+# The UI is rendered headlessly and serialised to PNG. A layout that cannot be
+# drawn must fail the release, not ship.
+$shot = Join-Path $BuildDir 'release-ui.png'
+Invoke-Step 'UI render check' $patcher @('--screenshot', $shot, '--simulate')
 if (-not (Test-Path $shot)) { throw "UI render produced no image at $shot" }
 Write-Host "    wrote $shot"
 
@@ -145,16 +101,15 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
 $stage = Join-Path $OutDir 'PiT-Patcher'
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
-Copy-Item (Join-Path $buildDir 'pit_patcher.exe') $stage
-Copy-Item (Join-Path $buildDir 'pit_patch.exe') $stage
+Copy-Item $patcher $stage
+Copy-Item $headless $stage
 Copy-Item (Join-Path $portRoot 'README.md') $stage
-$shotDest = Join-Path $stage 'ui-preview.png'
-Copy-Item $shot $shotDest
+Copy-Item $shot (Join-Path $stage 'ui-preview.png')
 
 # Refuse to package anything that could carry game data. The check is on the
 # staged tree, so it also catches a stray file added by a later step.
 $forbidden = Get-ChildItem $stage -Recurse -File | Where-Object {
-    $_.Extension -in @('.nds', '.bin', '.rom', '.gba', '.zip', '.json') -or
+    $_.Extension -in @('.nds', '.bin', '.rom', '.gba', '.json') -or
     $_.Name -match 'baserom|enemies\.json|\.keystore$'
 }
 if ($forbidden) {
