@@ -20,7 +20,7 @@ void func_ov000_020ae6c0(FieldRuntimeEntity *, int);
 int func_ov000_020b4728(FieldRuntimeEntity *, int, int);
 
 extern const u8 data_ov000_020c0b78[];
-void func_ov000_020a4a1c(FieldRuntimeEntity *, int, int);
+void func_ov000_020a4a1c(FieldRuntimeEntity *, int, u8);
 
 /* Local offsets are applied only around the existing spatial helpers. */
 int FieldAuxiliary_TestNavigationAtOffset(FieldAuxiliaryEntity *aux, int mask, int mode)
@@ -104,13 +104,13 @@ void FieldAuxiliary_UpdateRendererAtOffset(FieldAuxiliaryEntity *aux, u8 default
     }
 }
 
-void FieldAuxiliary_UpdateAnimation(FieldAuxiliaryEntity *aux, int mode, int restart)
+void FieldAuxiliary_UpdateAnimation(FieldAuxiliaryEntity *aux, int mode, u8 update_bounds)
 {
     unsigned int animation;
     if (aux->entity.base_state_flag_bits.animation_wait_enabled &&
         aux->entity.render_object->state_flag_bits.animation_active) {
         if (aux->entity.locomotion_state <= 3) {
-            func_ov000_020a4a1c(&aux->entity, mode, restart);
+            func_ov000_020a4a1c(&aux->entity, mode, update_bounds);
             return;
         }
         if (aux->entity.locomotion_state == 96)

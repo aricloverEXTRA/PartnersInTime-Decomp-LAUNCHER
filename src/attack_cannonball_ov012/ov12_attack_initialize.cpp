@@ -64,7 +64,7 @@ void Overlay12Attack_Initialize(BattlePartyActor *user)
     *(u16 *)(gBattleContext + 50) = 6;
     *(u16 *)(gBattleContext + 48) = 12;
     if (Overlay10Party_HasBadgeTwo())
-        func_ov012_020c2ae0();
+        Overlay12Attack_ApplyBadgeOffsets();
     Overlay10Attack_BeginEntry(user, func_ov012_020c5314);
     int i = 0;
     u32 formation_index;

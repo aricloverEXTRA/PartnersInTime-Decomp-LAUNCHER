@@ -10,17 +10,36 @@ extern "C" {
 }
 #endif
 #include <game/battle_effect.h>
-typedef struct Overlay25ChainJoint { s16 x, y, z, unknown_06[3]; } Overlay25ChainJoint;
+typedef struct Overlay25ChainJoint {
+    /* Q8 segment vector; relaxation retains full-width intermediates. */
+    s16 x, y, z;
+    union {
+        s16 unknown_06[3];
+        /* Cumulative original-minus-relaxed displacement, in whole units. */
+        struct { s16 displacement_x, displacement_y, displacement_z; };
+    };
+} Overlay25ChainJoint;
+typedef char Overlay25ChainJoint_DisplacementOffsetCheck[
+    (u32)&((Overlay25ChainJoint *)0)->displacement_x == 6 ? 1 : -1];
 typedef struct Overlay25ChainState {
     Overlay25ChainJoint joints[64];
     s16 unknown_300, unknown_302, unknown_304, countdown;
     s16 unknown_308, amplitude_q8, unknown_30c;
     s16 offset_x, offset_y, offset_z;
     s16 unknown_314, counter, unknown_318, unknown_31a;
-    u16 object_id;
-    u8 unknown_31e[26];
+    union {
+        struct { u16 object_id; u8 unknown_31e[26]; };
+        struct {
+            u8 unknown_31c[4];
+            /* Chain sum plus its world-space Q8 anchor. */
+            s32 endpoint_x_q8, endpoint_y_q8, endpoint_z_q8;
+            u8 unknown_32c[12];
+        };
+    };
     s32 x_q8, y_q8, z_q8;
 } Overlay25ChainState;
+typedef char Overlay25ChainState_EndpointOffsetCheck[
+    (u32)&((Overlay25ChainState *)0)->endpoint_x_q8 == 800 ? 1 : -1];
 typedef char Overlay25ChainState_SizeCheck[sizeof(Overlay25ChainState)==836?1:-1];
 typedef struct Overlay25ChainMotionParameters {
     u16 phase;
@@ -156,10 +175,14 @@ void Overlay25Enemy_WaitAttachedEffect(Overlay25Task *task, BattleSceneObject *o
                                        Overlay25WorkPrefix *work);
 void Overlay25Task_WaitSibling(Overlay25Task *task, BattleSceneObject *, Overlay25WorkPrefix *work);
 void Overlay25Chain_RetractForRetry(Overlay25Task *task, BattleSceneObject *enemy, Overlay25WorkPrefix *work);
+void Overlay25Chain_ReturnParty(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Chain_ApplyLandingDamage(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25LinkedEffect_ApplyPartyLandingDamage(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25LinkedEffect_ApplyReflectedDamage(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Party_UnlockAfterTask(Overlay25Task *task, BattleSceneObject *, Overlay25WorkPrefix *work);
+void BattleChain_RelaxSegments(Overlay25ChainJoint *joint, int count,
+                               int segment_length, int smoothing_q12);
+void Overlay25Enemy_PrepareChainTarget(Overlay25Task *, BattleSceneObject *, Overlay25WorkPrefix *);
 void Overlay25Enemy_FinishAttachedEffect(Overlay25Task *task, BattleSceneObject *object,
                                          Overlay25WorkPrefix *work);
 void Overlay25Enemy_WaitAnimation(Overlay25Task *task, BattleSceneObject *object, Overlay25WorkPrefix *);

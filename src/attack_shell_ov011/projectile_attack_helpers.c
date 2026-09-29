@@ -7,6 +7,7 @@
  */
 
 #include <game/battle_effect.h>
+#include <game/interval.h>
 #include <game/battle_object.h>
 #include <game/overlay011_attack.h>
 
@@ -22,9 +23,6 @@ enum {
 
 extern int BattleAnimation_GetDurationThroughFrame(u8 *resource_data, int animation_id,
                                int animation_frame, int scale);
-extern int GameIntervals_Overlap(int first_start, int first_end,
-                         int second_start, int second_end);
-extern int func_02010960(int value, int direction, int limit);
 extern s16 data_ov011_020c6040[];
 extern u16 data_ov011_020c5f24[];
 extern u8 data_ov011_020c5f20[];
@@ -67,9 +65,9 @@ void Overlay11Attack_UpdateClampedOffset(Overlay11AttackController *state) {
     s16 *offset = &state->offset_x;
     Overlay11AttackMotionBounds *bounds = state->motion_bounds;
 
-    offset[0] = func_02010960(
+    offset[0] = GameMotion_ClampToLimit(
         offset[0] + bounds->step_x, bounds->step_x, bounds->limit_x);
-    offset[1] = func_02010960(
+    offset[1] = GameMotion_ClampToLimit(
         offset[1] + bounds->step_y, bounds->step_y, bounds->limit_y);
 }
 

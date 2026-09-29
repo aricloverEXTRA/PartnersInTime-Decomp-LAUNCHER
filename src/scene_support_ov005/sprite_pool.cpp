@@ -9,6 +9,7 @@
 
 #include <game/battle_scene.h>
 #include <game/overlay005_pools.h>
+#include <msl/array.h>
 extern "C" {
 #include <game/sprite_output.h>
 #include <game/heap.h>
@@ -71,7 +72,6 @@ extern const void *data_ov005_0206a02c[];
 extern void func_0200a4cc(Overlay5Sprite *sprite, GameOamEntry *oam, u8 *entry_count, u8 *affine_count);
 extern void *func_02048aac(void *memory, u32 count, u32 size, u32 header,
                            void *(*construct)(void *), void *(*destroy)(void *));
-extern void func_02048874(void *array, u32 size, u32 header, void *(*destroy)(void *));
 extern void *func_ov005_02068818(void *object);
 
 Overlay5Sprite *func_ov005_02068cc0(Overlay5Sprite *sprite);
@@ -117,7 +117,7 @@ Overlay5Sprite *func_ov005_02068df0(Overlay5SpritePool *pool) {
 
 void func_ov005_02068d8c(Overlay5SpritePool *pool) {
     if (pool->sprites) {
-        func_02048874(pool->sprites, sizeof(Overlay5Sprite), 8, func_ov005_02068818);
+        MSL_DeleteArray(pool->sprites, sizeof(Overlay5Sprite), 8, func_ov005_02068818);
         pool->sprites = 0;
     }
     if (pool->nodes) {

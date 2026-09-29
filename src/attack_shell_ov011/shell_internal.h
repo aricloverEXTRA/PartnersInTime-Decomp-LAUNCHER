@@ -9,6 +9,7 @@ extern "C" {
 #include <nitro.h>
 }
 #include <game/battle_actor.h>
+#include <game/interval.h>
 #include <game/battle_effect.h>
 #include <game/battle_object.h>
 extern "C" {
@@ -97,7 +98,6 @@ extern s16 data_ov011_020c5f80[][3];
 extern u16 data_ov002_020be704[];
 void BattleSound_Stop(int);
 void func_0200940c(BattleModel *, s16);
-int func_02010960(int, int, int);
 extern u8 *gBattleContext;
 extern u8 data_ov011_020c5f20[];
 extern u16 data_ov011_020c5f24[];

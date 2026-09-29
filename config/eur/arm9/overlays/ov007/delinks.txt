@@ -255,3 +255,9 @@ src/scene_menu_ov007/pause_selection_close.cpp:
 
 src/scene_menu_ov007/pause_bitmap_close.cpp:
     .text start:0x02079d08 end:0x02079d1c
+
+src/scene_menu_ov007/pause_status_release.c:
+    .text start:0x02078478 end:0x020784a0
+
+src/scene_menu_ov007/menu_party_spring.cpp:
+    .text start:0x020769a4 end:0x02076e30

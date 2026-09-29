@@ -11,6 +11,7 @@ void BattleRewardItems_Initialize(void);
 void BattleRewardItems_Update(void);
 void BattleRewardItems_BeginClose(void);
 int BattleRewardItems_IsReady(void);
+int BattleRewardItems_IsDone(void);
 #ifdef __cplusplus
 }
 #endif

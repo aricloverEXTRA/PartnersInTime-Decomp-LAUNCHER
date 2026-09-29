@@ -1,12 +1,5 @@
 /* Match a thrown type against the packed exception-specification type list. */
-#include <nitro.h>
-typedef struct MslExceptionSpec {
-    u32 count;
-    u32 landing_offset;
-    s32 frame_offset;
-    const u8 *types;
-} MslExceptionSpec;
-typedef char MslExceptionSpecSize[sizeof(MslExceptionSpec) == 16 ? 1 : -1];
+#include "exception_search_internal.h"
 /* Native type-name matcher; its implementation remains unreconstructed. */
 extern int func_02048614(const u8 *, const u8 *, s32 *);
 

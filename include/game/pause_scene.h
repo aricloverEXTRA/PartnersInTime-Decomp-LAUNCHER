@@ -38,7 +38,8 @@ void PauseScene_LoadResources(PauseSceneTask *task);
 void PauseScene_PrepareExitTask(PauseExitTask *task);
 void PauseScene_FadeOutTask(PauseExitTask *task);
 void PauseScene_RequestExit(PauseSceneTask *scene, int mode);
-s32 PauseTransition_GetProgress(void);
+/* Native callers may pass the scene, although progress is global. */
+s32 PauseTransition_GetProgress(PauseSceneTask *unused_scene);
 PauseSceneTask *PauseScene_Init(PauseSceneTask *task, u32 priority, u32 unused);
 GameIrqTask *PauseSceneIrq_Init(GameIrqTask *task, u32 priority, u32 unused, void *parent);
 #ifdef __cplusplus

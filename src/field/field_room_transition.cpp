@@ -16,7 +16,6 @@ extern "C" {
 #include <game/save_data.h>
 #include <game/rumble.h>
 void func_ov000_0209ef28(FieldPartyManager *);
-void func_ov000_02080efc(FieldAreaContext *);
 extern u8 data_0205a00c;
 void func_ov000_0208b208(FieldPartyController *, int);
 
@@ -235,7 +234,7 @@ void FieldArea_PrepareRoomDeparture(FieldAreaContext *field)
     GameAudio_StopEffect(312);
     GameAudio_StopEffect(216);
     GameAudio_StopEffect(216);
-    func_ov000_02080efc(field);
+    FieldArea_ReleaseRoomResources(field);
     field->state_bits.unknown_06 = 0;
     field->state_bits.unknown_05 = 0;
     field->room_id = field->transition.room;

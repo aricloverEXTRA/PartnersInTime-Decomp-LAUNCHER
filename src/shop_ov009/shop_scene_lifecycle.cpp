@@ -19,12 +19,6 @@ GameIrqTask *ShopSceneIrq_Init(GameIrqTask *task, u32 priority, u32 unused, void
 }
 
 extern "C" {
-typedef struct ShopScrollState {
-    u8 unknown[196];
-    s16 sub, main;
-} ShopScrollState;
-typedef char ShopScrollStateSizeCheck[sizeof(ShopScrollState) == 200 ? 1 : -1];
-extern ShopScrollState data_ov009_0207f23c;
 extern int func_ov005_02065f00(void);
 extern void func_ov005_0206651c(int, int), func_ov005_0206642c(int, int), func_ov005_02068f84(int),
     func_ov005_02065eec(void);
@@ -252,7 +246,7 @@ ShopSceneTask *ShopScene_Init(ShopSceneTask *task, u32 priority, u32 unused)
     GameIrqTask_Enable(task->irq);
     if (!data_ov009_0207ea3c.special_shop && data_ov009_0207ea3c.animated_background) {
         OS_DisableIrqMask(2);
-        OS_SetIrqFunction(2, func_ov009_0207ce1c);
+        OS_SetIrqFunction(2, ShopScene_UpdateHBlank);
         OS_EnableIrqMask(2);
         GX_HBlankIntr(1);
     }

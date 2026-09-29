@@ -125,7 +125,7 @@ src/nitro/gx/gx_blend_affine.c
 src/nitro/gx/gx_command_list.c
 src/nitro/gx/gx_geometry_state.c
 src/nitro/gx/gx_load2d.c
-src/nitro/gx/gx_command_list_end.c
+src/nitro/gx/gx_command_list_buffer.c
 src/nitro/gx/gx_load3d.c
 src/nitro/os/os_irq.c
 src/nitro/os/os_message.c
@@ -443,7 +443,7 @@ src/elder_princess_shroob_ov025/enemy_projectile_effects.cpp
 src/elder_princess_shroob_ov025/enemy_projectile_preparation.cpp
 src/elder_princess_shroob_ov025/enemy_segment_chain_preparation.cpp
 src/elder_princess_shroob_ov025/ov25_enemy_wait_animation.cpp
-src/elder_princess_shroob_ov025/ov25_enemy_finish_attached_effect.cpp
+src/elder_princess_shroob_ov025/enemy_chain_target.cpp
 src/elder_princess_shroob_ov025/enemy_chain_landing.cpp
 src/elder_princess_shroob_ov025/ov25_task_wait_sibling.cpp
 src/elder_princess_shroob_ov025/enemy_chain_tasks.cpp
@@ -611,6 +611,7 @@ src/save_menu_ov008/erase_confirmation.cpp
 src/save_menu_ov008/game_over_models.cpp
 
 src/scene_menu_ov007/menu_springs.c
+src/scene_menu_ov007/menu_party_spring.cpp
 src/field/field_party_transition_requests.cpp
 src/battle/battle_model_afterimage.c
 src/field/field_room_interaction.cpp
@@ -1062,3 +1063,28 @@ src/scene_menu_ov007/pause_selection_close.cpp
 src/scene_menu_ov007/pause_bitmap_close.cpp
 
 src/save_menu_ov008/load_slot_confirmation.c
+src/scene_menu_ov007/pause_status_release.c
+src/game/session_field_resume.c
+src/msl/exception_dispatch.c
+src/msl/handler_search.cpp
+src/field/field_timed_renderer_delete.cpp
+src/nitro/os/os_exception.c
+src/msl/array_delete.c
+
+src/field/field_planar_screen_position.cpp
+
+src/battle/battle_chain_relaxation.cpp
+
+src/nitro/os/os_reset_itcm.c
+
+src/nitro/mi/mi_dma_itcm.c
+
+src/field/field_area_release.cpp
+
+src/shop_ov009/shop_hblank.cpp
+
+src/attack_cannonball_ov012/badge_tuning.cpp
+
+src/field/field_extended_save_flags.cpp
+
+src/battle/battle_menu_vertical.c

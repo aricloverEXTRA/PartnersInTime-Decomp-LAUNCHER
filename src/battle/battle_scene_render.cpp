@@ -6,6 +6,7 @@
  * interface finds the model under the current selection.
  */
 
+#include <nitro/mi_dma.h>
 #include <game/battle_context.h>
 #include <game/battle_effect.h>
 #include <game/battle_object.h>
@@ -13,7 +14,6 @@
 
 extern "C" {
 extern void DC_FlushRange(void *start, u32 size);
-extern void func_01ff861c(int channel, void *source, u32 size);
 }
 
 enum BattleShadowConstant {
@@ -129,7 +129,7 @@ extern "C" void BattleScene_DrawShadow(int variant, int animation_state,
         (*(u16 *)(gBattleContext + BATTLE_SHADOW_POLYGON_ID_OFFSET) << 24) |
         (animation_state << 16);
     DC_FlushRange(display_list, display_list_size);
-    func_01ff861c(BATTLE_SHADOW_DISPLAY_LIST_CHANNEL,
+    MI_SendGXCommand(BATTLE_SHADOW_DISPLAY_LIST_CHANNEL,
                   display_list, display_list_size);
 
     if (height > 0) {
@@ -151,7 +151,7 @@ extern "C" void BattleScene_DrawShadow(int variant, int animation_state,
                            BATTLE_SHADOW_POLYGON_ID_OFFSET) << 24) |
                 (second_alpha << 16);
             DC_FlushRange(display_list, display_list_size);
-            func_01ff861c(BATTLE_SHADOW_DISPLAY_LIST_CHANNEL,
+            MI_SendGXCommand(BATTLE_SHADOW_DISPLAY_LIST_CHANNEL,
                           display_list, display_list_size);
         }
     }

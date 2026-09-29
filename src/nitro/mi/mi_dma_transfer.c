@@ -4,11 +4,9 @@
  * The copy and fill transfers the rest of the game requests DMA through.
  */
 
+#include <nitro/mi_dma.h>
 #include <nitro/os_sync.h>
 
-extern void func_01ff84c0(u32 channel, const void *source, void *destination, u32 control);
-extern void func_01ff8558(u32 channel, const void *source, void *destination, u32 control);
-extern void MIi_DmaSetParams(u32 channel, const void *source, void *destination, u32 control);
 void MIi_CheckDma0SourceAddress(u32 channel, const void *source, u32 size, u32 mode);
 void MIi_CheckAnotherAutoDMA(u32 channel, u32 timing);
 void func_0203b310(u32 channel);
@@ -40,7 +38,7 @@ void func_0203b5f4(u32 channel, void *destination, u32 value, u32 size) {
     while (*control & 0x80000000) {}
     state = OS_DisableInterrupts();
     DMA_FILL_DATA[channel] = value;
-    func_01ff84c0(channel, (const void *)((u32)DMA_FILL_DATA + 4 * channel), destination,
+    MIi_DmaSetParamsRawAndReset0(channel, (const void *)((u32)DMA_FILL_DATA + 4 * channel), destination,
                    0x85000000 | (size >> 2));
     OS_RestoreInterrupts(state);
     while (*control & 0x80000000) {}
@@ -52,7 +50,7 @@ void func_0203b578(u32 channel, const void *source, void *destination, u32 size)
     if (!size) return;
     control = &DMA_WORDS[3 * channel + 2];
     while (*control & 0x80000000) {}
-    func_01ff8558(channel, source, destination, 0x84000000 | (size >> 2));
+    MIi_DmaSetParamsAndReset0(channel, source, destination, 0x84000000 | (size >> 2));
     while (*control & 0x80000000) {}
 }
 
@@ -62,6 +60,6 @@ void func_0203b500(u32 channel, const void *source, void *destination, u32 size)
     MIi_CheckDma0SourceAddress(channel, source, size, 0);
     control = &DMA_WORDS[3 * channel + 2];
     while (*control & 0x80000000) {}
-    func_01ff8558(channel, source, destination, 0x80000000 | (size >> 1));
+    MIi_DmaSetParamsAndReset0(channel, source, destination, 0x80000000 | (size >> 1));
     while (*control & 0x80000000) {}
 }

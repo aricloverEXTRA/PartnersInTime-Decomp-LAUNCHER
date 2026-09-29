@@ -171,3 +171,6 @@ src/shop_ov009/shop_owned_count_label.cpp:
 
 src/shop_ov009/shop_sell_bonus.c:
     .text start:0x0206d084 end:0x0206d0bc
+
+src/shop_ov009/shop_hblank.cpp:
+    .text start:0x0207ce1c end:0x0207ceb0

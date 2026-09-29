@@ -6,6 +6,7 @@
  * scene resource it names.
  */
 
+#include <game/format.h>
 #include <game/battle_context.h>
 
 /* Resource handles use the high nibble for the one-based archive slot. */
@@ -38,7 +39,6 @@ BattleAIState *BattleScriptState_GetByObjectId(u16 object_id) {
 extern void OS_Terminate(void);
 extern void *GameHeap_Allocate(u32 heap_id, u32 size, const void *name,
                           int use_default);
-extern int func_0202a914(char *destination, const char *format, ...);
 extern void func_0202cbd4(void *destination, int value, u32 size);
 extern BattleQueuedTask *BattleMap_QueueLoad(
     BattleObjectDataLoadState *load_state, s32 resource_id);
@@ -89,7 +89,7 @@ void BattleObjectData_AllocateLoadBuffer(int object_data_id, u32 size) {
         size = BATTLE_OBJECT_DATA_LARGE_SLOT_SIZE;
     }
 
-    func_0202a914(allocation_name, data_ov002_020bf724, object_data_id);
+    GameFormat_Write(allocation_name, data_ov002_020bf724, object_data_id);
     load_state = BattleObjectData_GetLoadState(object_data_id);
     load_state->data = GameHeap_Allocate(heap_id, size, allocation_name, 1);
 

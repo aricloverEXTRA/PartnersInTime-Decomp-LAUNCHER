@@ -392,7 +392,7 @@ void func_ov005_02066358(PauseMenuElement *, void (*)(PauseMenuElement *), int);
 void func_ov007_0206e27c(PauseMenuElement *);
 }
 
-extern "C" s32 PauseTransition_GetProgress(void)
+extern "C" s32 PauseTransition_GetProgress(PauseSceneTask *unused_scene)
 {
     return *(s32 *)data_ov007_0208e1e8;
 }

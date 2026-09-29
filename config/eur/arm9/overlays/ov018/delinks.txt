@@ -43,7 +43,7 @@ src/attack_pocket_chomp_ov018/chomp_tether_setup.c:
     .text start:0x020c2ca4 end:0x020c2d34
 
 src/attack_pocket_chomp_ov018/chomp_adult_exit.cpp:
-    .text start:0x020c6008 end:0x020c60bc
+    .text start:0x020c5d34 end:0x020c60bc
 
 src/attack_pocket_chomp_ov018/chomp_adult_jump.cpp:
     .text start:0x020c625c end:0x020c6330

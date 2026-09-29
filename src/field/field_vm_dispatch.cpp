@@ -113,7 +113,6 @@ extern void func_ov000_0206ba2c(
 extern void GameParty_Initialize(int new_game_preset);
 extern int GameInventory_Add(u16 item_id, int count_delta);
 extern const u16 data_02048f1a[];
-extern void func_ov000_02081bd4(int enabled);
 extern void GameRumble_PlayTimed(int rumble_pattern, int repeat_count);
 extern u8 data_0205a00c;
 extern void GameRumble_Stop(void);
@@ -3773,11 +3772,11 @@ int FieldVm_DispatchCommand(ScriptVm *vm, ScriptVmState *base_state,
         break;
 
     case FIELD_VM_CLEAR_EXTENDED_SAVE_FLAGS:
-        func_ov000_02081bd4(0);
+        FieldVm_FillExtendedSaveFlags(0);
         break;
 
     case FIELD_VM_SET_EXTENDED_SAVE_FLAGS:
-        func_ov000_02081bd4(1);
+        FieldVm_FillExtendedSaveFlags(1);
         break;
 
     case FIELD_VM_PREPARE_TOUCHSCREEN_MASK_ERASE:

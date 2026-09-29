@@ -75,6 +75,28 @@ ordered archive stores and helper calls are checked. The real initializer and
 byte-fill execute; open/read/close are explicit models. These cases do not claim
 live failed cartridge I/O, asynchronous queue or hardware timing coverage.
 
+### Geometry command-buffer initialization
+
+[`GxCommandList_Begin`](../../src/nitro/gx/gx_command_list_buffer.c) reconstructs
+EUR ARM9 `0x02038AB4..0x02038AD4` in 32 bytes of pure C. It records capacity,
+sets the buffer/opcode pointers, places the parameter cursor one word ahead,
+and clears the padding flag without writing the buffer. Capacity is metadata,
+not proof of an allocation extent. The existing terminator is now named
+`GxCommandList_End`; these are descriptive project names. Battle model rebuilding
+uses the same 20-byte record, embedded at context `+0x68B4`, so its former
+`BattleResourceStream` definition is now an alias of the SDK type.
+
+The controlled save-55 battle-entry route checks 186 complete calls, all 930
+ordered stores, the entire record with neighboring guards, context ownership,
+buffer prefixes and preserved registers. The capture shows the Swiggler fight.
+Checkpoint RAM/DTCM is restored and all 104 saves are unchanged. A cold boot
+ending at the title screen observed no calls. Another 24 isolated ARM946 cases
+execute the actual compiled initializer on copied RAM, checking full memory
+and 120 ordered stores; graphics and IRQ timing are outside these checks.
+All 20 functions in the three affected objects match, and the full ROM/relink
+and 112 tests pass. Private evidence:
+`build/analysis/xhigh_from_55/gx_list_begin_validation.json`.
+
 ## Locating evidence and comparing candidates
 
 Old milestone notes describe the state at the time they were written. Current
@@ -10266,3 +10288,1065 @@ corrected complete check reproduces the original ROM, reports zero native-relink
 differences and passes all 112 tests. Final whitespace cleanup leaves all three
 compiled objects identical and passes `ninja objects`/`ninja check`. Evidence and
 producer exits: `build/analysis/xhigh_from_55/auxiliary_cursor_validation.json`.
+
+
+## Elder Princess Shroob chain target selection
+
+[`Overlay25Enemy_PrepareChainTarget`](../../src/elder_princess_shroob_ov025/enemy_chain_target.cpp)
+reconstructs `0x020C8268..0x020C85F0` (904 bytes) in C++. Its unit also contains
+the existing 60-byte attached-effect completion callback. Phase zero starts
+sprite effect 520 and attached model effect 816, then waits for the latter to
+clear its owner. Phase one selects a chain from the pair flag, variant bit 16
+and enemy target ID. If necessary it tries the partner (`index ^ 1`) and then
+the opposite pair (`index ^ 3`). All three eligibility calls still occur when
+the initial target is valid. Failure clears the callback and returns before
+the common phase write. Success records party target 56/57, clears angle/mode,
+binds resource 40 and installs the next callback. Phase two waits for animation;
+other phases clear the callback. The common exit writes phase one.
+
+The enemy actor's target field is shared with signed consumers, but this caller
+uses native `LDRH`. A corresponding unsigned halfword view preserves that load;
+casting a signed field afterward still generated `LDRSH`. No inline assembly
+is required. Work remains a 7,088-byte resource-arena allocation, identified by
+its 12-byte slot and actor owner; the primary task is at `work + 6800`. Context
+`+27108/+27112` are the reused pair/phase words in this sequence.
+
+Private `build/runtime/eur_xhigh_ov25_chain_prepare/live103_v1.json` uses the
+previous controlled giant-phase checkpoint derived from save 103. At guarded
+dispatcher `0x020B60FC`, frame 320 selects this native callback and changes the
+phase from four to zero, requiring an empty attached-effect owner. This is a
+controlled partial sequence, not ordinary attack-script coverage. Over 1,870
+frames, one complete phase-zero call verifies ordered arguments, both caller
+stores, property-12 cleanup, projection, sprite/model pool allocation, active
+lists and attached ownership. The 56-byte model track is checked again at its
+guarded release at frame 350: its owner reference becomes null while the track
+bytes remain unchanged. The old completion callback is observed 31 times; those
+observations are separate from the new caller's independent output check.
+
+The oracle checks the full work/arena/scene records, bounded party/enemy input
+views, pointer tables, hit descriptors and effect pools. Animation writes in the
+receiving object and actual primary/alternate model allocations are bounded
+observations; animation pools, palette internals, audio, rendering and IRQ
+timing are not independently modeled. Main/sub graphics, palettes and OAM are
+captured. Frames 330 and 1870 were visually inspected and show the fight, followed
+by the party action menu. Full checkpoint RAM/DTCM is restored; all 104 original
+saves retain their hashes. The first discovery used an incorrect context root
+and failed before either fixture write; the corrected discovery and oracle use
+the verified battle root `0x020C0718`.
+
+`isolated_v1.json` adds 796 copied-state ARM946 cases: 768 selection combinations,
+24 effect/projection cases and four other-state cases. These cover all 16 HP
+masks, baby eligibility, both variant values, zero/nonzero pair flags, unsigned
+target IDs, zero/nonzero property 12 and signed projection boundaries. Results
+include 592 selected targets and 176 no-target returns. The native caller,
+lookup/eligibility, property cleanup, projection and both factories execute;
+sound/resource binding are guarded no-op stubs and animation changes only the
+animation ID. All 6,824 ordered caller stores and 7,648 helper pairs, full main
+RAM, DTCM outside the observed stack and preserved registers are checked.
+These synthetic cases do not establish live gameplay or renderer coverage.
+
+Both functions in the actual source object match all 964 bytes. The complete
+build reproduces the original ROM, reports zero native-relink differences and
+passes 112 tests. Source, artifact and producer-exit evidence is pinned in
+`build/analysis/xhigh_from_55/ov25_chain_target_validation.json`.
+
+
+## Motion limits, formatting and reward status
+
+Three small functions add 124 bytes of matching C:
+
+- [`GameMotion_ClampToLimit`](../../src/game/interval.c), ARM9
+  `0x02010960..0x02010990`, bounds an already-updated signed value above or below
+  its target according to the direction's sign. Zero direction preserves it.
+  Shell offset and support-speed callers now share its declaration.
+- [`GameFormat_Write`](../../src/game/format_string.c), ARM9
+  `0x0202A914..0x0202A944`, forwards optional arguments as contiguous 32-bit words
+  through MWCC's spilled-register/stack layout. It returns the cursor after the
+  terminating NUL. The native parser is now named `GameFormat_WriteArguments`;
+  that 256-byte parser remains unreconstructed and is not counted as new C.
+  Battle allocation names and the debug console share the corrected prototype.
+- [`BattleRewardItems_IsDone`](../../src/battle/battle_reward_items_initialize.c),
+  overlay 2 `0x0206E4DC..0x0206E4F8`, reads bit zero of the reward work's 32-bit
+  flags at offset `0x4D8`. The containing allocation is 1,344 bytes.
+
+Private `build/runtime/eur_xhigh_small_helpers/format55_v2.json` checks 20
+complete calls during the established controlled battle-entry route. It verifies
+`ds(%d)` output across the entire 36-byte caller buffer, the optional-argument
+pointer/words and the returned cursor. `reward55_v2.json` uses the guarded
+victory-phase fixture and checks two completed queries returning one, preserving
+the entire reward allocation. Both captures were inspected; both checkpoints
+were fully restored and all 104 saves retain their hashes.
+
+The attempted Shell routes, including guarded automatic support-button inputs,
+did not call the clamp. Its runtime evidence is therefore isolated ARM946
+execution: 245 signed boundary/order cases. `isolated_v1.json` also checks 18
+reward-record/flag cases, including zero results, and 12 variadic forwarding
+cases with register and stack arguments. All 275 cases use actual compiled
+source functions and compare full RAM/DTCM plus preserved registers. The isolated
+formatter helper is an explicit stub; the real parser is exercised only by the
+live allocation-name cases. These checks do not cover renderer or IRQ timing.
+All 32 functions in the seven affected source objects match; the full gate
+passes the golden-ROM check, zero-difference native relink and 112 tests.
+Evidence: `build/analysis/xhigh_from_55/small_helpers_validation.json`.
+
+
+## Pause status-page row cleanup
+
+`PauseStatusPage_Release` (`0x02078478..0x020784A0`, 40 bytes) marks task group 2
+for deferred removal, then unlinks the main-screen sprite allocation at
+`0x020908D0` (pause workspace `+0x2E0`). The status controller calls it during
+member changes; the page-close dispatcher calls it when returning to the menu.
+It shares the allocation with other page layouts, but has its own native entry.
+The pure C implementation uses `GameSpriteAllocation` and the existing unlink API.
+
+Private `build/runtime/eur_xhigh_pause_status_release/status65_v1.json` records
+1,340 frames of ordinary save-65 input without RAM fixtures: enter status,
+cycle right through all four members, switch left/right, return with B and exit
+with Start. Seven complete calls cover both callers and 140 task markings.
+All seven allocations are linked interior nodes on screen 0, with both neighbors
+present. Independent checks cover every marked 72-byte task, group roots, both
+complete sprite-allocation lists, unlink effects, the 90,600-byte workspace,
+party allocation/header, save prefix, display state, helper arguments and
+preserved registers/stack. Marking does not prove the subsequent pool sweep;
+head, tail and already-detached unlink cases are not covered by this route.
+
+Five captures and 20 graphics dumps are retained. The status display and final
+field screen were inspected; graphics are observational. Full checkpoint RAM
+and DTCM are restored, and all 104 original saves remain unchanged. The actual
+new source object and both migrated caller units match: eight functions,
+3,296 bytes. The full gate passes, including the golden ROM, zero native byte
+differences and 112 tests. Evidence is pinned by
+`build/analysis/xhigh_from_55/pause_status_release_validation.json`.
+
+
+## Resuming the field after loading
+
+`GameSession_ResumeField` (`0x02028EF0..0x02028F0C`, 28 bytes) requests session
+state 0 through `GameSessionTask_RequestStatePhase2`. The existing session task
+then loads the field overlay and creates its owner. This wrapper has a distinct
+native entry used by the load and Game Over scene exits.
+
+Private `build/runtime/eur_xhigh_session_field_resume/cold55_v1.json` covers an
+ordinary cold boot and load of save 55 over 2,113 frames, without RAM fixtures.
+The wrapper runs once at frame 1,621. The oracle checks the full 44-byte session
+allocation/header and normal-task list, the two tail-call argument contracts,
+all four ordered stores (requested state, transition phase, active and processed
+bits), SP and preserved registers. The session is the sole normal task at entry.
+Four captures and 16 graphics dumps are retained; the final field screen was
+inspected. Full checkpoint RAM/DTCM is restored and all 104 saves are unchanged.
+This route does not exercise Game Over retry or independently check subsequent
+field initialization, IRQ timing or pixels. The actual source object matches;
+the full gate passes the golden ROM, zero native differences and 112 tests.
+Validation: `build/analysis/xhigh_from_55/session_field_resume_validation.json`.
+
+
+## C++ exception dispatch
+
+`MSL_DispatchException` (`0x02047234..0x02047318`, 228 bytes) finds the unwind
+record, recovers an active catch for a rethrow, selects a matching handler and
+decodes its type, landing offset and signed catch-record offset. It then unwinds,
+initializes the catch record and transfers control with the saved ARM registers
+and stack. The final helper changes SP and r4-r11 deliberately; an ordinary
+callee-preservation check would be wrong at this boundary. The frame description
+and decoded operands form one local aggregate matching the native stack layout.
+
+Private `build/runtime/eur_xhigh_msl_exception_dispatch/isolated_v1.json` passes
+13 ARM946 cases with the actual compiled dispatcher and native helpers, without
+stubs. Copied load-55 RAM/DTCM and synthetic exception tables cover new throws,
+rethrows, object/pointer catches, SP/r11/r7 frame bases and signed frame offsets.
+Checks include ordered non-stack stores, direct-call arguments, full memory
+outside 512 stack bytes, catch data, landing PC and restored SP/r4-r11. The
+missing-frame case stops at the terminate entry; shutdown itself is untested.
+
+`live55_v2.json` passes 12 controlled calls over 400 DeSmuME frames at a guarded
+battle callback. Both methods check 188 non-stack stores. The live probe checks
+main RAM and DTCM outside the bounded stack and two 6,144-byte audio-capture
+buffers, whose active ownership and extents are verified from `NNSiSndCapture`.
+Audio contents are observational; their metadata remains checked. The first
+live attempt failed because its RAM comparison included these concurrently
+changing reverb buffers; its report and producer are preserved. Every fixture
+restores the full common workspace, exception table, root, stack and registers
+before the original callback completes. Two captures and eight graphics dumps
+are retained, and the final battle screen was inspected. Full checkpoint RAM
+and DTCM are restored; all 104 original saves are unchanged. These controlled
+calls do not prove naturally raised exceptions, cross-frame unwinding, destructor
+calls, IRQ timing or pixel correctness. The actual source object is exact; the
+full gate passes the golden ROM, zero native differences and 112 tests.
+Validation: `build/analysis/xhigh_from_55/msl_exception_dispatch_validation.json`.
+
+
+## Catch selection and exception specifications
+
+`MSL_FindCatchHandler` (`0x02047388..0x02047568`, 480 bytes) scans a private
+136-byte cursor, skips cleanup actions, matches catch types and checks exception
+specifications. `MSL_DispatchExceptionSpecification` (`0x02047568..0x020475D4`,
+108 bytes) unwinds to a rejected specification, writes its object/type/destructor
+and action pointer into a 24-byte frame record, then enters its landing pad.
+The two middle words are preserved. Search context, cursor and specification
+layouts are shared with the existing active-catch and specification helpers.
+The search's seven previous instruction differences were resolved by expressing
+the native unsuccessful-match branch as a switch break; no ASM was needed.
+The first full build caught reversed function-section order, despite both
+functions comparing exactly on their own. Reversing definitions corrected it.
+Four actual source objects now contain five exact functions totaling 1,296 bytes.
+
+Private `build/runtime/eur_xhigh_msl_exception_dispatch/search_isolated_v1.json`
+passes 62 ARM946 cases: cleanup kinds 2-11, 13 and 16-19; encoded operand lengths;
+jumps; a rejected first catch; catch-all, object/base and pointer/base matches;
+and accepted specifications with one or two types. It checks full copied RAM,
+DTCM and scratch outside 512 stack bytes, ordered adjustment writes, direct-call
+arguments, selected handler and preserved SP/r4-r11. Invalid kind 14 stops at
+terminate entry. `handler_isolated_v2.json` adds 17 complete dispatch cases,
+including four rejected specifications with zero, one or two types, through
+the real unwind and landing-transfer helpers. No helper is stubbed.
+
+`handler_live55_v1.json` repeats 16 controlled dispatches in 400 DeSmuME frames:
+12 ordinary catch transfers and four specification transfers. It checks 238
+ordered non-stack stores, decoded specification arguments, catch/frame data,
+landing PC and restored registers/stack. All 16 original battle callbacks then
+complete. The previous section's bounded audio-capture exception and restoration
+protocol apply. Two captures and eight graphics dumps are retained; the final
+battle screen was inspected. Checkpoint RAM/DTCM and all 104 saves are preserved.
+Natural exceptions, cross-frame unwinding, destructor calls, termination, IRQ
+timing and pixels remain outside these checks. The complete gate passes the
+golden ROM, zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/msl_handler_search_validation.json`.
+
+
+## Timed field renderer deletion
+
+`FieldTimedRenderer_Delete` (`ov000 0x02080EC4..0x02080EFC`, 56 bytes) restores
+the timed and animation renderer vtables, calls the shared controller/resource
+base destructors, frees the allocation and returns its former address. The base
+chain unlinks the embedded sprite allocation at offset 20 before heap release.
+The wrapper uses the existing 320-byte `FieldTimedRenderer` layout.
+
+Private `build/runtime/eur_xhigh_field_timed_renderer_delete/pause_v1.json`
+passes 591 ordinary frames from the verified Younger Princess Shroob field
+checkpoint, opening and closing pause without RAM fixtures. At frames 48-49,
+41 complete 320-byte renderers are released: 23 from heap 1 and 18 from heap 0.
+The oracle checks full renderer allocations/headers, both complete sprite lists
+and roots, render-list roots, neighboring heap headers/regions, helper arguments,
+581 ordered stores, return value, SP and preserved registers. Linked head, tail,
+interior and singleton removal occur; 43 heap merges include forward, backward
+and both-neighbor cases. It checks each freed record through the wrapper return,
+before any subsequent allocation can reuse it. Detached sprite removal and a
+free with neither neighbor available are outside this route's coverage.
+Three captures and 12 graphics dumps are retained; the final field screen was
+inspected. Full checkpoint RAM/DTCM and all 104 original saves are preserved.
+Screenshots are observational; IRQ timing and pixels are not independently
+modeled. The actual source object is exact, and the complete gate passes the
+golden ROM, zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/field_timed_renderer_delete_validation.json`.
+
+
+## SDK user exception callback
+
+`OSi_CallUserExceptionHandler` (`0x0203A600..0x0203A66C`, 108 bytes) returns
+when no callback is installed. Otherwise it carries the current stack into
+System mode, masks IRQs, enables the MPU, calls the handler with the saved
+context and user argument, then disables the MPU. Four inline-ASM instructions
+preserve the banked SP while writing CPSR `0x9F`; C expresses the remaining
+control flow. The returning exception path does not restore the previous CPU
+mode or MPU state. The context layout remains opaque here.
+
+The [manual's protection-unit section](https://inf.gg/mlbis/manual/nitrosdk#os-pu)
+helped correct two old symbol names: PiT `0x0203A4B0` and `0x0203A4C0` set and
+clear CP15 control bit 0, so they are `OS_EnableProtectionUnit` and
+`OS_DisableProtectionUnit`, not exception-vector selectors. Those native helpers
+remain unreconstructed and add no C bytes. PiT instructions establish this
+mapping; the manual does not document the callback dispatcher.
+
+Private `build/runtime/eur_xhigh_os_user_exception_dispatch/isolated_v3.json`
+checks 32 ARM946 cases over copied RAM/DTCM: System, Supervisor, Abort and
+Undefined modes; absent/present callback; MPU initially off/on; flags and user
+argument variants. It checks full memory including the saved LR store, helper
+order/arguments, CPSR, banked stacks, SP and preserved registers. Unicorn 2.1.3
+ignored the native CP15 control writes in two retained failed attempts; v3
+explicitly models those two side effects per nonnull call. It uses the actual
+compiled dispatcher and native helpers, including a no-op user callback.
+
+`live55_v1.json` passes four controlled calls in 400 DeSmuME frames from the
+save-55 battle checkpoint. Real MRC/MCR instructions confirm control `0x5707D`
+becomes `0x5707C` after a nonnull callback, then is restored to `0x5707D` before
+the original battle callback resumes. All four original callbacks complete.
+Full RAM/DTCM are checked outside 512 stack bytes and two validated 6,144-byte
+audio buffers; callback/context data are unchanged. Fixture globals, stack,
+registers and MPU state are restored. Two captures/eight graphics dumps are
+retained; the final battle screen was inspected. Checkpoint RAM/DTCM and all
+104 saves are preserved. These are controlled calls, not naturally raised
+exceptions; custom handler logic, FIQ banking, protection faults, IRQ timing
+and pixel correctness are untested. The integrated object reproduces the same
+108 bytes as the runtime candidate; the full gate passes the golden ROM,
+zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/os_user_exception_dispatch_validation.json`.
+
+
+## SDK exception vector initialization
+
+`OS_InitException` (`0x0203A66C..0x0203A6FC`, 144 bytes) accepts the shared
+exception vector as a debugger entry only inside `[0x02600000, 0x02800000)`.
+It records that pointer or zero at `0x02062F68`. With no accepted debugger, or
+without console-type bit `0x40000000`, it installs native entry `0x0203A4E8`
+in both the shared-RAM slot `0x027FFD9C` and DTCM slot `0x027E3FDC`. It then
+clears the user callback at `0x02062F60`; user argument and context are preserved.
+The initializer and preceding callback now share `src/nitro/os/os_exception.c`.
+
+The retained C-only draft differs in two words: MWCC folds DTCM page base plus
+`0xFDC` into the final address. A five-instruction ASM block preserves the native
+two-slot installation. The complete 252-byte unit and its 76-byte `OS_Init`
+caller compare exactly; only the initializer's 144 bytes add progress.
+
+Private `build/runtime/eur_xhigh_os_exception_initialize/isolated_v1.json`
+passes 32 cases over eight debugger values and four cached console types.
+They include both address boundaries, an unaligned accepted value, invalid
+values, 24 installations and eight retained-vector cases. The real cached
+console getter runs 16 times, without stubs. Shared high RAM aliases the final
+main-RAM page in Unicorn; full RAM, DTCM and scratch comparisons include every
+CPU stack write. All 176 ordered stores, SP, preserved registers and CPSR control
+are checked. Uncached console hardware detection is outside this fixture.
+
+`cold55_v1.json` follows 1,200 ordinary DeSmuME boot frames using save 55, without
+RAM edits. At frame 1, an absent debugger causes one installation and four
+verified stores. It checks both vector slots and their neighbors, all 140 bytes
+of exception globals/context, console-cache preservation, the main-RAM alias,
+SP, registers and return. The console getter is correctly skipped. Two captures,
+eight graphics dumps and initial RAM/DTCM snapshots are retained; the final title
+screen was inspected. All 104 original saves remain unchanged. Actual exceptions,
+debugger execution, IRQ/ARM7 timing and pixel correctness remain untested. The
+full gate passes the golden ROM, zero native differences and 112 tests.
+Validation: `build/analysis/xhigh_from_55/os_exception_initialize_validation.json`.
+
+
+## Runtime array deletion
+
+`MSL_DeleteArray` (`0x02048874..0x020488BC`, 72 bytes) returns for null arrays.
+When a destructor is supplied, it reads the element count one word before the
+array and calls the native reverse-order destructor helper. It then subtracts
+the caller's header size and frees the original allocation. The implementation
+is pure C. Both overlay-5 pool callers use the shared `msl/array.h` declaration.
+The new function and all 33 functions in the two affected caller units compare
+exactly: 2,092 bytes checked, with only 72 newly reconstructed.
+
+Private `build/runtime/eur_xhigh_msl_delete_array/pause_v1.json` passes 591
+ordinary frames from the verified Younger Princess Shroob field checkpoint,
+opening and closing pause without RAM edits. At frame 300, it deletes the
+256-element item array (64-byte stride, 16,392-byte allocation) and 32-sprite
+array (336-byte stride, 10,760-byte allocation), each with an eight-byte header.
+All 288 element destructors run last-to-first before either allocation is freed.
+The independent model checks full array allocations/cookies, vtable transitions,
+complete sprite-allocation lists/roots, neighboring heap headers/regions,
+helper arguments, 752 ordered stores, SP and preserved registers. Neither live
+free merges neighbors. Each allocation is checked through the wrapper return
+and retired before reuse. Three captures and 12 graphics dumps are retained;
+the final field screen was inspected. Checkpoint RAM/DTCM are restored and all
+104 saves remain unchanged.
+
+`isolated_v1.json` adds 146 ARM946 cases on copied pause-exit RAM/DTCM: two null
+cases and 144 combinations of header size, element stride/count, absent/native
+no-op destructor and free/allocated neighbors. Its synthetic three-block heap
+exists only in the copied RAM. Real vector-delete, free and merge routines run
+without stubs, checking 576 ordered non-stack stores, all memory outside 512
+stack bytes, helper arguments and preserved registers. The cases include zero
+count, 120 no-op destructor calls and 144 merges. Destructor exceptions, IRQ
+timing and pixel correctness remain untested. The full gate passes the golden
+ROM, zero native differences and 112 tests. Validation:
+`build/analysis/xhigh_from_55/msl_delete_array_validation.json`.
+
+
+## Pocket Chomp adult bounce exit
+
+`PocketChompAdult_BounceAway` (overlay 18, `0x020C5D34..0x020C6008`)
+plans three vertical arcs, cancels each trial channel, then uses their combined
+duration for the horizontal exit. It starts the real bounces in later calls and
+resets the participant once horizontal movement has finished. The routine shares
+the adjacent adult-exit source unit; its 724 bytes are pure matching C++.
+
+Preserve the two double operations `153.6 * height / 256.0` and the integer
+truncation after every bounce. The velocity comes from the Q12 square-root
+helper divided by 16. The first planning arc targets zero; subsequent trial arcs
+target the object's current height. Expressing that conditional with the zero
+case first reproduces the native instruction schedule without inline ASM.
+Animation helper `0x020C2E50` updates both the primary and optional variant
+scene objects, including their models and embedded palette records.
+
+Private `build/runtime/eur_xhigh_chomp_adult_bounce/` contains successful reports
+`auto83_v2`, `missed83_v1` and `cutoff1000_83_v1`: three ordinary 4111-frame routes
+from the verified save-83 battle-menu checkpoint. The last route stops automatic
+jump inputs after frame 1000 to exercise the opposite exit direction. Together
+they check 12 complete calls, 195 helper calls and 42 ordered direct stores,
+including all double-helper inputs/results, arc durations and motion-channel
+contents. Full attack work, both owned scene objects, actual model allocations,
+motion-list and graphics-queue neighbors are checked. Three return-to-command
+captures were viewed. Checkpoint RAM/DTCM and all 104 original saves are restored
+or unchanged; no RAM fixtures or helper stubs are used.
+
+Animation/reset internals remain bounded observations; effect allocation and
+rasterization are not independent oracles. These routes do not exercise the
+already-finished-bounces branch while horizontal movement is still active, or
+invalid bounce indices. The first failed probe omitted the variant object's
+palette ownership; its report and producer remain separate from the corrected
+runs. Private validation: `build/analysis/xhigh_from_55/chomp_adult_bounce_validation.json`.
+
+
+## Party animation selection
+
+[FieldPartyEntity_UpdateAnimation](../../src/field/field_party_entity_render.cpp)
+reconstructs overlay 0, `0x020B80A4..0x020B85F8` (1,364 bytes), in C++.
+It selects an animation from the member's locomotion state and facing direction,
+or delegates to the base entity policy. States with vertical movement choose
+mode 4 or 5 from the signed value at entity +868. State 21 tests bit 0 of its
+state record and bits 3..6 of an optional contact record; the latter retains a
+neutral four-byte view because its complete layout is not established here.
+Resource changes preserve the renderer's behavior field. Afterwards, six
+auxiliary slots receive their own animation updates. Following auxiliaries copy
+the member's original refresh flag and current signed animation speed, even if
+the member's animation helper has already cleared that flag.
+
+The final virtual argument is a byte-wide `update_bounds`, also forwarded to
+`FieldEntity_SetResourceAnimation`; it is not an animation-restart integer.
+The native caller forwards it without masking, and the resource helper consumes
+a byte on the stack. Keeping the caller parameter narrow preserves this ABI.
+A private full-width resource-helper prototype matched the new caller but
+changed the existing callee; that experiment was rejected. The public resource
+helper is unchanged. Initializing the handled flag before direction selection
+and retaining explicit byte casts at the renderer stores explains the remaining
+scheduling and masking differences. No inline assembly or source sweeps were used.
+All 34 functions (8,816 bytes) in six affected actual source objects compare
+exactly; the ROM hash, native relink and 112 tests pass.
+
+Private `build/runtime/eur_xhigh_field_party_animation/` contains three ordinary
+routes: `movement65_v1` (403 frames), `hammer83_v1` (231), and `roll83_v1` (349).
+They check 2,628 calls spanning 25 locomotion states, 686 ordered direct stores,
+2,156 base-policy calls, 34 resource changes, 146 speed updates and 629 auxiliary
+updates. Both state-21 outcomes, independent/following auxiliaries, and retained
+versus changed resources occur live. The first route uses
+`probe_field_party_animation_v1.py`; the other two use `probe_field_party_animation_v2.py`.
+All use `field_party_animation_oracle_v1.py`.
+
+The oracle checks whole 1,440-byte members, 1,360-byte auxiliaries, actual
+316-byte renderer allocations, their heap headers, accessed records and shared
+palette/render/texture lists. It independently checks caller decisions,
+arguments, stores, speed results, SP/r4-r11 and CPSR control bits. Animation
+children remain observational within their receiving entity, renderer and palette;
+changes to other list nodes and roots are derived from the observed placement.
+This does not verify all child internals or writes outside those records.
+Nine screenshots and 81 graphics captures preserve mapped BG/OBJ VRAM, palette,
+OAM and display-bank registers; the three final field screenshots were inspected.
+There is no independent pixel or IRQ oracle. Checkpoint RAM/DTCM was restored,
+and all 104 original saves retain their baseline hashes.
+
+`field_party_animation_isolated_v3.json` adds 1,002 ARM946 cases on copied
+RAM/DTCM, including every state 0..96, the default dispatch path, signed velocity
+boundaries, direction modes, resource equality, byte parameter values, state-21
+pointer/bit gates and all auxiliary slots. Animation children are explicit stubs
+with checked arguments, prescribed writes and caller-saved register clobbers.
+The native speed helper executes in 648 cases, including signed-halfword
+endpoints and both sides of its timer threshold. Synthetic auxiliary renderers
+use the copied owner's valid animation tables. Whole 4 MiB RAM, ordered stores,
+unused stack, DTCM and preserved registers are checked; maximum stack use is
+40 bytes. Unknown states and resource-index overflow fixtures cover caller
+arithmetic only, not valid assets or live gameplay. Earlier isolated versions
+failed source parsing before executing any case; the successful producer is
+`check_field_party_animation_isolated_v3.py`. Hashes, extents, producer versions
+and exit statuses are recorded in `field_party_animation_validation.json` under
+`build/analysis/xhigh_from_55/`.
+
+
+## Planar entity screen positions
+
+[FieldEntity2D_UpdateScreenPosition](../../src/field/field_planar_screen_position.cpp)
+reconstructs `0x020A4940..0x020A4A1C` (220 bytes, overlay 0). When animation is
+enabled, it converts Q12 X/Y to signed-halfword screen coordinates by division
+toward zero. A bound renderer receives those coordinates plus its signed offsets.
+Its packed order uses `8192 - (position_y + interaction_min_y) / 4096`, narrowed
+to 22 bits, followed by a separate six-bit entity-index store. Upper layer bits
+are preserved. Planar coordinates already use screen space; the camera arguments
+from the shared virtual interface are unused. All entity accesses fit the actual
+688-byte allocation despite the larger shared `FieldRuntimeEntity` view.
+
+The native code reads both Y values before the first renderer store. Caching
+those two values fixes the previous draft's alias-sensitive load order and makes
+the entire function exact. No inline ASM or compiler-flag changes are needed.
+The actual source object matches, the full EUR ROM hash and native relink pass,
+and all 112 tests pass.
+
+Private `build/runtime/eur_xhigh_planar_screen/save83_v1.json` checks 396 ordinary
+calls over 413 frames: 264 renderer updates and 132 disabled returns, with 1,584
+ordered stores. Each call checks the complete 688-byte entity, 316-byte renderer
+and their heap headers, arithmetic, both packed-key stores and SP/r4-r11/CPSR
+control. No helpers or stubs are involved. Three screenshots and 27 graphics
+captures retain mapped BG/OBJ VRAM, palette/OAM and display-bank registers; the
+final Star Shrine field capture was inspected. These captures are observational,
+not a pixel oracle. Checkpoint RAM/DTCM was restored and all 104 saves are intact.
+
+`field_planar_screen_isolated_v1.json` adds 268 ARM946 cases on copied RAM/DTCM:
+disabled and null-renderer gates, positive/negative Q12 fractional boundaries,
+signed-halfword limits and offsets, all 16 layer values, and index truncation.
+Distinct camera values also verify that those inputs are ignored. The compiled
+function executes without stubs; whole 4 MiB expected RAM, every ordered
+nonstack store, DTCM, unused stack and preserved registers are checked. Maximum
+stack use is eight bytes. These cases do not add live rendering or IRQ coverage.
+Private producers and validation live under `build/analysis/xhigh_from_55/`:
+`probe_field_planar_screen_v1.py`, `field_planar_screen_oracle_v1.py`,
+`check_field_planar_screen_isolated_v1.py` and `field_planar_screen_validation.json`.
+
+
+## Battle chain relaxation
+
+[`BattleChain_RelaxSegments`](../../src/battle/battle_chain_relaxation.cpp)
+reconstructs overlay 2 `0x020B710C..0x020B7448` (828 bytes) in C++.
+It updates the twelve-byte joints used by Elder Princess Shroob's chains.
+The first three signed halfwords hold a Q8 segment vector; the last three
+hold cumulative original-minus-relaxed displacement in whole units. The
+shared joint retains its raw array view and checks the displacement offset.
+
+Each segment accumulates the original vectors, limits its difference from
+the preceding relaxed vector, applies Q12 smoothing and redistributes drift.
+The allowed difference is `4 * length * (count - index) / count`. Correction
+runs only when its squared radius is strictly smaller than the signed squared
+difference. Hardware integer square roots select the correction and normalized
+length; a zero final norm skips normalization. Signed divisions truncate toward
+zero. Running vectors and sums remain full-width even after halfword stores.
+The native multiply/add grouping matters for matching; no inline assembly or
+source permutation search was needed. Nonpositive counts still read the first
+joint, then return without writes. All six native callers ignore the residual
+count in `r0`; the public interface is void.
+
+Private `build/runtime/eur_xhigh_chain_relax/live103_v1.json` checks 4,678 calls
+and 42,823 segments over 1,170 frames. It uses the existing giant-phase checkpoint
+derived from save 103. Before the new fixture, 1,280 calls and 11,520 segments
+are already checked. At guarded dispatcher `0x020B60FC`, frame 320 selects the
+native tracking initializer and sets its contact count to one. This is controlled
+attack selection, not ordinary story/attack-script coverage. No target arguments
+or executable bytes are edited. Calls from the rig, tracking, landing and final
+chain callbacks cover both correction outcomes. The oracle verifies all 256,938
+joint stores, 161,062 square-root register stores, 80,531 integer roots and
+412,885 signed-division argument/result pairs. Each return checks the full
+7,088-byte work allocation, 260-byte scene owner, twelve-byte resource-arena slot,
+context root, stack pointer, preserved registers and CPU control bits.
+
+`build/analysis/xhigh_from_55/battle_chain_relax_isolated_v1.json` adds 488 ARM946
+cases on copied live RAM. The actual compiled function and original division
+helper execute without call stubs. Fixtures cover nonpositive counts, zero
+vectors and lengths, signed halfword endpoints, negative smoothing/length,
+interior pointers, and the radius immediately below, equal to and above its
+threshold. The square-root device model returns integer roots after zero, one
+or three busy polls; this does not establish real hardware latency or IRQ
+behavior. All 49,504 non-stack stores, the complete 4 MiB RAM, DTCM, unused stack,
+preserved registers and modeled I/O page are checked. Maximum stack use is 104
+bytes. Overflow fixtures describe native ARM arithmetic rather than portable
+signed-overflow C semantics.
+
+All 32 capture/RAM artifacts and source hashes were validated. Frames 500 and
+1170 were visually inspected and show the active boss fight; graphics capture
+is observational, without an independent pixel oracle. The full checkpoint RAM
+and DTCM are restored, including fixture-induced changes, and all 104 original
+saves retain their hashes. The actual new source object matches all 828 bytes;
+21 related source objects match 69 functions/21,700 bytes. The first gate caught
+an unavailable standard header in the offset assertion; using the project's
+existing assertion idiom fixed it. The complete subsequent gate reproduces the
+original ROM, reports zero native-relink differences and passes 112 tests.
+Producer exits and artifact checks are recorded in
+`build/analysis/xhigh_from_55/battle_chain_relax_validation.json`.
+
+
+## Chain-held party return
+
+[`Overlay25Chain_ReturnParty`](../../src/elder_princess_shroob_ov025/enemy_chain_landing.cpp)
+reconstructs overlay 25 `0x020C877C..0x020C8AC8` (844 bytes) in C++ and extends
+the existing contiguous landing unit to 1,240 bytes. It retracts at most one
+segment per update, raises smoothing by 32 while below 2048, and rotates the
+first Q8 segment along a cosine-shaped arc. The smoothing increment can pass
+2048; it is not a clamp. After relaxation, it sums all but the final three
+segments and adds the chain anchor. The resulting endpoint at work offsets
+800/804/808 places the held party member. Named endpoint fields preserve the
+existing raw view and 836-byte chain stride.
+
+The unsigned phase advances by 1024 while below `0xFC00`. On reaching that
+threshold, the battle variant selects either the member's home coordinates or
+the other adult member's home. The full-width movement arguments include the
+three deltas and `(signed)(integer_root << 8) / 2048` as duration. The callback
+then clears the member's vertical visual offset, starts a completion task in
+slot five or six, and advances to landing damage. Native addressing forms the
+fixed slot-five base before adding the parity-selected task stride. Endpoint
+layout, late ID narrowing and stack-argument evaluation explain the matching
+corrections; no inline assembly is used.
+
+Private `build/runtime/eur_xhigh_chain_return/live103_v1.json` repeats the
+controlled save-103 tracking route described above. Across 1,170 frames it
+independently checks 126 return callbacks, 1,277 caller stores and 764 helper
+argument/result pairs. Both completed arcs select the original home and start
+timed movement. The checks cover chain count changes and retention, smoothing
+updates and retention, endpoint sums, party lookup, position adjustment, motion
+list/channel changes, completion-task initialization and the callback change.
+The full chain workspace, arena slot, scene objects, 148-byte party slots,
+visited motion-list nodes/root, trig table and relevant context fields are
+checked. The nested relaxation oracle again checks 4,678 calls/42,823 segments;
+these are separate from the return-callback counts. Audio is checked at its
+argument boundary, without a global audio-memory oracle.
+
+`build/analysis/xhigh_from_55/ov25_chain_return_isolated_v1.json` adds 260 copied-
+RAM ARM946 cases. They cover all four chain indices, both adult members and
+variant values, count floors, smoothing thresholds, phases around `0xFC00`,
+return distances 0/7/8/9, and unlisted/listed objects with active or deferred
+motion channels. The compiled caller and real lookup, relaxation, division,
+sum, motion and completion-initializer helpers execute. Only audio uses a
+guarded no-op stub that clobbers caller-saved registers. Results include 16
+immediate and 180 timed returns; 80 use the alternate home. All 23,511 non-stack
+stores are checked in order by caller/helper, along with 2,208 helper pairs,
+whole 4 MiB RAM, DTCM, unused stack, preserved registers and the modeled sqrt
+register page. Maximum stack use is 152 bytes. Modeled busy polls do not prove
+hardware latency, IRQ timing or gameplay coverage.
+
+All 34 artifacts and source pins validate. The three screenshot/graphics sets
+are hash-identical to the earlier route; frame 1170 was inspected again.
+Checkpoint RAM/DTCM is fully restored and all 104 saves remain unchanged.
+The actual landing unit matches all three functions/1,240 bytes; 21 related
+objects match 70 functions/22,544 bytes. The complete build reproduces the
+original ROM, reports zero native-relink differences and passes 112 tests.
+There were no failed build or replay runs in this batch. Evidence and producer
+exits: `build/analysis/xhigh_from_55/ov25_chain_return_validation.json`.
+
+
+## Pause party spring models
+
+[`MenuSpring_UpdatePartyModel`](../../src/scene_menu_ov007/menu_party_spring.cpp)
+reconstructs overlay 7 `0x020769A4..0x02076E30` (1,164 bytes) in C++.
+It chooses the normal or low-HP animation, animates a pinned selection point,
+applies random or requested impulses, relaxes the chain and positions/rotates
+the party model. The low-HP comparison includes exactly 25 percent. Selection
+state 1 performs its first movement step immediately; state 4 releases the
+point. The existing 236-byte chain now names its four motion fields while
+preserving the raw view. The shared task remains 72 bytes.
+
+Both projection calls pass the pause-scene pointer to the progress getter.
+The getter ignores this argument and reads global progress; its corrected
+shared declaration and unchanged 16-byte body preserve that caller ABI.
+The complete switch, reused point pointer, cached Y coordinate before model
+writes and explicit sixteen-bit angle mask explain the final match. The
+actual three source objects match all 12 functions/7,628 bytes. Both complete
+build gates reproduce the golden ROM, report zero native-relink differences
+and pass 112 tests. No inline assembly was added.
+
+Private `build/runtime/eur_xhigh_menu_party_spring/ordinary65_v3.json` uses
+ordinary save-65 pause/clothing navigation. Across 1,810 frames, all 6,128
+updates complete: 1,532 for each member, all five chain states, both adult/baby
+selection offsets, four finished selections, three active modes and natural
+random-direction impulses. The oracle checks 60,541 caller stores and 60,662
+helper argument/result pairs. Independent integer models cover the shared RNG,
+Q12 projection, arctangent table, spring integration/constraints and draw-list
+insertion. Each callback checks its full 72-byte task, 336-byte pooled model,
+four-chain workspace, live save allocation, stack and preserved CPU state.
+Animation helper changes are observed only within the full model record.
+
+`thresholds65_v1.json` repeats the route with 16 guarded live fixtures: each
+member uses maximum HP 100 and current HP 0, 24, 25 and 26, with alternating
+negative/positive impulses. All twelve expected low-HP calls and both impulse
+directions pass; HP and impulse input bytes are restored at each callback
+return. This route checks another 6,128 updates, 60,589 caller stores and
+60,678 helper pairs. Each route independently models 180,960 link corrections.
+The earlier two probes failed at frame 433 because a helper-return hook also
+needed to process the following store and refresh its pending event. Their
+reports remain separate; fixing the oracle required no game-code change.
+
+All 108 artifacts and producer hashes validate. Menu and final-field captures
+were inspected; full checkpoint RAM/DTCM was restored and all 104 original
+saves are unchanged. Graphics are observational, without an independent pixel
+or IRQ-timing model. Scene-controller drawing suppression, invalid indices and
+synthetic arithmetic extremes are outside these routes. Producer versions,
+process exits and exact-object evidence are recorded in
+`build/analysis/xhigh_from_55/menu_party_spring_validation.json`.
+
+
+## SDK soft-reset entry
+
+[`OS_ResetSystem`](../../src/nitro/os/os_reset.c), resident ARM9
+`0x0203AE8C..0x0203AF0C`, adds 128 exact C bytes to the existing reset module.
+The complete four-function unit matches 348 bytes. It rejects boot mode 2,
+takes a card lock using the low halfword of a newly allocated lock ID, stops
+DMA channels 0 through 3, selects receive-FIFO IRQ mask `0x40000`, clears
+pending IRQ requests, stores the full reset parameter at `0x027FFC20`, sends
+command 16 and enters the ITCM restart routine at `0x01FF8480`.
+
+Private evidence is `build/analysis/xhigh_from_55/os_reset_system_validation.json`
+and `build/runtime/eur_xhigh_os_reset_system/`. `keypad65_v2.json` records a
+1,220-frame ordinary save-65 replay: hold L+R+Start+Select for two frames, then
+release. It checks all nine returning helper calls and the ITCM handoff, the
+parameter store and 128 surrounding shared bytes, the lock bitmap, complete
+480-byte card workspace, 64-byte command and card lock, 11 ordered DMA stores,
+IRQ enable mask, stack and preserved registers. ARM7 acknowledges the reset,
+initialization runs again and the final capture visibly shows the title screen.
+All 43 captures/dumps validate; the checkpoint RAM/DTCM is restored and all 104
+original saves are unchanged. Register checks use native halfword/word access:
+the preserved `keypad65_v1.json` failed at frame 2 because its byte reader
+returned zero for the IRQ enable register. Only the probe changed.
+
+`isolated_v1.json` checks 100 ARM946 wrapper cases on copied RAM, including
+five boot-mode values, four full-width parameters and five lock-ID returns.
+All helper calls are explicit stubs there: mode 2 stops at termination, while
+the other cases check argument truncation, call order and the otherwise unused
+return epilogue. The 280 ordered stores and entire mapped RAM, DTCM, ITCM and
+scratch area are checked, including the upper-main-RAM alias. These cases do
+not establish real lock-exhaustion handling or a returning ITCM reset. Live
+reboot internals, asynchronous IRQ timing and rasterization remain observational.
+
+### ITCM image reload and acknowledgement
+
+[`os_reset_itcm.c`](../../src/nitro/os/os_reset_itcm.c) reconstructs
+`OSi_ReloadRomData` and `OSi_DoResetSystem`, `0x01FF83A0..0x01FF84C0`, adding
+288 bytes in ITCM. Both functions stay executable while ARM9's resident image
+is overwritten. The waiter polls the halfword set by ARM7's FIFO callback,
+disables the interrupt master, reloads the images and enters the native boot
+routine. The loader optionally replaces the 352-byte ROM header, caches both
+processor triples, flushes/invalidates caches and skips ARM9's already present
+secure-area prefix below ROM offset `0x8000` before reading both images.
+
+One inline `add` fixes the compiler's placement of the ARM7 base adjustment
+before the ARM9 call arguments. The preserved C-only draft matches all remaining
+instructions and pools after declaring each header triple in native field order;
+the final complete function matches all 224 bytes. The 64-byte waiter is pure C.
+The actual linked resident and ITCM objects match six functions/636 bytes, and
+the full build reproduces the original ROM with 112 tests passing.
+
+Private evidence: `build/analysis/xhigh_from_55/os_reset_itcm_validation.json`
+and `build/runtime/eur_xhigh_os_reset_itcm/`. Two ordinary 1,220-frame keypad
+replays each check 442 zero-flag reads, acknowledgement, the interrupt-master
+store, all eight cache/read calls and the boot handoff. They compare all 497,276
+reloaded ARM9/ARM7 bytes against the ROM, both destination neighbors and the
+unchanged header. Both reach the visible title; 86 artifacts validate and all
+104 saves remain unchanged after complete checkpoint RAM/DTCM restoration.
+
+The unchanged probe repeat has identical target-entry registers, RAM/DTCM/ITCM,
+checked calls and reload results. Its captures match through frame 300; at frame
+1,220, OAM and the animated title picture differ, while the other eight captured
+graphics ranges agree. The earlier resident-only probe shows the same comparison
+pattern. This preserves the variation without attributing it to code or a probe
+change; its cause and final rasterization remain unverified.
+
+`isolated_v2.json` adds 120 ARM946 cases across five aligned ROM bases, four ARM9
+offsets, three acknowledgement delays and both IRQ-enable states. Native IRQ
+disable/restore helpers execute; card data, cache operations and ARM7 readiness
+are explicit models, and execution stops at the native boot entry. Different
+replacement-header triples establish that the new header is consumed. All mapped
+RAM, DTCM, ITCM, scratch and I/O bytes, the upper-RAM alias and 1,320 ordered native
+stores are checked. The first isolated version failed after 48 cases because
+Unicorn's writer requires immutable bytes for the modeled header; the corrected
+producer passes without game-code changes. Hardware cache effects, concurrent
+ARM7 timing and the final boot assembly are outside this isolated model.
+
+### ITCM card sector reader
+
+`OSi_ReadCard`, `0x01FF8270..0x01FF83A0`, extends
+[`os_reset_itcm.c`](../../src/nitro/os/os_reset_itcm.c) by 304 pure C bytes.
+It rounds the ROM offset down to a 512-byte sector, issues command `0xB7`,
+consumes every FIFO word and stores only words whose signed byte offset falls
+inside the requested count. The destination remains a fixed integer address
+plus that offset; a byte-pointer expression made MWCC carry and increment a
+second pointer, adding two instructions. Correcting this dataflow matches the
+whole function without new assembly. The complete ITCM unit is now 592 bytes.
+
+This is a word-copy interface: a positive count not divisible by four still
+stores the entire last word. An unaligned-within-sector start can also issue a
+sector read for a zero or small negative count, while storing nothing. The reset
+callers use aligned offsets, destinations and word-sized counts. Do not simplify
+the signed tests or replace the sector drain with an early exit at the last store.
+
+Private `build/runtime/eur_xhigh_os_read_card_itcm/keypad65_v2.json` records an
+ordinary save-65 keypad reset. Both real reads cover 972 sectors, 7,776 command
+byte stores, 124,416 FIFO words and 124,319 destination-word stores; 97 trailing
+words are discarded. The oracle reads post-transfer CPU registers instead of
+consuming the FIFO itself, comparing every word with the ROM. The enclosing
+reset oracle still checks all 497,276 copied bytes, neighbors, header and ABI.
+The first live producer missed the nonnegative path because its observer sat
+on a conditional branch; its frame-2 failure is retained, and corrected hooks
+around the actual load/add pass without changing game code.
+
+`isolated_v1.json` executes the native reader in 360 ARM946 cases with modeled
+card status/FIFO registers and no function stubs. It covers three aligned sector
+offsets, ten signed sizes, initial busy waits, per-word readiness delays and
+two header control values. All 28,116 native stores, 52,224 FIFO reads and complete
+mapped RAM, DTCM, ITCM, scratch, I/O and FIFO regions are checked, including the
+whole final word for partial counts. Unaligned addresses, extreme overflow and
+real hardware timing are not covered by that model.
+
+The build is byte-identical with 112 tests passing; both actual reset objects
+match seven functions/940 bytes. All 43 artifacts validate, the final title is
+visible and all 104 original saves remain unchanged after checkpoint restoration.
+Input state, checked reset events and captures through frame 300 match the prior
+replay. The known late title OAM/pixel variation remains unclassified. Full evidence:
+`build/analysis/xhigh_from_55/os_read_card_itcm_validation.json`.
+
+
+## ITCM DMA register programming and geometry FIFO
+
+[`mi_dma_itcm.c`](../../src/nitro/mi/mi_dma_itcm.c) reconstructs the five
+functions at `0x01FF84C0..0x01FF86C8`: 520 pure C bytes. The shared
+[`mi_dma.h`](../../include/nitro/mi_dma.h) gives the resident transfer routines
+and battle renderers one interface. All seven affected source objects match,
+covering 30 functions and 8,264 bytes; only the new ITCM range adds progress.
+
+The four setters write source, destination and control in that order. Raw
+variants rely on the caller's IRQ state; the others disable and restore IRQs.
+The reset variants perform two reads of DMA0's source register even for other
+channels, then replace channel 0's parameters with `0, 0, 0x81400001` when
+selected. The raw reset variant performs two further reads. These accesses
+must not be removed or redirected to the selected channel.
+
+`MI_SendGXCommand` returns immediately for zero bytes, checks the DMA0 source
+restriction, waits for the channel, and submits chunks of at most **472 bytes**
+(`0x1D8`) to FIFO `0x04000400`. Each control word is `0x84400000 | (chunk >> 2)`;
+the source advances by the byte chunk size. It waits for completion after the
+last chunk. The tested submission sizes are word-aligned.
+
+Private evidence is `build/analysis/xhigh_from_55/mi_dma_itcm_validation.json`
+and `build/runtime/eur_xhigh_mi_dma_itcm/`. `boot55_v3.json` records 1,200
+ordinary cold-boot frames: 10,793 completed target calls, all five functions,
+23,220 ordered register stores and 5,423 GX chunks. `battle103_v1.json` adds
+180 neutral frames at the unmodified Elder Princess Shroob checkpoint:
+12,120 calls, 18,720 stores and 5,880 chunks. Both check read addresses,
+helper arguments/returns, IRQ state, stack and preserved registers. Their
+final title and battle images were inspected; 84 memory/image artifacts were
+validated, all 104 original saves remained unchanged, and the battle checkpoint's
+RAM/DTCM was restored. DMA destination contents and rasterization remain
+observational; the independent checks cover CPU-side register programming.
+
+`isolated_v2.json` executes 320 ARM946 cases on copied RAM: 128 setter cases
+across all channels, four control words and both IRQ states, plus 192 GX cases
+covering zero, 4, 468, 472, 476, 944, 948 and 1,024 bytes with three busy
+profiles. The actual source-check and IRQ helpers execute without stubs.
+Checks cover 16 DMA0 resets, 312 chunks, 1,368 ordered MMIO stores, 976 reads,
+1,232 helper returns and full copied memory except the bounded CPU stack's
+contents. Readiness is an explicit register model; DMA transfers and real
+hardware timing are not simulated.
+
+The first two cold-boot probes failed at frame 821 because their oracle used
+468 instead of the native 472-byte limit. The third probe corrects that constant;
+the already exact game function did not change. The first isolated runner failed
+before execution on an incorrect input path; the second corrects it. Failed
+versions and logs are preserved separately. The full build remains byte-identical,
+native relinking differs by zero bytes, and all 112 tests pass.
+
+
+## Field area resource release
+
+`FieldArea_ReleaseRenderResources` (`ov000 0x020809BC..0x02080EC4`,
+1,288 bytes) releases display resources while retaining entity state for a
+cached field scene. `FieldArea_ReleaseRoomResources`
+(`0x02080EFC..0x02081454`, 1,368 bytes) additionally deletes entities and the
+room-owned buffers. Both are pure C++ and match their full native ranges.
+The first shares its contiguous unit with entity render-snapshot capture;
+the timed-renderer deleting destructor occupies the gap between the releases.
+
+The existing 11,216-byte area and room-resource views now expose three
+24-byte palette records at +0x2A74 and 23 effect-model pointers at +0x2ABC.
+The four animation-model pointers at +0x2B18 remain a distinct trailing view.
+Full room cleanup frees +0x2364 and slots 1..19 in the pointer table at
++0x236C. Primary resource flag bit 0 suppresses freeing borrowed graphics,
+animation and bounds; both paths still free the containing resource arrays.
+The sub-screen tile allocation is embedded at area +8, not a separate heap
+object. Model stop, texture-offset release and deleting destruction occur in
+that order. Retain the native owner-clear order for palette crossfades and
+screen wipes. The wipe's active/retain cleanup branch follows a cleared owner
+pointer; the tested routes have both flags clear, and no synthetic active-wipe
+coverage is claimed.
+
+Private `build/runtime/eur_xhigh_field_area_release/pause_v2.json` passes
+591 ordinary frames from the verified Younger Princess Shroob field state,
+opening and closing pause. It checks one display release for room 556 and
+one full release for room 551, on opposite screens: 284 direct helper calls,
+417 nested heap/list operations, 42 caller stores and 1,557 primitive stores.
+The final capture shows the visible field return.
+
+`room_v2.json` passes a separate 1,834-frame controlled route, queuing room 359
+and then room 551 through two temporary Field VM commands. Each 72-byte command
+is restored at dispatcher return. The second release observes room 359's
+populated animation array and frees its one animation buffer. This route checks
+two full releases, 326 direct helper calls, 633 nested heap/list operations,
+38 caller stores and 2,395 primitive stores. The intermediate teleport is a
+resource-lifetime fixture, not a normal story entry; the final capture shows
+the original room again. `room_v1.json` is the earlier one-way route, recorded
+separately rather than counted again in these totals.
+
+The oracle independently checks caller decisions, argument/order/store traces,
+complete live area and resource-array extents, notification flags, and every
+observed nested heap free and sprite/palette unlink. Heap checks include full
+payloads, neighboring headers, region metadata and coalescing; list checks
+include both screens' roots and all nodes. Freed snapshots are retired at the
+checked return before address reuse. Other virtual-object changes are observed
+within their actual allocations; window internals, graphics helpers, IRQ timing
+and pixels remain outside the independent model. Active clipping, active/retained
+wipes, subtype-9 renderer-release exclusion and a populated second animation set
+are not covered. Seven captures and 48 binary dumps are validated; checkpoint
+RAM/DTCM are restored and all 104 original saves are unchanged.
+
+The ordinary and one-way probes use `probe_field_area_release_v2.py`; the return
+route uses `probe_field_area_release_v3.py`, both with
+`field_area_release_oracle_v1.py` under `build/analysis/xhigh_from_55/`.
+Probe v1 failed before emulation by decoding literal-pool words as stores;
+v2 excludes the two 28-byte pools from execution hooks while still guarding
+and comparing them. The actual four affected source objects contain 22 exact
+functions / 8,916 bytes, of which 2,656 bytes are newly reconstructed.
+The complete second gate passes the golden ROM, zero native differences and
+112 tests. The first gate failed only the missing module-comment test.
+Validation: `build/analysis/xhigh_from_55/field_area_release_validation.json`.
+
+## Shop HBlank background bands
+
+[shop_hblank.cpp](../../src/shop_ov009/shop_hblank.cpp) reconstructs the complete
+148-byte ARM function at overlay 9 `0x0207CE1C-0x0207CEB0`, including its four
+literal words. `ShopScene_UpdateHBlank` samples the 16-bit VCOUNT register once
+and writes the signed current wave value to the sub-screen BG2 X reference
+register (`0x04001028`) in two half-open scanline bands: `[scroll+31, scroll+96)`
+and `[scroll+119, scroll+192)`. Other lines receive zero. The scroll and wave are
+signed halfwords at `0x0207F23C+196` and `0x0207EA3C+128`; the output is a full
+32-bit store, not a halfword background-scroll write. The scene installs this
+HBlank callback only for an animated, nonspecial shop. The shared scroll record
+now lives in the scene's internal header, retaining its original layout.
+
+The actual compiled callback and all five functions in the migrated scene
+lifecycle object match: six functions, 5,456 bytes. The first callback draft had
+11 register-operand differences; expressing the single VCOUNT sample before the
+ordinary scroll local recovered the native allocation without assembly.
+
+Private `build/runtime/eur_xhigh_shop_hblank/live_v3.json` records 1,342 frames
+from `eur_story_065_hud_verified.dst` (SHA-1
+`ece238ed785fda646a77cde5e886aa7da3e009d7`). A guarded, temporary decoded Field VM
+command `0x121` enters shop 2; its 72 bytes are restored at the dispatcher return.
+Ordinary B inputs leave the shop. All 66,675 admitted HBlank calls complete and
+independently check the sampled scanline, selected branch and single ordered
+32-bit register write, preserved stack/registers, unchanged complete 2,492-byte
+workspace and 200-byte scroll record, and the lower 28 bits of hardware readback.
+All five bands occur, but the live wave value remains zero.
+
+`isolated_v1.json` separately verifies 27,615 ARM946 calls on copied live RAM and
+DTCM: every real scanline 0 through 262, 15 signed scroll offsets and seven signed
+wave values, including both halfword endpoints. Its interval-membership model
+checks every memory write, complete workspace/scroll/I/O records and preserved
+stack/registers. No helper is stubbed. VCOUNT is modeled as fixed memory per
+call; these synthetic cases do not establish live IRQ timing or rendered pixels.
+
+Probe v1 failed at frame 59 because its Python memory API call was invalid;
+v2 corrected that API and completed 741 frames. V3 adds 600 neutral frames,
+preserving both earlier capture/image-buffer hashes. The shop capture is visibly
+ready. The return loads field code but remains black even after the bounded
+extension; this controlled route does not verify a visible field return. Full
+checkpoint RAM/DTCM restoration succeeds. All 104 original saves are unchanged.
+The selected reports' three images and 20 binary captures, source hashes and
+counts pass `shop_hblank_validation.json`. Producers and failed logs are retained
+separately under `build/analysis/xhigh_from_55/`.
+
+The full gate passes the golden packaged ROM, zero-difference native relink and
+all 112 tests. This contributes 148 pure C++ bytes and no symbolic assembly.
+
+
+## Cannonballers badge parameter adjustments
+
+[badge_tuning.cpp](../../src/attack_cannonball_ov012/badge_tuning.cpp) recovers
+`Overlay12Attack_ApplyBadgeOffsets`, overlay 12 `0x020C2AE0-0x020C2B48`
+(104 bytes, including literals). The attack initializer invokes it when the
+acting party member has badge ID 2. It subtracts 128 from the signed word at
+`0x020C5A04` through the original signed-integer-to-binary64 conversion, addition
+and truncation helpers, then increments `0x020C5A10` by 8 and `0x020C5A08` by 4.
+The source retains this conversion sequence and store order. All signed 32-bit
+inputs and these integer-valued intermediate binary64 operations are exactly
+representable; the final integer result still requires its native range.
+Unknown parameter roles retain neutral address names. The new helper and its
+migrated initializer are exact in actual compiled source objects: 1,076 bytes.
+
+Private `build/runtime/eur_xhigh_cannon_badge_tuning/{ordinary_v2,badge_v2}.json`
+records two 540-frame replays from `ov17_bros_menu83.dst` (SHA-1
+`21d2e64a24b389689627292539103880c6761b47`). The ordinary route encounters badge
+25 and skips the helper. The controlled route sets one live save byte to 2 at
+the guarded badge predicate and restores it at that predicate's return, before
+the initializer resumes. The resulting tuning remains in force for this attack
+setup. A full checkpoint reload later restores all main RAM and DTCM.
+
+The controlled call changes the three parameters from 1177/24/12 to 1049/32/16.
+Checks cover complete native guards, all three arithmetic helper arguments and
+returns, three ordered stores, the complete 96-byte parameter neighborhood,
+unchanged 452-byte attack work, 148-byte user storage and 1,380-byte save record,
+and preserved stack/callee-saved registers. Both setup captures were visually
+inspected. This verifies setup, not a complete attack result or an independent
+pixel/IRQ-timing model. Helper stack writes are outside this oracle.
+
+Probe v1 failed after 540 frames because its predicate filter used the callsite
+rather than LR (`0x020C5940`); v2 corrects only that filter. Failed source, report
+and log remain separate. Both successful producers exit zero; all 30 artifacts
+and source hashes validate, and all 104 original saves remain unchanged.
+`build/analysis/xhigh_from_55/cannon_badge_tuning_validation.json` records the
+checks. The full build gate passes the golden ROM, zero native differences and
+112 tests. This adds 104 pure C++ bytes, with no new assembly.
+
+
+## Field VM extended save-flag fills
+
+[field_extended_save_flags.cpp](../../src/field/field_extended_save_flags.cpp)
+reconstructs the 44-byte overlay-0 helper at `0x02081BD4..0x02081C00`.
+`FieldVm_FillExtendedSaveFlags` fills the 128 bytes at `gSaveData + 0x270` with
+zero or all ones. These are VM save flags 1024 through 2047, selected by commands
+`0x130` and `0x131`. The underlying native helper fills 32-bit words; the explicit
+unsigned fill pattern recovers the conditional all-ones instruction that a
+signed draft expressed as Boolean conversion followed by negation. No ASM is
+needed. Both the actual helper object and the migrated 23,492-byte dispatcher
+match completely, including literals and resolved relocations.
+
+Private `build/runtime/eur_xhigh_field_extended_save_flags/live_v2.json` records
+120 neutral frames from `eur_story_065_hud_verified.dst` (SHA-1
+`ece238ed785fda646a77cde5e886aa7da3e009d7`). At guarded dispatcher entries in
+frames 30 and 60, temporary decoded commands invoke clear and set respectively.
+Each call checks the whole 1,380-byte live save, the native fill-helper ABI,
+all 32 ordered word stores, and preserved stack/callee-saved registers. Induced
+flags are restored before the dispatcher resumes; all 72 decoded-command bytes
+are restored at the dispatcher return. Final checkpoint reload also restores
+main RAM and DTCM. This is controlled command coverage, not a natural story
+trigger or a test of gameplay with every extended flag set.
+
+Both field captures were visually inspected. Sixteen image/memory artifacts,
+source hashes and report counts validate, and all 104 original saves remain
+unchanged. The producer exits zero. The full gate passes the golden EUR ROM,
+zero native differences and 112 tests; this adds 44 pure C++ bytes. Evidence:
+`build/analysis/xhigh_from_55/field_extended_save_flags_validation.json`.
+
+
+## Battle vertical list selection
+
+`BattleMenu_UpdateVerticalSelection` in `src/battle/battle_menu_vertical.c`
+(overlay 2, `0x020999D8..0x02099A74`, 156 bytes) updates a row in a nonempty
+battle item list. It reads unsigned halfwords at `gBattleContext + 0x104`
+(new presses) and `+0x106` (repeats). Up/down masks are `0x40`/`0x80`.
+A new press wraps at the corresponding edge; otherwise repeat movement
+clamps to `0..entry_count-1`. Opposite repeat bits cancel, while an up-edge
+press has priority over a down-edge press. A changed row plays sound 1
+with zero delay, interval and count; an unchanged row is silent.
+
+The native caller `BattleTurnState_Update` uses the helper for Bros. Items
+(return `0x020831D0`, selection `+0x120`, count `+0x5A6`) and ordinary items
+(return `0x020832F8`, selection `+0x124`, count `+0x5A4`). The indices are
+loaded as signed halfwords and counts as unsigned halfwords. Saving the
+original index while updating the parameter itself reproduces the native
+register lifetime in readable C; no ASM is needed. The actual build object,
+including the pointer literal and resolved call, matches all 156 bytes.
+
+Private evidence in `build/runtime/eur_xhigh_battle_menu_vertical/`:
+`live_v1.json` records 665 calls from the Bros. Items caller, using the
+compatible restored-encounter checkpoint `ov17_bros_menu83.dst` (SHA-1
+`21d2e64a24b389689627292539103880c6761b47`). Up/down taps and holds cover
+both wraps, both clamps, repeat movement and idle returns without new RAM
+edits. All returns check the selected row, sound decision and arguments,
+immediate resident audio dispatch, sound return, SP/r4-r11, and unchanged
+full 401416-byte battle allocation, 1380-byte save and pointer roots.
+There are 20 sound calls; the other 645 returns are silent. Four inspected
+captures show the list, with mapped VRAM, palette and OAM dumps retained.
+The original checkpoint's full RAM/DTCM is restored after the replay.
+
+`isolated_v1.json` adds 304 ARM946 cases in copied live RAM/DTCM: singleton
+and large lists, out-of-range selections, simultaneous keys and unrelated
+input bits. Every target stack store and all mapped memory are checked.
+The sound entry is explicitly stubbed there; real sound dispatch is covered
+only by the live replay. Empty lists are outside the public contract.
+The ordinary-item caller, audio-engine effects outside the checked records,
+interrupt timing and rendered pixels have no independent oracle in this block.
+The full build gate and all 112 tests pass. The private validation report
+`build/analysis/xhigh_from_55/battle_menu_vertical_validation.json` checks
+30 artifacts and all 104 unchanged original saves.

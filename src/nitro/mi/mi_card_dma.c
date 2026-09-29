@@ -4,10 +4,10 @@
  * The 32-bit DMA copy the card subsystem transfers with.
  */
 
+#include <nitro/mi_dma.h>
 #include <nitro/os_sync.h>
 extern void MIi_CheckAnotherAutoDMA(u32, u32);
 extern void MIi_CheckDma0SourceAddress(u32, const void *, u32, u32);
-extern void MIi_DmaSetParams(u32, const void *, void *, u32);
 void MIi_CardDmaCopy32(u32 channel, const void *source, void *destination, u32 size) {
     vu32 *control;
     MIi_CheckAnotherAutoDMA(channel, -1);

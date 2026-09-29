@@ -6,6 +6,7 @@
  * from normal play.
  */
 
+#include <game/format.h>
 #include <game/debug_console.h>
 #include <game/input.h>
 
@@ -14,7 +15,6 @@ extern const u8 data_02049fec[6144];
 extern const u16 data_02049fcc[][2];
 extern void MIi_CpuClearFast(u32 value, void *destination, u32 size);
 extern void DC_FlushRange(const void *source, u32 size);
-extern void func_0202a814(char *destination, const char *format, const u32 *arguments);
 extern void func_02038170(const void *source, u32 offset, u32 size);
 extern void func_020380a0(const void *source, u32 offset, u32 size);
 extern void func_02037fd0(const void *source, u32 offset, u32 size);
@@ -102,7 +102,7 @@ void GameConsole_Printf(GameConsole *console, const char *format, ...)
 {
     /* The ARM compiler saves the argument registers when their address is taken. */
     const u32 *arguments = (const u32 *)(((u32)&format & ~3) + 4);
-    func_0202a814(console->text, format, arguments);
+    GameFormat_WriteArguments(console->text, format, arguments);
     GameConsole_Write(console, console->text);
 }
 

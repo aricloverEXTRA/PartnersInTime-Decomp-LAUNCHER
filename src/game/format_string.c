@@ -1,5 +1,5 @@
 /*
- * String formatting (ARM9 resident, 0x0202A944-0x0202AA74).
+ * String formatting (ARM9 resident, 0x0202A914-0x0202AA74).
  *
  * The hex and string conversions the game's formatting helpers are built from.
  */
@@ -54,4 +54,13 @@ char *GameFormat_String(char *destination, int width, int flags, const char *tex
     } while (width <= 0 || --width);
     *destination = 0;
     return destination;
+}
+
+/* Match the ARM varargs layout used by GameConsole_Printf. Taking the address
+ * of the last named argument makes MWCC spill r0-r3; the first optional word
+ * then precedes the caller's stack arguments in the same contiguous area. */
+char *GameFormat_Write(char *destination, const char *format, ...)
+{
+    const u32 *arguments = (const u32 *)(((u32)&format & ~3) + 4);
+    return GameFormat_WriteArguments(destination, format, arguments);
 }

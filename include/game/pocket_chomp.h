@@ -110,6 +110,7 @@ int PocketChompAttack_IsBackdropIdle(void);
 int PocketChompAttack_AreAdultsIdle(void);
 int PocketChompAttack_MoveAdultsOffscreen(void);
 u32 PocketChompAdult_BeginExit(PocketChompAdultMotion *adult);
+void PocketChompAdult_BounceAway(PocketChompAdultMotion *adult, int bounce);
 u32 PocketChompAdult_BeginJump(PocketChompAdultMotion *adult);
 void PocketChomp_UpdateVisibility(PocketChomp *center);
 void PocketChomp_Boost(PocketChomp *center);

@@ -11,7 +11,6 @@ extern "C" {
 #include <game/heap.h>
 u32 OS_DisableIrqMask(u32);
 u32 OS_EnableIrqMask(u32);
-void func_ov000_02080efc(FieldAreaContext *);
 }
 static inline void ReleaseResources(FieldSystem *system) {
     FieldAreaContext *first, *second;
@@ -25,12 +24,12 @@ static inline void ReleaseResources(FieldSystem *system) {
     system->areas[0] = 0;
     system->areas[1] = 0;
     OS_EnableIrqMask(irq_mask);
-    func_ov000_02080efc(first);
+    FieldArea_ReleaseRoomResources(first);
     if (first) {
         FieldArea_Destroy(first);
         GameHeap_Delete(first);
     }
-    func_ov000_02080efc(second);
+    FieldArea_ReleaseRoomResources(second);
     if (second) {
         FieldArea_Destroy(second);
         GameHeap_Delete(second);

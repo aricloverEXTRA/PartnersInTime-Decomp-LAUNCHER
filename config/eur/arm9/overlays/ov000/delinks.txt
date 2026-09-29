@@ -192,7 +192,7 @@ src/field/field_auxiliary_lifecycle.cpp:
     .text start:0x020b72e0 end:0x020b756c
 
 src/field/field_party_entity_render.cpp:
-    .text start:0x020b7ef8 end:0x020b80a4
+    .text start:0x020b7ef8 end:0x020b85f8
 
 src/field/field_party_entity_bounds.cpp:
     .text start:0x020b85f8 end:0x020b86ec
@@ -491,7 +491,7 @@ src/field/field_region_scripts.cpp:
     .text start:0x02088978 end:0x02088c88
 
 src/field/field_area_render_snapshots.cpp:
-    .text start:0x02080944 end:0x020809bc
+    .text start:0x02080944 end:0x02080ec4
 
 src/field/field_mask_erase_release.c:
     .text start:0x02065f54 end:0x02066028
@@ -534,3 +534,15 @@ src/field/field_time_hole_arrival.cpp:
 
 src/field/field_corner_correction.c:
     .text start:0x020aa30c end:0x020aa5b0
+
+src/field/field_timed_renderer_delete.cpp:
+    .text start:0x02080ec4 end:0x02080efc
+
+src/field/field_planar_screen_position.cpp:
+    .text start:0x020a4940 end:0x020a4a1c
+
+src/field/field_area_release.cpp:
+    .text start:0x02080efc end:0x02081454
+
+src/field/field_extended_save_flags.cpp:
+    .text start:0x02081bd4 end:0x02081c00

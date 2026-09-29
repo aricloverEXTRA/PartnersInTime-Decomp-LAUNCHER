@@ -11310,3 +11310,409 @@ Golden ROM, zero native differences and 112 tests pass. See the
   explicit helper models. Captures inspected; checkpoint RAM/DTCM restored;
   all 104 original saves unchanged. Evidence:
   `build/analysis/xhigh_from_55/auxiliary_cursor_validation.json`.
+
+
+## Elder Princess Shroob chain target selection
+
+- Reconstructed the 904-byte chain-target initializer and selector in C++.
+  The renamed unit includes the existing 60-byte completion callback; both are
+  exact without inline ASM. Matching C/C++: 879,836 / 1,563,700 (56.2663%);
+  overlay 25: 20,492 / 38,024 (53.89%).
+- Golden ROM, zero native-relink differences, 112 tests. Controlled giant-phase
+  live route verifies effect creation and subsequent owner release; 796 isolated
+  ARM946 cases check remaining states, eligibility and projection boundaries.
+  Captures inspected, checkpoint RAM/DTCM restored, all 104 saves unchanged.
+  Rendering/animation internals remain outside the independent oracle. Evidence:
+  `build/analysis/xhigh_from_55/ov25_chain_target_validation.json`.
+
+
+## Geometry command-buffer initialization
+
+- Reconstructed the 32-byte SDK initializer in pure C and shared its record with
+  battle model rebuilding. The existing terminator is named and kept exact.
+  Matching C/C++: 879,868 / 1,563,700 (56.2683%).
+- All 20 functions in the affected objects match. Golden ROM, zero native-relink
+  differences and 112 tests pass. Controlled battle entry checks 186 calls;
+  24 copied-RAM ARM946 cases check complete memory and ordered stores.
+  Capture inspected, checkpoint restored, 104 saves unchanged. Evidence:
+  `build/analysis/xhigh_from_55/gx_list_begin_validation.json`.
+
+
+## Motion limits, formatting and reward status
+
+- Reconstructed the directional clamp, variadic formatting wrapper and reward
+  completion query in pure C. New code: 124 bytes; matching C/C++ is now
+  879,992 / 1,563,700 (56.2763%). Shared declarations replace old local prototypes.
+- All 32 functions in the seven affected objects match. Full gate: golden ROM,
+  zero native-relink differences, 112 tests. Live checks cover 20 formatter and
+  two reward-query calls. The clamp was not reached by the attempted Shell
+  routes; its evidence is isolated. Total isolated ARM946 cases: 275, checking
+  full memory and ABI. Captures inspected, checkpoints restored, 104 saves intact.
+  Evidence: `build/analysis/xhigh_from_55/small_helpers_validation.json`.
+
+
+### Status-page row cleanup
+
+- Reconstructed `PauseStatusPage_Release` and migrated both callers: 40 new
+  pure C bytes. All eight functions in the three actual source objects match.
+- Ordinary save-65 status route: seven calls across member changes and page
+  return, 140 task markings, complete sprite-list effects and ABI checks.
+  Full checkpoint restored; all 104 saves unchanged. Status/field images viewed.
+- Golden ROM, zero native differences, 112 tests. Matching C/C++:
+  880032/1563700 (56.2788%).
+- Private evidence: `eur_xhigh_pause_status_release/status65_v1.json` and
+  `xhigh_from_55/pause_status_release_validation.json`.
+
+
+### Resume the field after loading
+
+- Reconstructed the 28-byte `GameSession_ResumeField` wrapper in pure C.
+- Ordinary cold boot/load of save 55: one complete call, full session record,
+  four ordered stores and tail-call ABI checked. Field screen inspected;
+  checkpoint RAM/DTCM restored and all 104 original saves unchanged.
+- Actual source object exact, golden ROM, zero native differences, 112 tests.
+  Matching C/C++: 880060/1563700 (56.2806%). Evidence:
+  `xhigh_from_55/session_field_resume_validation.json`.
+
+
+### C++ exception dispatch
+
+- Reconstructed `MSL_DispatchException` in pure C, including catch selection,
+  decoded landing/frame offsets and transfer to the saved ARM context.
+- 13 isolated ARM946 cases and 12 controlled live calls; 188 ordered non-stack
+  stores checked in each suite. Actual helpers, no stubs; new throw/rethrow,
+  object/pointer and SP/r11/r7 frames. No natural-exception coverage claimed.
+- Corrected an overbroad live RAM check for independently running reverb capture;
+  failed and successful reports retained. Checkpoint and all 104 saves preserved.
+- Actual source object exact; golden ROM, zero native differences, 112 tests.
+  Matching C/C++: 880288/1563700 (56.2952%). Evidence:
+  `xhigh_from_55/msl_exception_dispatch_validation.json`.
+
+
+### Catch selection and exception-specification transfer
+
+- Reconstructed `MSL_FindCatchHandler` and `MSL_DispatchExceptionSpecification`
+  in C++, with shared search/specification layouts and no ASM.
+- 62 isolated search cases, 17 isolated dispatch cases and 16 controlled live
+  transfers. Real helpers, matching/skip/specification branches, complete checked
+  memory ranges, ordered stores, landing addresses and register/stack contracts.
+  No natural-exception or cross-frame-unwind claim; all 104 saves preserved.
+- Corrected reversed function-section order before the successful full gate.
+  Five affected functions (1,296 bytes) exact in actual source objects;
+  golden ROM, zero native differences, 112 tests.
+- Matching C/C++: 880876/1563700 (56.3328%). Evidence:
+  `xhigh_from_55/msl_handler_search_validation.json`.
+
+
+### Timed field renderer deletion
+
+- Reconstructed the complete 56-byte `FieldTimedRenderer_Delete` wrapper in C++.
+- Ordinary pause/back route: 41 complete renderer releases, 581 ordered stores,
+  both sprite lists, heap metadata, 43 merges and return/stack/register checks.
+  No RAM fixtures; field return inspected and all 104 saves preserved.
+- Actual source object exact; golden ROM, zero native differences, 112 tests.
+  Matching C/C++: 880932/1563700 (56.3364%). Evidence:
+  `xhigh_from_55/field_timed_renderer_delete_validation.json`.
+
+
+### SDK user exception callback
+
+Reconstructed the 108-byte ARM9 user-handler dispatcher with four explained
+mode-switch instructions in inline ASM. Corrected two native MPU helper names
+using PiT instructions and the cross-game NitroSDK reference; those renames add
+no C bytes. Actual compiled object and golden ROM are exact, native differences
+zero, all 112 tests pass. Isolated verification covers 32 cases with explicitly
+modeled CP15 writes; four live controlled calls verify the real CP15 effects and
+restore MPU state before gameplay resumes. All 104 saves remain unchanged.
+Matching C/C++ is 881040/1563700 (56.3433%); symbolic ASM remains separate.
+See the SDK user exception callback section of the reconstruction reference and
+private os_user_exception_dispatch_validation.json for coverage limits/artifacts.
+
+
+### SDK exception vector initialization
+
+Reconstructed OS_InitException and joined it with the adjacent callback unit.
+The new 144-byte initializer uses five explained ASM instructions for the native
+shared-RAM/DTCM vector stores. All 252 bytes in the merged unit and its 76-byte
+caller compare exactly; golden ROM, zero native differences, 112 tests pass.
+Thirty-two isolated cases cover debugger bounds and console flags; a 1200-frame
+ordinary cold boot verifies installation without RAM edits. All 104 saves intact.
+Matching C/C++: 881184/1563700 (56.3525%); symbolic ASM remains separate.
+See SDK exception vector initialization in the reconstruction reference and
+private os_exception_initialize_validation.json for artifacts and limits.
+
+
+### Runtime array deletion
+
+Added the pure-C MSL_DeleteArray wrapper and shared pool-caller declaration.
+The new 72-byte function and affected caller units are exact: 34 functions,
+2092 bytes checked. Golden ROM, zero native differences and 112 tests pass.
+Ordinary pause teardown verifies 288 reverse-order element destructors and two
+array frees; 146 isolated cases cover null/empty arrays, optional callbacks and
+heap merges. All 104 saves remain unchanged. Matching C/C++ is now
+881256/1563700 (56.3571%); symbolic ASM remains separate.
+See Runtime array deletion in the reconstruction reference and private
+msl_delete_array_validation.json for artifacts and coverage limits.
+
+
+### Pocket Chomp adult bounce exit
+
+Reconstructed the 724-byte three-bounce exit planner in pure C++, extending the
+adjacent adult-exit unit. All four functions in the affected actual source
+objects (3084 bytes) match; golden ROM, zero native differences and 112 tests pass.
+Three ordinary game routes cover both directions: 12 calls, 195 helper calls and
+42 ordered direct stores, with independent arithmetic and motion-channel checks.
+All 104 saves remain unchanged. Matching C/C++ is 881980/1563700 (56.4034%);
+symbolic ASM remains separate. See Pocket Chomp adult bounce exit in the
+reconstruction reference and private chomp_adult_bounce_validation.json for
+artifacts and coverage limits.
+
+
+### 2026-09-28: Party locomotion animation selection
+
+- Reconstructed `FieldPartyEntity_UpdateAnimation` in the existing party-render
+  unit: 1,364 new C++ bytes at ov000 `0x020B80A4..0x020B85F8`, without inline ASM.
+  Special locomotion states select resource groups or a base-policy mode; enabled
+  auxiliary slots receive the original refresh flag and signed playback speed.
+  Corrected the shared virtual update-bounds argument to its byte-wide contract.
+- Full gate passes: byte-identical EUR ROM, native relink with zero differing
+  bytes, 112 tests, and 34 functions/8,816 bytes exact in actual source objects.
+- Three ordinary save-65/83 routes check 2,628 calls across 25 states in 983 frames,
+  686 direct stores, 146 speed calls and 629 auxiliary calls. Both state-21 paths
+  occur live. Bounded animation-child observations are distinct from independent
+  caller and list-neighbor checks. Three final field captures were inspected.
+  Another 1,002 copied-RAM ARM946 cases cover dispatch and parameter boundaries;
+  animation children are explicit stubs, while the speed helper executes natively.
+- Matching C/C++ reaches **883,344 / 1,563,700 bytes (56.4906%)**. Overlay 0 is
+  **195,712 / 366,712 bytes (53.37%)**. Symbolic ASM remains separate.
+  All 104 original saves are unchanged. Details and coverage limits:
+  [party animation selection](research/RECONSTRUCTION_NOTES.md#party-animation-selection).
+
+
+### 2026-09-28: Planar field screen coordinates
+
+- Reconstructed the 220-byte `FieldEntity2D_UpdateScreenPosition`, including
+  signed Q12 division, cached Y offsets and separate depth/index stores.
+  Actual source object and complete ROM are exact; native relink reports zero
+  differences and all 112 tests pass. No inline ASM.
+- Ordinary checkpoint83 navigation checks 396 calls and 1,584 ordered writes
+  over 413 frames. Another 268 copied-RAM ARM946 cases cover arithmetic, packed
+  fields and disabled/null-renderer boundaries without stubs. Full allocations,
+  preserved registers, captures and all104 original save hashes are verified.
+- Matching C/C++: **883,564 / 1,563,700 bytes (56.5047%)**; overlay0:
+  **195,932 / 366,712 bytes (53.43%)**. Symbolic ASM remains separate.
+  [Evidence and limits](research/RECONSTRUCTION_NOTES.md#planar-entity-screen-positions).
+
+
+### Battle chain relaxation (2026-09-28)
+
+- Reconstructed `BattleChain_RelaxSegments`, overlay 2 `0x020B710C..0x020B7448`,
+  as 828 bytes of exact C++; shared twelve-byte joint displacement fields named.
+- Live controlled save-103 boss route: 4,678 calls, 42,823 segments, 256,938
+  joint stores, 161,062 square-root register stores, 80,531 roots and 412,885
+  checked division pairs. Both correction outcomes; full work/owner/arena slot.
+- 488 copied-RAM ARM946 cases cover zero and signed boundaries, strict radius
+  comparison and modeled square-root busy loops. Actual compiled function and
+  division helper execute; all 49,504 non-stack stores and whole RAM checked.
+- 32 artifacts validated, two gameplay captures inspected, checkpoint RAM/DTCM
+  restored, 104 saves unchanged. No independent pixel/IRQ or ordinary attack
+  selection claim. Related actual objects: 69 functions, 21,700 matching bytes.
+- Gate v1 caught the unavailable standard header; corrected gate v2 passes:
+  original ROM hash, zero native-relink differences, 112 tests.
+- Evidence: `build/analysis/xhigh_from_55/battle_chain_relax_validation.json`.
+  Matching C/C++: 884,392 / 1,563,700 (56.5577%); symbolic ASM remains separate.
+
+
+### Chain-held party return (2026-09-28)
+
+- Added `Overlay25Chain_ReturnParty`, overlay25 `0x020C877C..0x020C8AC8`,
+  844 exact C++ bytes. The contiguous landing unit now matches 3 functions/1,240
+  bytes; named endpoint fields retain the raw view and 836-byte chain stride.
+- Controlled save103 live route: 126 return callbacks,1,277 own stores,764 helper
+  pairs and two complete landing handoffs. Nested chain oracle separately checks
+  4,678 calls/42,823 segments. Audio arguments checked; graphics observational.
+- 260 isolated ARM946 cases: both homes, count/smoothing/phase boundaries,
+  immediate/timed return and active/deferred motion channels.23,511 ordered
+  non-stack stores,2,208 helper pairs,whole copied RAM/DTCM checked; audio stub
+  explicit. Modeled sqrt waits do not prove hardware or IRQ timing.
+- 34 artifacts verified; repeated screenshot/graphics hashes identical; final
+  screenshot inspected. Whole checkpoint restored;104 saves unchanged.
+- Full gate passes first attempt: original ROM,zero native-relink differences,
+  112 tests.21 related actual objects:70 functions/22,544 bytes all exact.
+- Evidence:`build/analysis/xhigh_from_55/ov25_chain_return_validation.json`.
+  Matching C/C++:885,236 /1,563,700 (56.6116%); symbolic ASM separate.
+
+
+## 2026-09-28 - Pause party spring models
+
+- Reconstructed `MenuSpring_UpdatePartyModel` (ov007 `0x020769A4..0x02076E30`,
+  1,164 bytes) in readable C++; named shared chain motion fields and preserved
+  the progress getter's unused scene argument. No new inline assembly.
+- Matching C/C++: **886,400 / 1,563,700 bytes (56.6861%)**; symbolic ASM remains
+  4,040 bytes separately. Three actual source objects match 12 functions/7,628 bytes.
+- Full build, golden-ROM packaging, zero-difference native relink and 112 tests pass.
+- Ordinary save-65 menu navigation checks 6,128 callbacks, all five states and
+  60,541 caller stores. A second live route adds 16 HP-threshold/impulse fixtures
+  and checks another 6,128 callbacks/60,589 stores. Both return to the visible field;
+  108 artifacts validate and all 104 original saves are unchanged. Animation
+  internals and pixels remain observational; drawing suppression is untested.
+- Private evidence: `build/analysis/xhigh_from_55/menu_party_spring_validation.json`
+  and `build/runtime/eur_xhigh_menu_party_spring/`. Two failed frame-433 oracle
+  versions are preserved; corrected probes pass without changing game code.
+
+
+## 2026-09-28 - SDK soft-reset entry
+
+- Added 128 exact C bytes for `OS_ResetSystem`; the complete reset unit matches
+  all four functions/348 bytes. No inline assembly. Matching C/C++ now
+  **886,528 / 1,563,700 bytes (56.6943%)**, symbolic ASM counted separately.
+- Full verification passes: golden ROM, zero native-relink differences and
+  112 tests. Ordinary save-65 keypad reset checks nine helper returns, 11 DMA
+  stores, card/lock state and the ITCM handoff; ARM7 acknowledgement and visible
+  title restart observed. 100 isolated wrapper cases use explicit helper stubs.
+- 43 artifacts validated, checkpoint restored and 104 original saves unchanged.
+  The initial live probe's byte-width IRQ read failed; the corrected probe passes.
+- Evidence: `build/analysis/xhigh_from_55/os_reset_system_validation.json`;
+  limitations and procedure in the reconstruction reference's SDK reset section.
+
+
+## 2026-09-28 - ITCM reset image reload
+
+- Reconstructed `OSi_ReloadRomData` and `OSi_DoResetSystem`, 288 bytes at
+  `0x01FF83A0..0x01FF84C0`. One explained inline addition; complete functions exact.
+  Both affected actual objects match six functions/636 bytes.
+- Matching C/C++: **886,816 / 1,563,700 bytes (56.7127%)**. Golden ROM,
+  zero-difference native relink and 112 tests pass.
+- Two ordinary keypad resets each compare 497,276 reloaded ROM bytes and check
+  acknowledgement, cache/read call order, header and ABI through boot handoff.
+  120 isolated cases check header replacement, secure-prefix bounds and waits;
+  card/cache/ARM7 models are explicit. Initial header-write probe failure retained.
+- 86 artifacts validated; 104 saves unchanged. An unchanged-probe repeat has
+  identical checked reset behavior but different late title OAM/pixels; cause
+  unconfirmed. Full checkpoint restoration and visible title confirmed.
+- Evidence: `build/analysis/xhigh_from_55/os_reset_itcm_validation.json`.
+
+
+## 2026-09-28 - ITCM card sector reader
+
+- Added 304 exact C bytes for `OSi_ReadCard`, extending the reset ITCM unit to
+  592 bytes. Fixed-base addressing matches without new inline assembly.
+  Seven functions/940 bytes in both actual reset objects compare exactly.
+- Matching C/C++: **887,120 / 1,563,700 bytes (56.7321%)**. Full verification
+  passes: original ROM hash, zero native-relink differences and 112 tests.
+- Ordinary reset checks 972 sectors, 124,416 FIFO words, 124,319 destination
+  stores and all command/control writes. 360 isolated native-reader cases add
+  signed-size, partial-word, sector and busy/readiness boundaries with explicit
+  register/FIFO models and no function stubs.
+- 43 artifacts validate; visible restart and full checkpoint restoration;
+  104 original saves unchanged. Initial conditional-hook probe failure preserved.
+- Evidence: `build/analysis/xhigh_from_55/os_read_card_itcm_validation.json`.
+
+
+## 2026-09-28: ITCM DMA programming and GX submission
+
+- Reconstructed five ITCM DMA functions (`0x01FF84C0..0x01FF86C8`) as pure C,
+  with a shared interface for resident transfers and battle renderers.
+  Matching C/C++ reaches 887,640 / 1,563,700 bytes (56.7654%); symbolic ASM
+  remains separate. The 472-byte GX limit and DMA0 dummy reads/reset are preserved.
+- All seven affected source objects match: 30 functions, 8,264 bytes, including
+  the 520 newly reconstructed bytes. Full build, golden ROM, zero-difference
+  native relink and 112 tests pass.
+- Ordinary cold boot and battle replay check 22,913 completed target calls;
+  320 isolated ARM946 cases cover channel 0, IRQ states, zero/boundary sizes
+  and modeled busy waits. CPU register programming is independently checked;
+  hardware DMA data movement and rasterization remain observational.
+- Both final scenes were inspected; 84 artifacts validate and 104 saves remain
+  unchanged. Failed oracle/input-path versions are retained separately.
+  See [DMA evidence](research/RECONSTRUCTION_NOTES.md#itcm-dma-register-programming-and-geometry-fifo)
+  and private `build/analysis/xhigh_from_55/mi_dma_itcm_validation.json`.
+
+
+## 2026-09-28: Field area display and room release
+
+Reconstructed FieldArea_ReleaseRenderResources (ov000 0x020809BC, 1288 bytes)
+and FieldArea_ReleaseRoomResources (0x02080EFC, 1368 bytes) as readable C++.
+The first retains entity state for cached scenes; the second releases entities
+and room-owned data. Existing shared records now describe embedded palettes,
+effect slots and cleanup-owned buffer pointers. No inline ASM.
+
+Both new functions plus affected callers/snapshot capture are exact in four
+actual source objects: 22 functions / 8916 bytes. Full gate v2 passes the golden
+EUR ROM, native relink with zero differences and 112 tests. Gate v1 passed the
+ROM checks but failed the file-header-comment test; the comments were added.
+
+Runtime: ordinary pause_v2 (591 frames) and controlled room_v2 (1834 frames)
+check four complete releases, 610 helper calls, 1050 nested heap/list operations,
+80 caller stores and 3952 primitive stores. Both screens, borrowed/owned primary
+resources, entity cleanup, linked effect models and a populated animation buffer
+are covered. Full areas/arrays, allocations/heap metadata and sprite/palette
+lists are checked, with freed records retired before reuse. Virtual-object
+changes outside these primitives and rasterization remain observational. Active
+clipping/wipes, subtype9 exclusion and a populated second animation set are not
+covered. The two temporary room-change commands and checkpoint RAM/DTCM are
+restored; 104 saves unchanged. Seven images / 48 binary dumps validated.
+
+Private evidence: build/runtime/eur_xhigh_field_area_release/{pause_v2,room_v2}.json;
+build/analysis/xhigh_from_55/field_area_release_validation.json. Earlier probe v1
+failed before emulation on literal-pool disassembly; later probes guard full
+native functions while hooking only code. One-way room_v1 remains separate.
+
+New matching C/C++: 2656 bytes. Total: 890296 / 1563700 (56.9352%).
+Symbolic ASM remains separate at 4040 bytes.
+
+
+## 2026-09-28: Shop HBlank background bands
+
+Reconstructed ShopScene_UpdateHBlank (overlay 9, 0x0207CE1C, 148 bytes) in pure C++. Shared signed scroll record and callback registration retain their native layout and behavior. Six actual source-object functions / 5,456 bytes match. Full gate: golden ROM, zero native differences, 112 tests. Live controlled shop route: 66,675 completed HBlank checks, all five bands, wave zero. Copied-RAM ARM946 checks: 27,615 cases with signed extremes and every real scanline. Shop visibly ready; field reload remains black after bounded extension, so no visible field-return claim. All 104 saves unchanged; 23 artifacts validated. Evidence: build/runtime/eur_xhigh_shop_hblank/{live_v3,isolated_v1}.json and build/analysis/xhigh_from_55/shop_hblank_validation.json. Matching C/C++ is 890,444 / 1,563,700 (56.9447%); symbolic ASM remains separate.
+
+
+## 2026-09-28: Cannonballers badge parameter adjustments
+
+Reconstructed Overlay12Attack_ApplyBadgeOffsets (ov012 0x020C2AE0, 104 bytes)
+as pure C++, preserving the binary64 conversion sequence and three parameter
+stores. Actual helper and initializer objects: two functions / 1076 bytes exact.
+Full gate: golden ROM, zero native differences, 112 tests. Two 540-frame replays
+check the ordinary skip and a guarded temporary badge-2 fixture: one target call,
+three independently checked arithmetic calls and three ordered stores. Full
+parameter neighborhood and live work/user/save records checked; checkpoint
+RAM/DTCM restored. No complete attack-result claim. All 104 original saves
+unchanged; 30 artifacts validated. Failed v1 predicate filter and passing v2
+producers remain separate. Evidence: build/runtime/eur_xhigh_cannon_badge_tuning/
+{ordinary_v2,badge_v2}.json and build/analysis/xhigh_from_55/
+cannon_badge_tuning_validation.json. Matching C/C++: 890548 / 1563700 (56.9513%).
+Symbolic ASM remains separate at 4040 bytes.
+
+
+## 2026-09-28: Field VM extended save-flag fills
+
+Reconstructed FieldVm_FillExtendedSaveFlags (ov000 0x02081BD4, 44 bytes)
+in C++, with an unsigned word-fill pattern and no ASM. Helper and migrated
+VM dispatcher: two actual functions / 23536 bytes exact. Full gate passes
+the golden ROM, zero native differences and 112 tests. Controlled live
+commands 0x130/0x131 complete in a 120-frame field replay: two calls, two
+fill-helper checks and all 64 ordered word stores; full save checked.
+Flags restored at helper return, decoded commands at dispatcher return,
+and checkpoint RAM/DTCM restored at replay end. Both field captures inspected;
+16 artifacts validated; all 104 saves unchanged. No natural story-trigger or
+downstream all-flags behavior claim. Evidence: build/runtime/
+eur_xhigh_field_extended_save_flags/live_v2.json and build/analysis/
+xhigh_from_55/field_extended_save_flags_validation.json. Matching C/C++:
+890592 / 1563700 (56.9541%); symbolic ASM remains separate at 4040 bytes.
+
+
+## 2026-09-28: Battle vertical list selection
+
+Linked BattleMenu_UpdateVerticalSelection (ov002 0x020999D8, 156 bytes)
+as readable C without ASM. The actual source object matches the entire
+function. Full gate: golden ROM, zero native differences, 112 tests.
+A 665-frame Bros. Items replay checks all 665 calls, both wrap directions,
+both repeat clamps, movement and idle; 20 real sound dispatches checked.
+Full battle/save records and ABI verified, four captures inspected, and
+checkpoint RAM/DTCM restored. Another 304 isolated ARM946 cases cover
+simultaneous keys and list boundaries with sound explicitly stubbed.
+No ordinary-item caller, independent audio or pixel coverage claimed.
+All 30 artifacts validate and 104 original saves remain unchanged.
+Evidence: build/runtime/eur_xhigh_battle_menu_vertical/{live_v1,isolated_v1}.json
+and build/analysis/xhigh_from_55/battle_menu_vertical_validation.json.
+Matching C/C++: 890748 / 1563700 (56.9641%); symbolic ASM remains 4040 bytes.
+Work pauses after this block at the user's request.

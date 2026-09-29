@@ -13,7 +13,7 @@ void Overlay11Support_UpdateSpeed(Overlay11Support *support)
 {
     if (support->object) {
         support->speed_q8 =
-            func_02010960(support->speed_q8 + data_ov011_020c5f7e[data_ov002_020c0710->variant][0],
+            GameMotion_ClampToLimit(support->speed_q8 + data_ov011_020c5f7e[data_ov002_020c0710->variant][0],
                           data_ov011_020c5f7e[data_ov002_020c0710->variant][0],
                           data_ov011_020c5f80[data_ov002_020c0710->variant][0]);
     }
