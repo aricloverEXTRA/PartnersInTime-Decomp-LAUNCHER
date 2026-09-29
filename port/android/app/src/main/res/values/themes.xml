@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      No action bar: the patcher screen is the whole interface, and the palette
+      below matches the colours the view paints so the system bars do not clash
+      with it.
+    -->
+    <style name="Theme.PiTPatcher" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#12141C</item>
+        <item name="android:colorBackground">#12141C</item>
+        <item name="android:statusBarColor">#12141C</item>
+        <item name="android:navigationBarColor">#12141C</item>
+        <item name="android:colorAccent">#6FCF97</item>
+    </style>
+</resources>

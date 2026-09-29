@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launcher icon, drawn as vector XML so the repository carries no binary image
+  assets. Same palette as the in-app UI.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="#1B1F2B"
+        android:pathData="M0,0h24v24h-24z" />
+    <path
+        android:fillColor="#6FCF97"
+        android:pathData="M12,4l7,7h-4.5v9h-5v-9h-4.5z" />
+    <path
+        android:fillColor="#E0A458"
+        android:pathData="M4,20h16v1.5h-16z" />
+</vector>

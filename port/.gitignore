@@ -1,0 +1,22 @@
+/build/
+/out/
+/cache/
+CMakeUserPresets.json
+__pycache__/
+
+*.nds
+*.nds.*
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+/roms/
+/assets/
+/assets-extracted/
+/nitrofs/
+
+# Generated data projects contain data derived from the user's own ROM.
+# Only the multiplier profiles under /mods/ are distributable.
+/generated/
+__pycache__/

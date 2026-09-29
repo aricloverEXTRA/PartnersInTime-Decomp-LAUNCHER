@@ -1,0 +1,72 @@
+{
+  "schema": "pit-mod-profile-v1",
+  "id": "hard_mode",
+  "name": "Hard Mode",
+  "version": "1.0.0",
+  "license": "CC-BY-4.0",
+  "authors": [],
+  "description": "Raises enemy durability and offence for a real difficulty spike, then pays it back with a large experience and coin boost. The balance target is a shorter, denser loop rather than a longer grind: fights are meaningfully more dangerous, but you level faster and clear them in less total time.",
+  "contains_game_data": false,
+  "notes": [
+    "This profile stores only multipliers. It contains no bytes, names, stats or other data derived from the retail ROM.",
+    "Stats are applied to the user's own data export at build time.",
+    "Values are stored as unsigned 16-bit fields, so every result is clamped to 65535.",
+    "Balance is derived from the reconstructed damage formula in PiT src/battle/battle_damage_calculation.c: damage = (attacker_level * attacker_power) / defender_defense. Defense is a divisor, not a subtrahend.",
+    "Turns to kill therefore scale with max_hp * defense multiplied together, not added. The previous HP x1.5 + DEF x1.5 draft produced x2.25 turns per battle with no experience compensation, which is what made it read as a slog.",
+    "These values give about x1.15 turns per battle, x2.3 damage taken per battle, and x0.66 total turns spent per level gained."
+  ],
+  "applies_to": {
+    "version": "eur",
+    "stat_document": "stats/enemies.json"
+  },
+  "transforms": [
+    {
+      "field": "max_hp",
+      "scale": 1.1,
+      "min": 1,
+      "max": 65535,
+      "enabled": true,
+      "reason": "Enemy HP +10%. Deliberately small: HP is a direct turns-to-kill multiplier, and this is the stat that turns a difficulty spike into a slog."
+    },
+    {
+      "field": "power",
+      "scale": 2.0,
+      "min": 0,
+      "max": 65535,
+      "enabled": true,
+      "reason": "Enemy POW +100%. This is the difficulty spike. It raises damage taken per turn directly, so it makes fights feel dangerous without making them longer."
+    },
+    {
+      "field": "defense",
+      "scale": 1.05,
+      "min": 1,
+      "max": 65535,
+      "enabled": true,
+      "reason": "Enemy DEF +5%. Kept near 1x on purpose: defense is the divisor in the damage formula, so it multiplies with HP into the turn count and can floor small hits to 1."
+    },
+    {
+      "field": "speed",
+      "scale": 1.25,
+      "min": 1,
+      "max": 65535,
+      "enabled": true,
+      "reason": "Enemy SPD +25%. Drives turn order and hit-bonus pressure without multiplying damage or length."
+    },
+    {
+      "field": "coins",
+      "scale": 1.75,
+      "min": 0,
+      "max": 65535,
+      "enabled": true,
+      "reason": "Coin rewards +75%, so the extra danger pays for itself in shop budget."
+    },
+    {
+      "field": "experience",
+      "scale": 1.75,
+      "min": 0,
+      "max": 65535,
+      "enabled": true,
+      "reason": "Experience +75%. Experience is a flat per-enemy award with no dependence on HP or turns, so this is the lever that actually shortens the progression loop."
+    }
+  ]
+}

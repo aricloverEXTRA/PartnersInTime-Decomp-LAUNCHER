@@ -29,27 +29,33 @@ Two properties of the current tree matter more than the completion percentage:
 
 The important qualification: this repository optimizes for byte matching, which
 is the wrong objective function for a port. A port needs semantic equivalence,
-not identical register allocation. The 23,488-byte reconstructed field dispatcher is nearly
-usable as port code today — it compiles and covers all 290 slots — while it
-correctly remains unlinked for the ROM build at 95.96% fuzzy similarity. The
-same holds for the 19,168-byte battle dispatcher and the 9,196-byte scene
-dispatcher.
+not identical register allocation. The 23,492-byte reconstructed field dispatcher
+is nearly usable as port code today — it compiles and covers all 290 slots —
+while it correctly remains unlinked for the ROM build at 95.96% fuzzy
+similarity. The same holds for the 19,168-byte battle dispatcher and the
+9,196-byte scene dispatcher.
 
 ## Measured starting point
 
 | Quantity | Value |
 |---|---:|
 | Mapped ARM9 code | 1,563,700 B across 22 components |
-| ARM9 function symbols | 4,966 |
-| Byte-matching C | 117,392 B (7.51%) |
-| Maintained symbolic ARM9 assembly | 7,412 B |
+| ARM9 function symbols | 4,956 |
+| Byte-matching C | 878,932 B (56.21%) |
+| Maintained symbolic ARM9 assembly | 4,040 B |
 | Symbolic ARM7 | 43,852 B |
 | Relink coverage | 43 components, 420 section units, 31,138 relocations, zero differing bytes |
 | Reachable VM commands | 475,711 (638 Field rooms, 14 Battle archives, 3 Scene archives) |
 | Editable data records | 10,510 strings, 98 enemies, 765 treasures, 99 items, 4 shops |
+| Linked translation units that build under clang | 748 / 943 (79.3%) |
 
 Regenerate the code figures with `tools/generate_progress.py`; see
 [`PROGRESS.md`](PROGRESS.md) for the methodology.
+
+The clang figure comes from `tools/check_portability.py`, which compiles every
+unit in `config/eur/arm9/linked_sources.txt` with a clang translation of the
+`CC_FLAGS` in `tools/configure.py`. It does not link and does not touch the
+matching build. See [clang portability baseline](#clang-portability-baseline).
 
 ## Three candidate architectures
 
@@ -148,8 +154,11 @@ practicality:
    decompilation takes anyway, but on its own schedule.
 
 Endianness is not a concern; both targets are little-endian. The residual risks
-are ARM `LDR` rotation on unaligned access and MWCC structure padding. Both are
-rare and both will surface at least once.
+are ARM `LDR` rotation on unaligned access and MWCC structure padding. The first
+is untested. The second has now surfaced and is measured: MWCC aligns 64-bit
+integers to 4 bytes where AAPCS uses 8, which is enough to change the size of
+`FieldRuntimeEntity` and `OsAlarm`. See
+[clang portability baseline](#clang-portability-baseline).
 
 ## What the shipped result looks like
 
@@ -178,7 +187,7 @@ rare and both will surface at least once.
 
 ## Effort
 
-Extrapolating 7.51% along the current curve produces a number that is not
+Extrapolating from the matching-byte percentage produces a number that is not
 useful. The better question is how much of the image is port-relevant:
 
 - **Port-relevant:** resident ARM9 and overlays 0, 2, 5, 6, 7, 8, 9, and 25,
@@ -195,7 +204,8 @@ than a precondition. With (B) alone, a small team is looking at years.
 
 ## What to do now, so the port does not become a fork
 
-These are cheap while only 7.51% is written and expensive later.
+These are cheap while the remaining code is still being written and expensive
+later.
 
 1. **Draw the HAL boundary now.** No new absolute addresses in `src/`; MMIO
    through accessors declared in `include/hardware.h` rather than raw
@@ -209,6 +219,66 @@ These are cheap while only 7.51% is written and expensive later.
 3. **Add an empty second build target** that compiles the existing C and C++
    sources with clang. It costs about a day and keeps portability honest from
    now on, instead of discovering the truth about it in three years.
+   **Done:** `tools/check_portability.py`. See
+   [clang portability baseline](#clang-portability-baseline) for the measured
+   result and the two ABI facts it exposed.
+
+## Clang portability baseline
+
+`tools/check_portability.py` compiles the 943 translation units listed in
+`config/eur/arm9/linked_sources.txt` with clang 19 targeting `arm946e-s`,
+translating every `CC_FLAGS` entry in `tools/configure.py`: `-fshort-enums`,
+`-fsigned-char`, `-fno-merge-constants`, `-mfloat-abi=soft`, `-fno-exceptions`,
+`-fno-rtti`, `-fshort-wchar`, `-nostdinc`, and C89/C++98 dialects selected per
+file extension. It writes objects to `build/portability/` and does not link.
+
+748 of 943 units compile (432 of 511 `.c`, 316 of 432 `.cpp`). All 195 failures
+fall into three groups, and none of them is missing game logic:
+
+| Units | Cause |
+|---:|---|
+| 172 | 64-bit integer alignment. See below. |
+| 22 | Metrowerks `asm { ... }` blocks. |
+| 1 | Assignment to a cast expression, an MWCC extension. |
+
+### 64-bit integer alignment is the one that matters
+
+MWCC aligns `s64`/`u64` to **4 bytes** on ARM946E with `-fp soft`. Clang follows
+AAPCS and aligns them to **8**. Every struct containing a 64-bit member therefore
+gains padding before that member, and the struct's own alignment rises with it.
+Measured:
+
+| Struct | MWCC | clang | Evidence |
+|---|---:|---:|---|
+| `FieldRuntimeEntity` | `0x520` | `0x528` | `include/game/field_entity.h:753` `s64 collision_policy` |
+| `OsAlarm` | 44 | 48 | `include/nitro/os_alarm.h:15,18,19` `u64 fire, period, start` |
+| `FieldEntity` | `0xEC` | `0xEC` | no 64-bit member, matches |
+| `FieldRenderObject` | `0x138` | `0x138` | no 64-bit member, matches |
+
+The `typedef char ..._SizeCheck[(sizeof(T) == N) ? 1 : -1]` asserts already in
+the tree are what surface this, and they are **correct**: they encode the layout
+the ROM actually uses, and MWCC is the compiler that produced it. The 172
+failing units are reporting a real ABI difference, not a reconstruction defect.
+
+Two consequences for a port:
+
+- A port that adopts clang's natural layout will silently disagree with the ROM
+  about the offsets of every field after a 64-bit member. `FieldRuntimeEntity` is
+  the worst case, because it is the field-entity base record and 171 units touch
+  it.
+- Silently "fixing" the asserts to make clang happy would be a correctness
+  regression in the matching build. If a port needs clang's layout, it has to
+  say so explicitly, and it has to translate ROM offsets rather than trust its
+  own struct.
+
+### Metrowerks inline assembly
+
+22 units contain `asm { ... }` blocks, which clang cannot parse on ARM; there is
+no MS-style inline-assembly equivalent. Some are deliberate byte-matching
+fragments, for example `src/battle/battle_capture_transform.c:29`, which keeps
+the base-buffer and sub-buffer additions separate because Metrowerks otherwise
+folds the C expression into one offset. A port has to supply these as intrinsics
+or plain C, and accept that the result will not be byte-identical.
 
 ## Principal risks
 

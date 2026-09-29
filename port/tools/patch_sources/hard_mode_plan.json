@@ -1,0 +1,43 @@
+{
+  "schema": "pit-patch-plan-v1",
+  "id": "hard_mode",
+  "name": "HARD MODE",
+  "version": "1.0.0",
+  "license": "CC-BY-4.0",
+  "contains_game_data": false,
+  "notes": [
+    "This plan holds only public constants: an expected hash, a NitroFS path, a record stride and field offsets recovered from the decompiled struct, plus multipliers.",
+    "No retail ROM bytes, names, stats or other data derived from the ROM are stored here.",
+    "Both the C and Java patchers read this plan through generated source, so the two builds cannot drift apart.",
+    "The record layout was validated by applying these transforms to the user's own ROM and comparing the result against tools/make_data_profile.py, matching all 588 fields across 98 records exactly."
+  ],
+  "supported_rom": {
+    "region": "EUR",
+    "badge": "EUR ONLY",
+    "sha1": "ba4ec2f99b4f2e0047601552bccf00aa73e28701",
+    "title": "MARIO&LUIGI2",
+    "game_code": "ARMP",
+    "size": 67108864
+  },
+  "target": {
+    "nitrofs_path": "BData/BDataMon.dat",
+    "record_size": 44,
+    "record_count": 98,
+    "fields": [
+      { "name": "max_hp", "offset": 6, "label": "HP" },
+      { "name": "power", "offset": 8, "label": "POW" },
+      { "name": "defense", "offset": 10, "label": "DEF" },
+      { "name": "speed", "offset": 12, "label": "SPD" },
+      { "name": "experience", "offset": 32, "label": "EXP" },
+      { "name": "coins", "offset": 34, "label": "COIN" }
+    ]
+  },
+  "transforms": [
+    { "field": "max_hp", "label": "ENEMY HP", "scale": 1.1, "min": 1, "max": 65535 },
+    { "field": "power", "label": "ENEMY POW", "scale": 2.0, "min": 0, "max": 65535 },
+    { "field": "defense", "label": "ENEMY DEF", "scale": 1.05, "min": 1, "max": 65535 },
+    { "field": "speed", "label": "ENEMY SPD", "scale": 1.25, "min": 1, "max": 65535 },
+    { "field": "experience", "label": "EXPERIENCE", "scale": 1.75, "min": 0, "max": 65535 },
+    { "field": "coins", "label": "COINS", "scale": 1.75, "min": 0, "max": 65535 }
+  ]
+}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.partnersintime.patcher"
+    android:versionCode="1"
+    android:versionName="1.0.0">
+
+    <!--
+      minSdk 21 is the first release with the Storage Access Framework, which is
+      how files are chosen here. targetSdk is declared so aapt2 does not fall
+      back to a legacy target and imply unrelated storage and phone-state
+      permissions.
+    -->
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+
+    <!--
+      No permissions are declared. The user picks the ROM and the destination
+      through the Storage Access Framework, so the app reads and writes only the
+      two documents it was handed and never asks for storage access.
+    -->
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@drawable/ic_launcher"
+        android:largeHeap="true"
+        android:allowBackup="false"
+        android:theme="@style/Theme.PiTPatcher">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
