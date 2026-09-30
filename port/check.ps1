@@ -30,6 +30,10 @@ Set-StrictMode -Version Latest
 $portRoot = $PSScriptRoot
 $buildDir = Join-Path $portRoot 'build/checks'
 $failed = 0
+# $LASTEXITCODE is only defined after a native command runs. Under StrictMode,
+# reading the unset variable throws, so give the first Invoke-Check a defined
+# value. Any native command overwrites it afterwards.
+$LASTEXITCODE = 0
 
 # Tests with -eq 'Windows_NT' rather than $IsWindows, which does not exist in
 # Windows PowerShell 5.1, so the same script runs on both the Windows and the
@@ -52,11 +56,21 @@ function Invoke-Check {
     }
 }
 
-# The name to look for depends on the host: Windows has py/python, the Linux
-# runner has python3 and no `python` unless something installs it.
-$python = (Get-Command py -ErrorAction SilentlyContinue).Source
-if (-not $python) { $python = (Get-Command python -ErrorAction SilentlyContinue).Source }
-if (-not $python) { $python = (Get-Command python3 -ErrorAction SilentlyContinue).Source }
+# Returns the path of the first command from $Names that exists, or $null.
+# A bare (Get-Command ...).Source read throws under StrictMode when the command
+# is missing, so the null test has to come first.
+function Resolve-CommandPath {
+    param([string[]] $Names)
+    foreach ($name in $Names) {
+        $command = Get-Command $name -ErrorAction SilentlyContinue
+        if ($command) { return $command.Source }
+    }
+    return $null
+}
+
+# Windows has py and usually python; the Linux runner has python3 and no
+# `python` unless something installs it.
+$python = Resolve-CommandPath 'py', 'python', 'python3'
 if (-not $python) { throw 'No Python found: install Python 3.11+ or put py/python/python3 on PATH.' }
 function Invoke-Python {
     param([string[]] $Arguments)
@@ -73,7 +87,7 @@ function Get-JdkTool {
         $candidate = Join-Path $env:JAVA_HOME "bin/$fileName"
         if (Test-Path $candidate) { return $candidate }
     }
-    return (Get-Command $Name -ErrorAction SilentlyContinue).Source
+    return (Resolve-CommandPath $Name)
 }
 
 Invoke-Check 'generated patch data is current' {
