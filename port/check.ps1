@@ -36,9 +36,9 @@ $failed = 0
 $LASTEXITCODE = 0
 
 # Tests with -eq 'Windows_NT' rather than $IsWindows, which does not exist in
-# Windows PowerShell 5.1, so the same script runs on both the Windows and the
-# Linux CI job.
-$isWindows = $env:OS -eq 'Windows_NT'
+# Windows PowerShell 5.1 and is read-only in PowerShell 7, so the same script
+# runs on both the Windows and the Linux CI job.
+$onWindows = $env:OS -eq 'Windows_NT'
 
 function Invoke-Check {
     param([string] $Name, [scriptblock] $Body)
@@ -82,7 +82,7 @@ function Invoke-Python {
 # what the CI job set up, and PATH is the developer's fallback.
 function Get-JdkTool {
     param([string] $Name)
-    $fileName = if ($isWindows) { "$Name.exe" } else { $Name }
+    $fileName = if ($onWindows) { "$Name.exe" } else { $Name }
     if ($env:JAVA_HOME) {
         $candidate = Join-Path $env:JAVA_HOME "bin/$fileName"
         if (Test-Path $candidate) { return $candidate }
