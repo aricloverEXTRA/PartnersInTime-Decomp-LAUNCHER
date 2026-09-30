@@ -129,8 +129,8 @@ static unsigned int scale_value(unsigned int value, unsigned int num,
 /* ----------------------------------------------------------------- pipeline */
 
 pit_patch_result pit_patcher_run(const char *input_path, const char *output_path,
-                                 pit_patch_log_fn log, void *ctx,
-                                 pit_patch_info *info)
+                                 int apply_plan, pit_patch_log_fn log,
+                                 void *ctx, pit_patch_info *info)
 {
     unsigned char *patched = NULL;
     const unsigned char *data = NULL;
@@ -264,8 +264,10 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
              (unsigned int)PIT_RECORD_COUNT, (unsigned int)PIT_RECORD_SIZE);
     log_step(log, ctx, 6, message, 0.56);
 
-    /* Step 7: patch a private copy. */
-    log_step(log, ctx, 7, "Applying plan to a copy...", 0.62);
+    /* Step 7: make a private copy, then apply the plan if it is enabled. */
+    log_step(log, ctx, 7,
+             apply_plan ? "Applying plan to a copy..." :
+                          "Copying ROM; plan is OFF...", 0.62);
     patched = (unsigned char *)malloc(size);
     if (!patched) {
         pit_rom_close(&rom);
@@ -275,44 +277,48 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
     pit_rom_close(&rom);
     data = NULL;
 
-    for (record = 0; record < PIT_RECORD_COUNT; record++) {
-        size_t base = (size_t)info->target_offset +
-                      (size_t)record * (size_t)PIT_RECORD_SIZE;
+    if (apply_plan) {
+        for (record = 0; record < PIT_RECORD_COUNT; record++) {
+            size_t base = (size_t)info->target_offset +
+                          (size_t)record * (size_t)PIT_RECORD_SIZE;
 
-        for (i = 0; i < PIT_TRANSFORM_COUNT; i++) {
-            const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
-            unsigned int offset = PIT_RECORD_SIZE;
-            unsigned int value;
-            unsigned int result_value;
+            for (i = 0; i < PIT_TRANSFORM_COUNT; i++) {
+                const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
+                unsigned int offset = PIT_RECORD_SIZE;
+                unsigned int value;
+                unsigned int result_value;
 
-            for (field = 0; field < PIT_FIELD_COUNT; field++) {
-                if (strcmp(PIT_PLAN_FIELDS[field].name, t->field) == 0) {
-                    offset = PIT_PLAN_FIELDS[field].offset;
-                    break;
+                for (field = 0; field < PIT_FIELD_COUNT; field++) {
+                    if (strcmp(PIT_PLAN_FIELDS[field].name, t->field) == 0) {
+                        offset = PIT_PLAN_FIELDS[field].offset;
+                        break;
+                    }
                 }
+                if (offset == PIT_RECORD_SIZE) {
+                    continue;
+                }
+                value = read_u16(patched + base + offset);
+                result_value = scale_value(value, t->num, t->den,
+                                           t->min_value, t->max_value);
+                write_u16(patched + base + offset, result_value);
+                written++;
             }
-            if (offset == PIT_RECORD_SIZE) {
-                continue;
-            }
-            value = read_u16(patched + base + offset);
-            result_value = scale_value(value, t->num, t->den,
-                                       t->min_value, t->max_value);
-            write_u16(patched + base + offset, result_value);
-            written++;
-        }
 
-        if ((record % 8u) == 0u || record + 1u == PIT_RECORD_COUNT) {
-            snprintf(message, sizeof(message),
-                     "Patched record %u/%u...", record + 1u,
-                     (unsigned int)PIT_RECORD_COUNT);
-            log_step(log, ctx, 7, message,
-                     0.62 + 0.24 * ((double)(record + 1u) /
-                                    (double)PIT_RECORD_COUNT));
+            if ((record % 8u) == 0u || record + 1u == PIT_RECORD_COUNT) {
+                snprintf(message, sizeof(message),
+                         "Patched record %u/%u...", record + 1u,
+                         (unsigned int)PIT_RECORD_COUNT);
+                log_step(log, ctx, 7, message,
+                         0.62 + 0.24 * ((double)(record + 1u) /
+                                        (double)PIT_RECORD_COUNT));
+            }
         }
+        log_step(log, ctx, 7, "All 98 records patched.", 0.86);
+    } else {
+        log_step(log, ctx, 7, "Plan skipped; the copy is unchanged.", 0.86);
     }
-    log_step(log, ctx, 7, "All 98 records patched.", 0.86);
     if (info) {
-        info->records_patched = PIT_RECORD_COUNT;
+        info->records_patched = apply_plan ? PIT_RECORD_COUNT : 0;
         info->fields_written = written;
     }
 

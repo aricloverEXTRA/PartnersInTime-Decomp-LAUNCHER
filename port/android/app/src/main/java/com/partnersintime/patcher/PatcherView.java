@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -32,6 +33,12 @@ import java.util.List;
  * <p>The view is otherwise inert. It reports taps through {@link Callback} and
  * lets the activity own all state, so the same layout can be exercised in a
  * test without an Android runtime.
+ *
+ * <p>The screen is split into tabs, matching the C build: PATCH (the core
+ * flow), MODS (optional data mods, off by default) and ABOUT (what this tool is
+ * for). Both touch and the D-pad / Tab keyboard work: Tab or the D-pad move the
+ * focus around the visible tab, Enter/Space activate the focused control, and
+ * Left/Right switch tabs when nothing is being edited.
  */
 public final class PatcherView extends View {
 
@@ -46,36 +53,72 @@ public final class PatcherView extends View {
     /* Layout, matching the macros of the same name in the C renderer. */
     private static final int MARGIN = 12;
     private static final int HEADER_H = 48;
-    private static final int PLAN_X = MARGIN;
-    private static final int PLAN_Y = 58;
-    private static final int PLAN_W = UI_W - 2 * MARGIN;
-    private static final int PLAN_H = 82;
-    private static final int CHIP_COUNT = 3;
-    private static final int CHIP_GAP = 12;
-    private static final int CHIP_W = (PLAN_W - 2 * 12 - (CHIP_COUNT - 1) * CHIP_GAP) / CHIP_COUNT;
-    private static final int CHIP_X0 = PLAN_X + 12;
-    private static final int CHIP_Y0 = PLAN_Y + 24;
-    private static final int CHIP_H = 24;
+
+    private static final int TAB_X0 = MARGIN;
+    private static final int TAB_Y = 50;
+    private static final int TAB_H = 16;
+    public static final int TAB_COUNT = 3;
+    private static final int TAB_GAP = 8;
+    private static final int TAB_W =
+            (UI_W - 2 * MARGIN - (TAB_COUNT - 1) * TAB_GAP) / TAB_COUNT;
+    private static final int CONTENT_Y = 76;
+
     private static final int FIELD_X = 76;
     private static final int FIELD_W = UI_W - FIELD_X - 12 - 78;
     private static final int FIELD_H = 16;
-    private static final int FIELD_Y0 = 152;
+    private static final int FIELD_Y0 = 88;
     private static final int FIELD_DY = 28;
     private static final int BROWSE_X = UI_W - MARGIN - 76;
     private static final int BROWSE_W = 76;
     private static final int BROWSE_H = 20;
+
+    private static final int MODS_Y = 146;
+
     private static final int PATCH_X = MARGIN;
-    private static final int PATCH_Y = 202;
-    private static final int PATCH_W = 140;
+    private static final int PATCH_Y = 156;
+    private static final int PATCH_W = 160;
     private static final int PATCH_H = 26;
-    private static final int STATUS_X = 164;
-    private static final int BAR_Y = 222;
-    private static final int BAR_H = 10;
-    private static final int BAR_W = UI_W - STATUS_X - MARGIN;
+    private static final int STATUS_X = PATCH_X + PATCH_W + 14;
+    private static final int BAR_X = MARGIN;
+    private static final int BAR_Y = 190;
+    private static final int BAR_H = 12;
+    private static final int BAR_W = UI_W - 2 * MARGIN;
+
+    private static final int FOOTER_Y = 308;
+
     private static final int LOG_X = MARGIN;
-    private static final int LOG_Y = 240;
+    private static final int LOG_Y = 212;
     private static final int LOG_W = UI_W - 2 * MARGIN;
-    private static final int LOG_H = UI_H - LOG_Y - MARGIN;
+    private static final int LOG_H = FOOTER_Y - 8 - LOG_Y;
+
+    private static final int MODS_CARD_X = MARGIN;
+    private static final int MODS_CARD_Y = 84;
+    private static final int MODS_CARD_W = UI_W - 2 * MARGIN;
+    private static final int MODS_CARD_H = 160;
+    private static final int MODS_HINT_Y = MODS_CARD_Y + MODS_CARD_H + 10;
+    private static final int TOGGLE_X = MODS_CARD_X + 16;
+    private static final int TOGGLE_Y = 112;
+    private static final int TOGGLE_W = 32;
+    private static final int TOGGLE_H = 14;
+    private static final int TOGGLE_KNOB_W = 12;
+    private static final int MODS_NAME_X = TOGGLE_X + TOGGLE_W + 8;
+    private static final int MODS_NAME_Y = TOGGLE_Y - 4;
+    private static final int MODS_DESC_Y = 130;
+    private static final int MODS_DIV_Y = 152;
+
+    private static final int CHIP_H = 24;
+    private static final int CHIP_GAP = 12;
+    private static final int CHIP_COUNT = 3;
+    private static final int CHIP_W =
+            (MODS_CARD_W - 24 - (CHIP_COUNT - 1) * CHIP_GAP) / CHIP_COUNT;
+    private static final int CHIP_X0 = MODS_CARD_X + 12;
+    private static final int CHIP_Y0 = MODS_DIV_Y + 8;
+    private static final int CHIP_DY = CHIP_H + 4;
+
+    private static final int ABOUT_CARD_X = MARGIN;
+    private static final int ABOUT_CARD_Y = 84;
+    private static final int ABOUT_CARD_W = UI_W - 2 * MARGIN;
+    private static final int ABOUT_CARD_H = FOOTER_Y - 8 - ABOUT_CARD_Y;
 
     /* Palette, matching the C renderer. Every value comes from the real EUR
      * ROM's 15-bit BGR555 palettes, expanded with c * 255 / 31. See
@@ -109,11 +152,29 @@ public final class PatcherView extends View {
     public static final int LOG_WARN = 2;
     public static final int LOG_ERROR = 3;
 
-    /* Button identities, matching the button_id enum in the C renderer. */
+    /* Tab identities, matching the tab_id enum in the C renderer. */
+    public static final int TAB_PATCH = 0;
+    public static final int TAB_MODS = 1;
+    public static final int TAB_ABOUT = 2;
+
+    /* Button identities, matching the button_id enum values in the C renderer. */
     private static final int BTN_NONE = 0;
-    private static final int BTN_BROWSE_SOURCE = 1;
-    private static final int BTN_BROWSE_OUTPUT = 2;
-    private static final int BTN_PATCH = 3;
+    private static final int BTN_TAB_PATCH = 1;
+    private static final int BTN_TAB_MODS = 2;
+    private static final int BTN_TAB_ABOUT = 3;
+    private static final int BTN_TOGGLE = 4;
+    private static final int BTN_BROWSE_IN = 5;
+    private static final int BTN_BROWSE_OUT = 6;
+    private static final int BTN_PATCH = 7;
+
+    /* Keyboard focus slots, matching the FOCUS_* constants in the C renderer. */
+    public static final int FOCUS_NONE = 0;
+    public static final int FOCUS_SRC = 1;
+    public static final int FOCUS_BROWSE_IN = 2;
+    public static final int FOCUS_OUT = 3;
+    public static final int FOCUS_BROWSE_OUT = 4;
+    public static final int FOCUS_PATCH = 5;
+    public static final int FOCUS_TOGGLE = 6;
 
     /**
      * The idle stub the C renderer paints so a fresh window is not a dead
@@ -145,7 +206,10 @@ public final class PatcherView extends View {
         public boolean busy;
         public boolean patched;
         public boolean failed;
-        public int totalSteps = 98;
+        public int totalSteps = Patcher.STEPS;
+        public int tab = TAB_PATCH;
+        public boolean hardMode;
+        public int focus = FOCUS_NONE;
     }
 
     public interface Callback {
@@ -154,6 +218,10 @@ public final class PatcherView extends View {
         void onBrowseOutput();
 
         void onPatch();
+
+        void onTab(int tab);
+
+        void onToggleMods();
     }
 
     private final Paint fill = new Paint();
@@ -179,6 +247,8 @@ public final class PatcherView extends View {
         stroke.setStyle(Paint.Style.STROKE);
         stroke.setAntiAlias(false);
         setClickable(true);
+        setFocusable(true);
+        setFocusableInTouchMode(true);
     }
 
     public void setCallback(Callback callback) {
@@ -236,6 +306,17 @@ public final class PatcherView extends View {
     public void setPaths(String source, String output) {
         state.sourceName = source;
         state.outputName = output;
+        invalidate();
+    }
+
+    public void setTab(int tab) {
+        state.tab = tab;
+        state.focus = FOCUS_NONE;
+        invalidate();
+    }
+
+    public void setHardMode(boolean hardMode) {
+        state.hardMode = hardMode;
         invalidate();
     }
 
@@ -447,7 +528,7 @@ public final class PatcherView extends View {
 
         textScaled(canvas, MARGIN + 1, 11, "PiT PATCHER", C_SHADOW, 3);
         textScaled(canvas, MARGIN, 10, "PiT PATCHER", C_TEXT_HI, 3);
-        text(canvas, MARGIN + 2, 30, "HARD MODE PATCHER", C_ACCENT);
+        text(canvas, MARGIN + 2, 30, "DECOMP ROM WORKSHOP", C_ACCENT);
 
         /* Version chip, right aligned. */
         String version = PatchData.PLAN_VERSION;
@@ -477,39 +558,167 @@ public final class PatcherView extends View {
         rect(canvas, x, y, 1, 1, color);
     }
 
-    /* ---------------------------------------------------------------- plan */
+    /* ---------------------------------------------------------------- tabs */
 
-    private void drawChip(Canvas canvas, int x, int y, int w, int h, String label, String value) {
+    private void drawTab(Canvas canvas, int tab, String label) {
+        int x = TAB_X0 + tab * (TAB_W + TAB_GAP);
+        boolean selected = state.tab == tab;
+        boolean hot = hovered == BTN_TAB_PATCH + tab
+                || (tab == TAB_MODS && state.focus == FOCUS_TOGGLE)
+                || (tab == TAB_PATCH && (state.focus == FOCUS_BROWSE_IN
+                        || state.focus == FOCUS_BROWSE_OUT || state.focus == FOCUS_PATCH));
+
+        if (selected) {
+            roundGradient(canvas, x, TAB_Y, TAB_W, TAB_H, 3, C_AMBER, C_ACCENT);
+            rect(canvas, x + 2, TAB_Y + 1, TAB_W - 4, 1, C_AMBER_HI);
+            roundOutline(canvas, x, TAB_Y, TAB_W, TAB_H, 3, C_AMBER_HI);
+            text(canvas, x + (TAB_W - textWidth(label)) / 2, TAB_Y + (TAB_H - FONT_H) / 2,
+                    label, C_PILL_TEXT);
+            rect(canvas, x + 8, TAB_Y + TAB_H, TAB_W - 16, 2, C_ACCENT);
+            rect(canvas, x + TAB_W / 2 - 1, TAB_Y + TAB_H + 2, 2, 1, C_AMBER);
+        } else if (hot) {
+            roundGradient(canvas, x, TAB_Y, TAB_W, TAB_H, 3, C_PANEL_HI, C_PANEL);
+            roundOutline(canvas, x, TAB_Y, TAB_W, TAB_H, 3, C_EDGE_HOT);
+            text(canvas, x + (TAB_W - textWidth(label)) / 2, TAB_Y + (TAB_H - FONT_H) / 2,
+                    label, C_AMBER);
+        } else {
+            roundGradient(canvas, x, TAB_Y, TAB_W, TAB_H, 3, C_PANEL_HI, C_PANEL);
+            roundOutline(canvas, x, TAB_Y, TAB_W, TAB_H, 3, C_EDGE_SOFT);
+            text(canvas, x + (TAB_W - textWidth(label)) / 2, TAB_Y + (TAB_H - FONT_H) / 2,
+                    label, C_DIM);
+        }
+    }
+
+    private void drawToggle(Canvas canvas, boolean on, boolean hot) {
+        if (on) {
+            roundGradient(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
+                    hot ? C_AMBER_HI : C_AMBER, C_ACCENT);
+            roundOutline(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
+                    C_AMBER_HI);
+        } else {
+            roundGradient(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
+                    C_PANEL_LO, C_WELL);
+            roundOutline(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
+                    hot ? C_AMBER_HI : C_EDGE_SOFT);
+        }
+        int knob = TOGGLE_KNOB_W;
+        int kx = on ? TOGGLE_X + TOGGLE_W - knob - 2 : TOGGLE_X + 2;
+        int ky = TOGGLE_Y + (TOGGLE_H - knob) / 2;
+
+        roundGradient(canvas, kx, ky, knob, knob, 3, C_TEXT_HI, C_TEXT);
+        roundOutline(canvas, kx, ky, knob, knob, 3, C_EDGE);
+    }
+
+    private void drawFooter(Canvas canvas) {
+        hline(canvas, 0, FOOTER_Y - 2, UI_W, C_EDGE_SOFT);
+        text(canvas, MARGIN, FOOTER_Y, "FOR THE PARTNERS IN TIME DECOMPILATION", C_DIM);
+        text(canvas, UI_W - MARGIN - textWidth("(57%)"), FOOTER_Y, "(57%)", C_AMBER);
+    }
+
+    /* ---------------------------------------------------------------- mods */
+
+    private void drawChip(Canvas canvas, int x, int y, int w, int h, String label, String value,
+            boolean hot) {
         dropShadow(canvas, x, y, w, h, 3);
-        roundGradient(canvas, x, y, w, h, 3, C_PANEL, C_PANEL_LO);
+        roundGradient(canvas, x, y, w, h, 3, hot ? C_PANEL_HI : C_PANEL, C_PANEL_LO);
         rect(canvas, x + 4, y + 1, w - 8, 1, C_EDGE);
         roundOutline(canvas, x, y, w, h, 3, C_EDGE_SOFT);
 
         /* Gold spine on the left edge marks it as a tuned stat. */
-        rect(canvas, x + 1, y + 4, 2, h - 8, C_ACCENT);
+        rect(canvas, x + 1, y + 4, 2, h - 8, hot ? C_AMBER : C_ACCENT);
         rect(canvas, x + 1, y + 3, 2, 1, 0xA0FFFFFF);
 
         text(canvas, x + 8, y + 3, label, C_DIM);
-        text(canvas, x + 8, y + 12, value, C_AMBER);
+        text(canvas, x + 8, y + 12, value, hot ? C_AMBER_HI : C_AMBER);
     }
 
-    private void drawPlan(Canvas canvas) {
-        drawCard(canvas, PLAN_X, PLAN_Y, PLAN_W, PLAN_H, 4);
+    private void drawModsTab(Canvas canvas) {
+        boolean on = state.hardMode;
+        boolean toggleHot = hovered == BTN_TOGGLE || state.focus == FOCUS_TOGGLE;
 
-        text(canvas, PLAN_X + 12, PLAN_Y + 9, "PATCH PLAN", C_ACCENT);
-        String summary = PatchData.RECORD_COUNT + " RECORDS";
-        text(canvas, PLAN_X + PLAN_W - 12 - textWidth(summary), PLAN_Y + 9, summary, C_DIM);
-        hline(canvas, PLAN_X + 12, PLAN_Y + 20, PLAN_W - 24, C_EDGE_SOFT);
+        drawCard(canvas, MODS_CARD_X, MODS_CARD_Y, MODS_CARD_W, MODS_CARD_H, 4);
+        text(canvas, MODS_CARD_X + 12, MODS_CARD_Y + 9, "MODS", C_ACCENT);
+        text(canvas, MODS_CARD_X + MODS_CARD_W - 12 - textWidth("OPTIONAL"),
+                MODS_CARD_Y + 9, "OPTIONAL", C_DIM);
+        hline(canvas, MODS_CARD_X + 12, MODS_CARD_Y + 20, MODS_CARD_W - 24, C_EDGE_SOFT);
 
-        for (int i = 0; i < PatchData.TRANSFORM_LABEL.length; i++) {
-            int col = i % CHIP_COUNT;
-            int row = i / CHIP_COUNT;
-            int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
-            int cy = CHIP_Y0 + row * (CHIP_H + 4);
+        drawToggle(canvas, on, toggleHot);
+        text(canvas, MODS_NAME_X, MODS_NAME_Y, "HARD MODE", C_TEXT_HI);
+        {
+            String stateText = on ? "ON" : "OFF";
+            int sw = textWidth(stateText);
 
-            drawChip(canvas, cx, cy, CHIP_W, CHIP_H, PatchData.TRANSFORM_LABEL[i],
-                    PatchData.TRANSFORM_SCALE[i]);
+            text(canvas, MODS_CARD_X + MODS_CARD_W - 12 - sw, TOGGLE_Y + TOGGLE_H / 2 - 4,
+                    stateText, on ? C_AMBER : C_DIM);
         }
+
+        text(canvas, MODS_CARD_X + 12, MODS_DESC_Y,
+                "A DATA MOD THAT RAISES ENEMY STATS: HP, POW, DEF", C_DIM);
+        text(canvas, MODS_CARD_X + 12, MODS_DESC_Y + LINE_H,
+                "AND SPD UP, PLUS 75% MORE EXPERIENCE AND COINS.", C_DIM);
+        hline(canvas, MODS_CARD_X + 12, MODS_DIV_Y, MODS_CARD_W - 24, C_EDGE_SOFT);
+
+        if (on) {
+            for (int i = 0; i < PatchData.TRANSFORM_LABEL.length; i++) {
+                int col = i % CHIP_COUNT;
+                int row = i / CHIP_COUNT;
+                int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
+                int cy = CHIP_Y0 + row * CHIP_DY;
+
+                drawChip(canvas, cx, cy, CHIP_W, CHIP_H, PatchData.TRANSFORM_LABEL[i],
+                        PatchData.TRANSFORM_SCALE[i], true);
+            }
+        } else {
+            text(canvas, MODS_CARD_X + 12, CHIP_Y0,
+                    "OFF: THE PATCH ONLY VERIFIES AND PREPARES YOUR", C_DIM);
+            text(canvas, MODS_CARD_X + 12, CHIP_Y0 + LINE_H,
+                    "EUR COPY - NO MOD IS APPLIED. TAP THE TOGGLE TO", C_DIM);
+            text(canvas, MODS_CARD_X + 12, CHIP_Y0 + 2 * LINE_H,
+                    "ENABLE HARD MODE, THEN PATCH.", C_DIM);
+        }
+
+        text(canvas, MARGIN, MODS_HINT_Y,
+                "MODS ARE OPTIONAL DATA EDITS TO YOUR OWN ROM COPY.", C_DIM);
+    }
+
+    /* --------------------------------------------------------------- about */
+
+    private void drawAboutTab(Canvas canvas) {
+        String[] lines = {
+            "THIS PATCHER WORKS WITH YOUR OWN EUR COPY OF",
+            "MARIO & LUIGI: PARTNERS IN TIME. IT VERIFIES THE",
+            "ROM BY SHA-1, FINDS ITS STAT TABLE, AND WRITES A",
+            "ROM FOR THE DECOMPILATION PROJECT.",
+            "",
+            "THE PROJECT IS ONLY ABOUT 57% RECONSTRUCTED, SO",
+            "THE RESULT MAY NOT BOOT NATIVELY ON A CONSOLE OR",
+            "EMULATOR YET - WE TAKE THE CHANCE ANYWAY.",
+            "",
+            "HARD MODE IS AN OPTIONAL DATA MOD (MODS TAB) THAT",
+            "RAISES ENEMY STATS TO MAKE THE GAME HARDER. IT IS",
+            "NOT REQUIRED TO USE THIS TOOL.",
+        };
+
+        drawCard(canvas, ABOUT_CARD_X, ABOUT_CARD_Y, ABOUT_CARD_W, ABOUT_CARD_H, 4);
+        text(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 9, "ABOUT", C_ACCENT);
+        text(canvas, ABOUT_CARD_X + ABOUT_CARD_W - 12 - textWidth("PIT PATCHER"),
+                ABOUT_CARD_Y + 9, "PIT PATCHER", C_DIM);
+        hline(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 20, ABOUT_CARD_W - 24, C_EDGE_SOFT);
+
+        text(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 32,
+                "PARTNERS IN TIME - DECOMPILATION EDITION", C_TEXT_HI);
+        hline(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 42, ABOUT_CARD_W - 24, C_EDGE_SOFT);
+
+        for (int i = 0; i < lines.length; i++) {
+            int ly = ABOUT_CARD_Y + 54 + i * LINE_H;
+
+            text(canvas, ABOUT_CARD_X + 12, ly, lines[i], C_TEXT);
+        }
+        text(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + ABOUT_CARD_H - 14,
+                PatchData.PLAN_ID + " v" + PatchData.PLAN_VERSION + " | "
+                        + PatchData.RECORD_COUNT + " x " + PatchData.RECORD_SIZE
+                        + "-BYTE RECORDS",
+                C_DIM);
     }
 
     /* -------------------------------------------------------------- fields */
@@ -567,12 +776,16 @@ public final class PatcherView extends View {
     }
 
     private void drawActions(Canvas canvas) {
+        boolean hotIn = hovered == BTN_BROWSE_IN || state.focus == FOCUS_BROWSE_IN;
+        boolean hotOut = hovered == BTN_BROWSE_OUT || state.focus == FOCUS_BROWSE_OUT;
+        boolean hotPatch = hovered == BTN_PATCH || state.focus == FOCUS_PATCH;
+
         drawButton(canvas, BROWSE_X, FIELD_Y0 - 2, BROWSE_W, BROWSE_H, "BROWSE",
-                hovered == BTN_BROWSE_SOURCE, false, true);
+                hotIn, false, true);
         drawButton(canvas, BROWSE_X, FIELD_Y0 + FIELD_DY - 2, BROWSE_W, BROWSE_H, "BROWSE",
-                hovered == BTN_BROWSE_OUTPUT, false, true);
+                hotOut, false, true);
         drawButton(canvas, PATCH_X, PATCH_Y, PATCH_W, PATCH_H, "PATCH",
-                hovered == BTN_PATCH, true, patchEnabled());
+                hotPatch, true, patchEnabled());
 
         String caption = "STATUS";
         String value;
@@ -594,7 +807,7 @@ public final class PatcherView extends View {
         text(canvas, STATUS_X, PATCH_Y + 4, caption, C_DIM);
         text(canvas, STATUS_X + textWidth(caption) + 8, PATCH_Y + 4, value, color);
 
-        drawProgress(canvas, STATUS_X, BAR_Y, BAR_W, BAR_H, fractionForRender());
+        drawProgress(canvas, BAR_X, BAR_Y, BAR_W, BAR_H, fractionForRender());
     }
 
     /** fraction as painted, including the idle stub the C renderer also draws. */
@@ -602,7 +815,7 @@ public final class PatcherView extends View {
         if (state.fraction > 0) {
             return state.fraction;
         }
-        return state.busy || state.patched || state.failed ? 0 : IDLE_STUB;
+        return state.busy || state.patched || state.failed ? 1.0 : IDLE_STUB;
     }
 
     private void drawProgress(Canvas canvas, int x, int y, int w, int h, double fraction) {
@@ -652,13 +865,36 @@ public final class PatcherView extends View {
         }
     }
 
+    private void drawPatchTab(Canvas canvas) {
+        drawFields(canvas);
+
+        /* Plan status on the left, keyboard hints on the right. */
+        text(canvas, MARGIN, MODS_Y, state.hardMode ? "MODS: HARD MODE" : "MODS: NONE",
+                state.hardMode ? C_AMBER : C_DIM);
+        text(canvas, UI_W - MARGIN - textWidth("TAB FOCUS  ENTER PATCH  ESC QUIT"),
+                MODS_Y, "TAB FOCUS  ENTER PATCH  ESC QUIT", C_DIM);
+
+        drawActions(canvas);
+        drawLog(canvas);
+    }
+
     private void render(Canvas canvas) {
         drawBackdrop(canvas);
         drawHeader(canvas);
-        drawPlan(canvas);
-        drawFields(canvas);
-        drawActions(canvas);
-        drawLog(canvas);
+
+        drawTab(canvas, TAB_PATCH, "PATCH");
+        drawTab(canvas, TAB_MODS, "MODS");
+        drawTab(canvas, TAB_ABOUT, "ABOUT");
+
+        if (state.tab == TAB_MODS) {
+            drawModsTab(canvas);
+        } else if (state.tab == TAB_ABOUT) {
+            drawAboutTab(canvas);
+        } else {
+            drawPatchTab(canvas);
+        }
+
+        drawFooter(canvas);
     }
 
     /* --------------------------------------------------------------- input */
@@ -681,16 +917,49 @@ public final class PatcherView extends View {
         canvas.restore();
     }
 
+    private boolean isFocused(int buttonNow) {
+        return hovered == buttonNow && state.busy
+                ? false : state.focus == focusOf(buttonNow);
+    }
+
+    private static int focusOf(int buttonNow) {
+        switch (buttonNow) {
+            case BTN_BROWSE_IN:
+                return FOCUS_BROWSE_IN;
+            case BTN_BROWSE_OUT:
+                return FOCUS_BROWSE_OUT;
+            case BTN_PATCH:
+                return FOCUS_PATCH;
+            case BTN_TOGGLE:
+                return FOCUS_TOGGLE;
+            default:
+                return FOCUS_NONE;
+        }
+    }
+
     /** Geometry is fixed, so hit tests and painting cannot disagree. */
     private int buttonAt(float x, float y) {
-        if (inButton(x, y, BROWSE_X, FIELD_Y0 - 2, BROWSE_W, BROWSE_H)) {
-            return BTN_BROWSE_SOURCE;
+        for (int tab = 0; tab < TAB_COUNT; tab++) {
+            int tx = TAB_X0 + tab * (TAB_W + TAB_GAP);
+
+            if (inButton(x, y, tx, TAB_Y, TAB_W, TAB_H)) {
+                return BTN_TAB_PATCH + tab;
+            }
         }
-        if (inButton(x, y, BROWSE_X, FIELD_Y0 + FIELD_DY - 2, BROWSE_W, BROWSE_H)) {
-            return BTN_BROWSE_OUTPUT;
+        if (state.tab == TAB_MODS
+                && inButton(x, y, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H)) {
+            return BTN_TOGGLE;
         }
-        if (inButton(x, y, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)) {
-            return BTN_PATCH;
+        if (state.tab == TAB_PATCH) {
+            if (inButton(x, y, BROWSE_X, FIELD_Y0 - 2, BROWSE_W, BROWSE_H)) {
+                return BTN_BROWSE_IN;
+            }
+            if (inButton(x, y, BROWSE_X, FIELD_Y0 + FIELD_DY - 2, BROWSE_W, BROWSE_H)) {
+                return BTN_BROWSE_OUT;
+            }
+            if (inButton(x, y, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)) {
+                return BTN_PATCH;
+            }
         }
         return BTN_NONE;
     }
@@ -712,13 +981,7 @@ public final class PatcherView extends View {
             case MotionEvent.ACTION_UP: {
                 int hit = buttonAt(x, y);
                 if (hit == hovered) {
-                    if (hit == BTN_BROWSE_SOURCE && callback != null) {
-                        callback.onBrowseSource();
-                    } else if (hit == BTN_BROWSE_OUTPUT && callback != null) {
-                        callback.onBrowseOutput();
-                    } else if (hit == BTN_PATCH && callback != null) {
-                        callback.onPatch();
-                    }
+                    activate(hit);
                 }
                 hovered = BTN_NONE;
                 invalidate();
@@ -730,6 +993,131 @@ public final class PatcherView extends View {
                 return true;
             default:
                 return true;
+        }
+    }
+
+    /* ------------------------------------------------------------- keyboard */
+
+    private static final int[] PATCH_CYCLE = {
+        FOCUS_BROWSE_IN, FOCUS_BROWSE_OUT, FOCUS_PATCH
+    };
+
+    private void focusCycle(boolean backward) {
+        if (state.tab == TAB_MODS) {
+            state.focus = FOCUS_TOGGLE;
+        } else if (state.tab == TAB_ABOUT) {
+            state.focus = FOCUS_NONE;
+        } else {
+            int index = -1;
+
+            for (int i = 0; i < PATCH_CYCLE.length; i++) {
+                if (PATCH_CYCLE[i] == state.focus) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index < 0) {
+                index = backward ? PATCH_CYCLE.length - 1 : 0;
+            } else if (backward) {
+                index = (index + PATCH_CYCLE.length - 1) % PATCH_CYCLE.length;
+            } else {
+                index = (index + 1) % PATCH_CYCLE.length;
+            }
+            state.focus = PATCH_CYCLE[index];
+        }
+        invalidate();
+    }
+
+    private void focusMove(int delta) {
+        int index = -1;
+
+        for (int i = 0; i < PATCH_CYCLE.length; i++) {
+            if (PATCH_CYCLE[i] == state.focus) {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0) {
+            index = delta > 0 ? 0 : PATCH_CYCLE.length - 1;
+        } else {
+            index = (index + delta + PATCH_CYCLE.length) % PATCH_CYCLE.length;
+        }
+        state.focus = PATCH_CYCLE[index];
+        invalidate();
+    }
+
+    private void switchTab(int delta) {
+        int next = (state.tab + delta + TAB_COUNT) % TAB_COUNT;
+
+        setTab(next);
+        if (callback != null) {
+            callback.onTab(next);
+        }
+    }
+
+    private void activate(int id) {
+        switch (id) {
+            case BTN_TAB_PATCH:
+            case BTN_TAB_MODS:
+            case BTN_TAB_ABOUT:
+                switchTab(id - BTN_TAB_PATCH - state.tab);
+                break;
+            case BTN_TOGGLE:
+                if (state.tab == TAB_MODS) {
+                    state.hardMode = !state.hardMode;
+                    state.focus = FOCUS_TOGGLE;
+                    if (callback != null) {
+                        callback.onToggleMods();
+                    }
+                    invalidate();
+                }
+                break;
+            case BTN_BROWSE_IN:
+                if (state.tab == TAB_PATCH && callback != null) {
+                    callback.onBrowseSource();
+                }
+                break;
+            case BTN_BROWSE_OUT:
+                if (state.tab == TAB_PATCH && callback != null) {
+                    callback.onBrowseOutput();
+                }
+                break;
+            case BTN_PATCH:
+                if (state.tab == TAB_PATCH && callback != null) {
+                    callback.onPatch();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_TAB:
+                focusCycle(event.hasModifiers(KeyEvent.META_SHIFT_ON));
+                return true;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                switchTab(1);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                switchTab(-1);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_UP:
+                focusMove(-1);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                focusMove(1);
+                return true;
+            case KeyEvent.KEYCODE_ENTER:
+            case KeyEvent.KEYCODE_NUMPAD_ENTER:
+            case KeyEvent.KEYCODE_DPAD_CENTER:
+            case KeyEvent.KEYCODE_SPACE:
+                activate(focusOf(state.focus));
+                return true;
+            default:
+                return super.onKeyDown(keyCode, event);
         }
     }
 }

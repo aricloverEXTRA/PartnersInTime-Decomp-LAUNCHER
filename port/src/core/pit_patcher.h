@@ -55,12 +55,17 @@ const char *pit_patch_result_text(pit_patch_result result);
 
 /*
  * Runs the full pipeline. Verifies the input, copies it, applies the plan to the
- * copy, recomputes the header CRC and writes output_path. On failure nothing is
- * written and the reason is reported through the log.
+ * copy (unless apply_plan is zero), recomputes the header CRC and writes
+ * output_path. On failure nothing is written and the reason is reported through
+ * the log.
+ *
+ * With apply_plan == 0 the copy is written untouched apart from the repaired
+ * header CRC, so the tool doubles as a plain "prepare my own ROM" step and a
+ * data mod, and the mods stay optional.
  */
 pit_patch_result pit_patcher_run(const char *input_path, const char *output_path,
-                                 pit_patch_log_fn log, void *ctx,
-                                 pit_patch_info *info);
+                                 int apply_plan, pit_patch_log_fn log,
+                                 void *ctx, pit_patch_info *info);
 
 /*
  * CRC-16/MODBUS over the first 0x15E header bytes, as this release stores it at

@@ -121,9 +121,11 @@ public final class Patcher {
     /**
      * Runs the full pipeline over the user's ROM bytes and returns the patched
      * image. The caller writes {@code out} so this stays off the main thread
-     * and works with any storage the platform hands back.
+     * and works with any storage the platform hands back. When {@code applyPlan}
+     * is false the ROM is verified and copied with only the header CRC repaired,
+     * matching the C {@code --no-mods} path, so the data mod stays optional.
      */
-    public static Result run(byte[] rom, byte[] out, Listener listener) {
+    public static Result run(byte[] rom, byte[] out, boolean applyPlan, Listener listener) {
         Result result = new Result();
 
         if (rom == null || out == null || out.length < rom.length) {
@@ -196,34 +198,41 @@ public final class Patcher {
                 PatchData.TARGET_PATH, targetOffset, PatchData.RECORD_COUNT,
                 PatchData.RECORD_SIZE), 0.58);
 
-        step(listener, 7, "Applying plan to a copy...", 0.64);
+        step(listener, 7, applyPlan ? "Applying plan to a copy..."
+                                    : "Copying ROM; plan is OFF...", 0.64);
         System.arraycopy(rom, 0, out, 0, rom.length);
 
         int written = 0;
-        int[] value = new int[1];
-        for (int record = 0; record < PatchData.RECORD_COUNT; record++) {
-            int base = targetOffset + record * PatchData.RECORD_SIZE;
+        if (applyPlan) {
+            int[] value = new int[1];
+            for (int record = 0; record < PatchData.RECORD_COUNT; record++) {
+                int base = targetOffset + record * PatchData.RECORD_SIZE;
 
-            for (int t = 0; t < PatchData.TRANSFORM_NUM.length; t++) {
-                int field = PatchData.TRANSFORM_FIELD[t];
+                for (int t = 0; t < PatchData.TRANSFORM_NUM.length; t++) {
+                    int field = PatchData.TRANSFORM_FIELD[t];
 
-                readU16(out, base + PatchData.FIELD_OFFSETS[field], value);
-                int scaled = scaleValue(value[0],
-                        PatchData.TRANSFORM_NUM[t], PatchData.TRANSFORM_DEN[t],
-                        PatchData.TRANSFORM_MIN[t], PatchData.TRANSFORM_MAX[t]);
-                writeU16(out, base + PatchData.FIELD_OFFSETS[field], scaled);
-                written++;
+                    readU16(out, base + PatchData.FIELD_OFFSETS[field], value);
+                    int scaled = scaleValue(value[0],
+                            PatchData.TRANSFORM_NUM[t], PatchData.TRANSFORM_DEN[t],
+                            PatchData.TRANSFORM_MIN[t], PatchData.TRANSFORM_MAX[t]);
+                    writeU16(out, base + PatchData.FIELD_OFFSETS[field], scaled);
+                    written++;
+                }
+
+                if (record % 8 == 0 || record + 1 == PatchData.RECORD_COUNT) {
+                    step(listener, 7, "Patched record " + (record + 1) + "/"
+                            + PatchData.RECORD_COUNT + "...", 0.64 + 0.24
+                            * (double) (record + 1) / PatchData.RECORD_COUNT);
+                }
             }
-
-            if (record % 8 == 0 || record + 1 == PatchData.RECORD_COUNT) {
-                step(listener, 7, "Patched record " + (record + 1) + "/"
-                        + PatchData.RECORD_COUNT + "...", 0.64 + 0.24
-                        * (double) (record + 1) / PatchData.RECORD_COUNT);
-            }
+            result.recordsPatched = PatchData.RECORD_COUNT;
+            result.fieldsWritten = written;
+            step(listener, 7, "All " + PatchData.RECORD_COUNT + " records patched.", 0.88);
+        } else {
+            result.recordsPatched = 0;
+            result.fieldsWritten = 0;
+            step(listener, 7, "Plan skipped; the copy is unchanged.", 0.88);
         }
-        result.recordsPatched = PatchData.RECORD_COUNT;
-        result.fieldsWritten = written;
-        step(listener, 7, "All " + PatchData.RECORD_COUNT + " records patched.", 0.88);
 
         step(listener, 8, "Recomputing header CRC-16...", 0.92);
         int crc = headerCrc16(out, 0, out.length);

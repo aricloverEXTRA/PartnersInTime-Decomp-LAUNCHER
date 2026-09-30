@@ -49,9 +49,26 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         view.setCallback(this);
         setContentView(view);
         view.addLog(LOG_INFO, "Select your EUR ROM, then choose an output name.");
+        view.addLog(LOG_INFO, "HARD MODE is optional: MODS tab, off by default.");
+        view.addLog(LOG_INFO, "TIP: Tab / D-pad moves focus; Enter activates.");
         for (String line : CompatInfo.report(this)) {
             view.addLog(LOG_INFO, line);
         }
+    }
+
+    @Override
+    public void onTab(int tab) {
+        view.setTab(tab);
+        view.addLog(LOG_INFO, tab == PatcherView.TAB_MODS ? "MODS tab."
+                : (tab == PatcherView.TAB_ABOUT ? "ABOUT tab." : "PATCH tab."));
+    }
+
+    @Override
+    public void onToggleMods() {
+        boolean on = view.state().hardMode;
+        view.addLog(LOG_INFO, on
+                ? "HARD MODE ON: the patch will raise enemy stats."
+                : "HARD MODE OFF: the copy is prepared without mods.");
     }
 
     @Override
@@ -79,7 +96,8 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/octet-stream");
-        intent.putExtra(Intent.EXTRA_TITLE, "PiT_hard_mode.nds");
+        intent.putExtra(Intent.EXTRA_TITLE,
+                view.state().hardMode ? "PiT_hard_mode.nds" : "PiT_prepared.nds");
         startActivityForResult(intent, REQ_CREATE_ROM);
     }
 
@@ -173,18 +191,22 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         view.clearLog();
         view.setBusy(true);
 
+        final boolean applyPlan = view.state().hardMode;
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 Patcher.Result result = new Patcher.Result();
                 byte[] rom = null;
                 byte[] out = null;
+                int romLen = 0;
 
                 try {
                     rom = readAll(source, PatchData.ROM_SIZE + 1);
                     if (rom == null) {
                         result.code = Patcher.ERR_READ;
                     } else {
+                        romLen = rom.length;
                         out = new byte[rom.length];
                         Patcher.Listener listener = new Patcher.Listener() {
                             @Override
@@ -192,7 +214,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                                 progress(step, message, fraction);
                             }
                         };
-                        result = Patcher.run(rom, out, listener);
+                        result = Patcher.run(rom, out, applyPlan, listener);
                         if (result.code != Patcher.OK) {
                             out = null;
                         }
@@ -227,9 +249,15 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                 }
                 if (result.code == Patcher.OK) {
                     out = null;
-                    log(LOG_OK, String.format(
-                            "Patched %d records, %d fields. Header CRC-16 %04X.",
-                            result.recordsPatched, result.fieldsWritten, result.headerCrc));
+                    if (applyPlan) {
+                        log(LOG_OK, String.format(
+                                "Patched %d records, %d fields. Header CRC-16 %04X.",
+                                result.recordsPatched, result.fieldsWritten, result.headerCrc));
+                    } else {
+                        log(LOG_OK, String.format(
+                                "Prepared %d-byte copy; header CRC-16 %04X.",
+                                romLen, result.headerCrc));
+                    }
                 }
                 finishWith(result.code, Patcher.resultText(result.code));
             }

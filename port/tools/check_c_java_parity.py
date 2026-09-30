@@ -63,6 +63,24 @@ def compile_java(port: Path, out_dir: Path) -> None:
     run([javac, "-Xlint:all", "-d", str(out_dir)] + sources, port)
 
 
+def compare_pair(java: str, c: str, java_cmd: list[str], c_cmd: list[str],
+                 port: Path, label: str) -> bool:
+    """Run one build of each patcher and require byte-identical output."""
+    run(java_cmd, port)
+    run(c_cmd, port)
+
+    java_hash = sha1_file(java)
+    c_hash = sha1_file(c)
+
+    print(f"java  {java_hash}")
+    print(f"c     {c_hash}")
+    if java_hash != c_hash:
+        print(f"MISMATCH ({label}): the two patchers disagree")
+        return False
+    print(f"EXACT MATCH ({label}): both patchers produced identical ROMs")
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--rom", type=Path, required=True,
@@ -85,6 +103,8 @@ def main() -> int:
         classes.mkdir()
         java_out = work / "java.nds"
         c_out = work / "c.nds"
+        java_prep = work / "java_prepared.nds"
+        c_prep = work / "c_prepared.nds"
 
         print("compiling the Java patcher...")
         compile_java(port, classes)
@@ -97,23 +117,28 @@ def main() -> int:
         if not java:
             raise SystemExit("no java found: set JAVA_HOME or put java on PATH")
 
-        print("running the Java patcher...")
-        run([java, "-cp", str(classes),
-             "com.partnersintime.patcher.PitSelfTest", str(args.rom), str(java_out)], port)
-
-        print("running the C patcher...")
-        run([str(port / args.pit_patch), str(args.rom), str(c_out)], port)
-
-        java_hash = sha1_file(java_out)
-        c_hash = sha1_file(c_out)
+        print("running the Java patcher (plan)...")
+        ok = compare_pair(
+            java_out, c_out,
+            [java, "-cp", str(classes),
+             "com.partnersintime.patcher.PitSelfTest", str(args.rom), str(java_out)],
+            [str(port / args.pit_patch), str(args.rom), str(c_out)],
+            port, "plan")
+        if not ok:
+            return 1
 
         print()
-        print(f"java  {java_hash}")
-        print(f"c     {c_hash}")
-        if java_hash != c_hash:
-            print("MISMATCH: the two patchers disagree")
+        print("running the Java patcher (--no-mods)...")
+        ok = compare_pair(
+            java_prep, c_prep,
+            [java, "-cp", str(classes),
+             "com.partnersintime.patcher.PitSelfTest", "--no-mods",
+             str(args.rom), str(java_prep)],
+            [str(port / args.pit_patch), "--no-mods", str(args.rom), str(c_prep)],
+            port, "no-mods")
+        if not ok:
             return 1
-        print("EXACT MATCH: both patchers produced identical ROMs")
+
         return 0
 
 

@@ -178,15 +178,15 @@ public final class PitUnitTest {
 
     private static void testRejectsBadInput() {
         byte[] rom = new byte[1024];
-        Patcher.Result result = Patcher.run(rom, new byte[rom.length], null);
+        Patcher.Result result = Patcher.run(rom, new byte[rom.length], true, null);
         checkEq("wrong size rejected", result.code, Patcher.ERR_SIZE);
 
         byte[] right = new byte[PatchData.ROM_SIZE];
-        Patcher.Result sized = Patcher.run(right, new byte[PatchData.ROM_SIZE], null);
+        Patcher.Result sized = Patcher.run(right, new byte[PatchData.ROM_SIZE], true, null);
         checkEq("wrong sha1 rejected", sized.code, Patcher.ERR_SHA1);
 
         /* An output buffer smaller than the input must not be touched. */
-        Patcher.Result small = Patcher.run(rom, new byte[16], null);
+        Patcher.Result small = Patcher.run(rom, new byte[16], true, null);
         checkEq("undersized output rejected", small.code, Patcher.ERR_ARGS);
 
         check("error text is non-empty",

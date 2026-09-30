@@ -115,8 +115,17 @@ does not.
 
 `src/core/pit_patcher.c` is the whole pipeline. It checks the cartridge size,
 SHA-1, title, game code and header CRC-16; finds `BData/BDataMon.dat` through
-the NitroFS reader; scales the 98 stat records; recomputes the header CRC; and
-writes the result. The source ROM is never modified.
+the NitroFS reader; optionally scales the 98 stat records; recomputes the header
+CRC; and writes the result. The source ROM is never modified.
+
+The launcher has three tabs — **PATCH**, **MODS**, **ABOUT** — and the Hard Mode
+mod is an option inside **MODS**, **off by default**. With the mod off, the
+patcher only verifies and prepares the user's own EUR copy for a bootable
+reconstruction (the ~57% decompilation in this repository, which does not run
+the game yet — we take the chance anyway); the output is suffixed
+`.prepared.nds`. With the mod on, the 98 stat records are scaled and the output
+is suffixed `.hardmode.nds`. The two prepared copies are named differently so
+they cannot be mistaken for each other.
 
 ### One plan, two languages
 
@@ -168,18 +177,21 @@ Current results, against the supported EUR cartridge:
 | Check | Result |
 |---|---|
 | Patched ROM vs. the balanced Python profile export | exact match, 588 fields over 98 records |
-| C output vs. Java output | byte-identical (`2430b978…`) |
+| C output vs. Java output, mod on | byte-identical |
+| C output vs. Java output, mod off (prepare-only) | byte-identical |
 | Java unit tests | 949 checks, 0 failed |
 | UI layout | rendered headlessly to PNG and text on every Windows build |
 
 The last one matters more than it looks. `pit_patcher.exe --screenshot` draws
 through the same `render()` the window uses and `--dump-ascii` serialises the
 canvas to text, so a layout that cannot be drawn fails the build instead of
-shipping.
+shipping. The UI checks cover all three tabs — the PATCH tab at rest and
+mid-patch, the MODS tab with the mod off and on, and the ABOUT tab — so a
+layout change to one screen cannot silently regress another.
 
-The patched ROM is **not** expected to boot. Nothing in this project can run the
-game yet, and the patcher demonstrates a verified patch pipeline, not a playable
-build.
+The prepared or patched ROM is **not** expected to boot. Nothing in this project
+can run the game yet, and the patcher demonstrates a verified patch pipeline,
+not a playable build.
 
 ## Android frontend
 
@@ -190,10 +202,11 @@ class-path checks run without a device. `MainActivity` adds Storage Access
 Framework file access and a worker thread; the app declares no storage
 permission, so it only ever touches the two documents the user picked.
 
-`PatcherView` draws the 400x240 interface by hand: a fixed design grid scaled to
-the screen, with text blitted from the same generated 8x8 font the C build uses.
-No font files and no bitmap assets ship in the repository, and the launcher icon
-is vector XML.
+`PatcherView` draws the 480x320 interface by hand: the same three-tab design the
+C build renders, with text blitted from the same generated 8x8 font the C build
+uses. `tools/check_ui_parity.py` makes the two agree by failing if any shared
+layout or palette constant differs. No font files and no bitmap assets ship in
+the repository, and the launcher icon is vector XML.
 
 Built with `aapt2` → `javac` → `d8` → `zipalign` → `apksigner` directly.
 Signing is v1/v2 only, because the v3 block carries a SHA-256 signature that

@@ -1,10 +1,18 @@
 # PiT Patcher
 
-A test-only ROM patcher for the European release of *Mario & Luigi: Partners in
+A ROM preparation tool for the European release of *Mario & Luigi: Partners in
 Time* (`ARMP`, SHA-1 `ba4ec2f99b4f2e0047601552bccf00aa73e28701`).
 
-The patch applies the **Hard Mode** plan: enemy HP, power, defense and speed
-rise, along with experience and coin drops.
+It works on the ~57% reconstructed decompilation in this repository: the patcher
+verifies that the supplied file really is the EUR cartridge, pre-checks the
+patch site through the NitroFS directory table, and prepares a patched copy for
+the day the reconstruction reaches a bootable state. We take the chance anyway.
+
+## Hard Mode is optional
+
+The **Hard Mode** mod is a data edit in the **MODS** tab, **off by default**.
+Turn it on if you want enemy HP, power, defense and speed raised, along with
+experience and coin drops:
 
 | Field | Scale |
 |---|---|
@@ -14,6 +22,12 @@ rise, along with experience and coin drops.
 | Enemy speed | x5/4 |
 | Experience | x7/4 |
 | Coins | x7/4 |
+
+With the mod **off**, the patcher does not edit the copy beyond repairing its
+header CRC; the output is suffixed `.prepared.nds`. With the mod **on**, the 98
+stat records are scaled and the output is suffixed `.hardmode.nds`. The choice
+is remembered on the screen and re-applied to the output file name, so you can
+never mistake one prepared copy for the other.
 
 ## What you need
 
@@ -48,22 +62,25 @@ which is ignored.
 
 ## Using it
 
+The launcher has three tabs — **PATCH**, **MODS**, **ABOUT** — with mouse,
+touch and keyboard support.
+
 1. Choose your EUR ROM.
 2. Choose an output file. The output must not be the source.
-3. Press **PATCH**.
+3. Optionally open **MODS** and switch **HARD MODE** on.
+4. Press **PATCH**.
 
 The app verifies the ROM size, SHA-1, title, game code and header CRC-16,
-locates `BData/BDataMon.dat` through the NitroFS directory table, scales the
-98 stat records, recomputes the header CRC and writes the result. It patches a
-copy, so a failure never damages the source.
+locates `BData/BDataMon.dat` through the NitroFS directory table, and — with
+the mod enabled — scales the 98 stat records and recomputes the header CRC. It
+always works on a copy, so a failure never damages the source.
 
 ## Important
 
-**The patched ROM is not expected to boot.** The decompilation in this
-repository is incomplete: there is no ARM interpreter, memory map, GX or HAL
-implementation yet, so nothing in this project can run the game. The patcher
-demonstrates a working, verified patch pipeline against real cartridge data; it
-is not a playable build.
+**A prepared ROM is not expected to boot yet.** The decompilation in this
+repository is incomplete: there is no bootable reconstruction, so nothing in
+this project can run the game today. The patcher demonstrates a working,
+verified patch pipeline against real cartridge data. We take the chance anyway.
 
 ## Layout
 
@@ -93,9 +110,10 @@ Everything that does not need a cartridge:
 That covers the generated plan being current, the font's 95 glyphs and their
 byte-identical C and Java tables, the Windows and Android layout constants
 agreeing, the absence of ROM data in the tree, the Java patcher compiling
-warning-free under `-Xlint:all -Werror`, 949 unit assertions, and two
+warning-free under `-Xlint:all -Werror`, 949 unit assertions, and five
 headlessly rendered launcher frames checked for layout, contrast and palette
-provenance.
+provenance (the PATCH tab at rest and mid-patch, the MODS tab with the mod off
+and on, and the ABOUT tab).
 
 Checks that do need your own EUR ROM, and are therefore not part of CI:
 
@@ -105,15 +123,16 @@ python tools/check_c_java_parity.py --rom <rom.nds>
 ```
 
 The last one patches the same ROM with both the C and the Java build and
-compares the results byte for byte. Current result: **exact match**, 98 records
-and 588 fields.
+compares the results byte for byte, with the hard-mode mod both on and off.
+Current result: **exact match** in both modes, 98 records and 588 fields.
 
 ### One screen, two platforms
 
 The Windows and Android launchers draw the same 480x320 screen by hand, and
 nothing in either language makes them agree. `tools/check_ui_parity.py` reads
-both files and fails if any shared layout or palette constant differs, so a
-change to one side's geometry cannot silently leave the other behind.
+both files and fails if any shared layout or palette constant differs — the
+identity enums (log levels, tab ids, button ids) included — so a change to one
+side's geometry cannot silently leave the other behind.
 
 `tools/check_ui.py` renders the Windows launcher headlessly to a PNG and checks
 the result objectively: element positions, no overlapping regions, text contrast

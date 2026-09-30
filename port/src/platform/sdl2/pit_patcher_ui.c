@@ -11,6 +11,13 @@
  * the headless driver and the Android build use; the only addition here is a
  * mutex, because the callback arrives from the worker while the main loop is
  * repainting.
+ *
+ * The UI is split into tabs. PATCH is the core flow (verify + prepare, with the
+ * plan applied when the MODS toggles it on). MODS holds the optional data mods,
+ * and ABOUT explains what the tool is for: preparing the user's own EUR ROM for
+ * the Partners in Time decompilation project, which is only partially
+ * reconstructed and may not boot yet. Keyboard support mirrors the Android
+ * build: Tab cycles focus, arrow keys change tabs, Enter/Space activate.
  */
 
 #include <SDL.h>
@@ -70,43 +77,74 @@
 #define LINE_H 10
 
 /* Layout. Every number render() and setup_buttons() use lives here so the hit
- * tests cannot drift from what is drawn. */
+ * tests cannot drift from what is drawn. The Android View mirrors every one of
+ * these names and values exactly; tools/check_ui_parity.py proves that. */
 #define MARGIN        12
 #define HEADER_H      48
 
-#define PLAN_X        MARGIN
-#define PLAN_Y        58
-#define PLAN_W        (UI_W - 2 * MARGIN)
-#define PLAN_H        82
-#define CHIP_H        24
-#define CHIP_GAP      12
-#define CHIP_COUNT    3
-#define CHIP_W        ((PLAN_W - 2 * 12 - (CHIP_COUNT - 1) * CHIP_GAP) / CHIP_COUNT)
-#define CHIP_X0       (PLAN_X + 12)
-#define CHIP_Y0       (PLAN_Y + 24)
+#define TAB_X0        MARGIN
+#define TAB_Y         50
+#define TAB_H         16
+#define TAB_COUNT     3
+#define TAB_GAP       8
+#define TAB_W         ((UI_W - 2 * MARGIN - (TAB_COUNT - 1) * TAB_GAP) / TAB_COUNT)
+#define CONTENT_Y     76
 
 #define FIELD_X       76
 #define FIELD_W       (UI_W - FIELD_X - 12 - 78)
 #define FIELD_H       16
-#define FIELD_Y0      152
+#define FIELD_Y0      88
 #define FIELD_DY      28
 #define BROWSE_X      (UI_W - MARGIN - 76)
 #define BROWSE_W      76
 #define BROWSE_H      20
 
+#define MODS_Y        146   /* plan status + keyboard hints on the PATCH tab */
+
 #define PATCH_X       MARGIN
-#define PATCH_Y       202
-#define PATCH_W       140
+#define PATCH_Y       156
+#define PATCH_W       160
 #define PATCH_H       26
-#define STATUS_X      164
-#define BAR_Y         222
-#define BAR_H         10
-#define BAR_W         (UI_W - STATUS_X - MARGIN)
+#define STATUS_X      (PATCH_X + PATCH_W + 14)
+#define BAR_X         MARGIN
+#define BAR_Y         190
+#define BAR_H         12
+#define BAR_W         (UI_W - 2 * MARGIN)
 
 #define LOG_X         MARGIN
-#define LOG_Y         240
+#define LOG_Y         212
 #define LOG_W         (UI_W - 2 * MARGIN)
-#define LOG_H         (UI_H - LOG_Y - MARGIN)
+#define LOG_H         (FOOTER_Y - 8 - LOG_Y)
+
+#define FOOTER_Y      308
+
+#define MODS_CARD_X   MARGIN
+#define MODS_CARD_Y   84
+#define MODS_CARD_W   (UI_W - 2 * MARGIN)
+#define MODS_CARD_H   160
+#define MODS_HINT_Y   (MODS_CARD_Y + MODS_CARD_H + 10)
+#define TOGGLE_X      (MODS_CARD_X + 16)
+#define TOGGLE_Y      112
+#define TOGGLE_W      32
+#define TOGGLE_H      14
+#define TOGGLE_KNOB_W 12
+#define MODS_NAME_X   (TOGGLE_X + TOGGLE_W + 8)
+#define MODS_NAME_Y   (TOGGLE_Y - 4)
+#define MODS_DESC_Y   130
+#define MODS_DIV_Y    152
+
+#define CHIP_H        24
+#define CHIP_GAP      12
+#define CHIP_COUNT    3
+#define CHIP_W        ((MODS_CARD_W - 24 - (CHIP_COUNT - 1) * CHIP_GAP) / CHIP_COUNT)
+#define CHIP_X0       (MODS_CARD_X + 12)
+#define CHIP_Y0       (MODS_DIV_Y + 8)
+#define CHIP_DY       (CHIP_H + 4)
+
+#define ABOUT_CARD_X  MARGIN
+#define ABOUT_CARD_Y  84
+#define ABOUT_CARD_W  (UI_W - 2 * MARGIN)
+#define ABOUT_CARD_H  (FOOTER_Y - 8 - ABOUT_CARD_Y)
 
 /* --------------------------------------------------------------------- logs */
 
@@ -132,11 +170,34 @@ typedef struct {
 /* ---------------------------------------------------------------- ui_widgets */
 
 typedef enum {
+    TAB_PATCH = 0,
+    TAB_MODS,
+    TAB_ABOUT
+} tab_id;
+
+typedef enum {
     BTN_NONE = 0,
+    BTN_TAB_PATCH,
+    BTN_TAB_MODS,
+    BTN_TAB_ABOUT,
+    BTN_TOGGLE,
     BTN_BROWSE_IN,
     BTN_BROWSE_OUT,
     BTN_PATCH
 } button_id;
+
+/* Keyboard focus slots. Fields have their own slots so Tab can move through
+ * the wells as well as the buttons; a field slot also means "currently being
+ * typed into". */
+#define FOCUS_NONE       0
+#define FOCUS_SRC        1
+#define FOCUS_BROWSE_IN  2
+#define FOCUS_OUT        3
+#define FOCUS_BROWSE_OUT 4
+#define FOCUS_PATCH      5
+#define FOCUS_TOGGLE     6
+
+#define BTN_COUNT        7
 
 static const char *level_prefix(log_level level)
 {
@@ -546,12 +607,14 @@ typedef struct {
     int enabled;
     int hovered;
     int pressed;
+    int focus_sel;   /* keyboard focus is on this control this frame */
 } ui_button;
 
 static void draw_button(pit_image *img, ui_button *btn)
 {
     int primary = (btn->id == BTN_PATCH);
     int radius = 3;
+    int hot = btn->hovered || btn->focus_sel;
     pit_pixel top;
     pit_pixel bottom;
     pit_pixel edge;
@@ -571,7 +634,7 @@ static void draw_button(pit_image *img, ui_button *btn)
             bottom = C_ACCENT_LO;
             edge = C_AMBER_HI;
             label = C_TEXT_HI;
-        } else if (btn->hovered) {
+        } else if (hot) {
             top = C_AMBER_HI;
             bottom = C_ACCENT;
             edge = C_TEXT_HI;
@@ -593,7 +656,7 @@ static void draw_button(pit_image *img, ui_button *btn)
             bottom = C_WELL;
             edge = C_EDGE;
             label = C_TEXT;
-        } else if (btn->hovered) {
+        } else if (hot) {
             top = C_EDGE_HOT;
             bottom = C_ACCENT;
             edge = C_AMBER_HI;
@@ -649,6 +712,87 @@ static void draw_button(pit_image *img, ui_button *btn)
     draw_text(img, tx + 1, ty + 1, PIT_ARGB(110, 0x00, 0x00, 0x08), btn->label,
               glyph_scale);
     draw_text(img, tx, ty, label, btn->label, glyph_scale);
+}
+
+/* Tab strip. The selected tab is gold, like the PATCH button, so the current
+ * view reads immediately; the rest sit at panel level until hovered. */
+static void draw_tab(pit_image *img, ui_button *btn, int selected)
+{
+    int hot = btn->hovered || btn->focus_sel;
+    int radius = 3;
+    pit_pixel top;
+    pit_pixel bottom;
+    pit_pixel edge;
+    pit_pixel label;
+    int tx;
+    int ty;
+
+    if (selected) {
+        top = C_AMBER;
+        bottom = C_ACCENT;
+        edge = C_AMBER_HI;
+        label = C_PILL_TEXT;
+    } else if (btn->pressed) {
+        top = C_PANEL_LO;
+        bottom = C_WELL;
+        edge = C_EDGE;
+        label = C_TEXT;
+    } else if (hot) {
+        top = C_PANEL_HI;
+        bottom = C_PANEL;
+        edge = C_EDGE_HOT;
+        label = C_AMBER;
+    } else {
+        top = C_PANEL_HI;
+        bottom = C_PANEL;
+        edge = C_EDGE_SOFT;
+        label = C_DIM;
+    }
+
+    fill_round_gradient(img, btn->x, btn->y, btn->w, btn->h, radius, top, bottom);
+    if (selected) {
+        fill_rect(img, btn->x + 2, btn->y + 1, btn->w - 4, 1, C_AMBER_HI);
+    }
+    stroke_round_rect(img, btn->x, btn->y, btn->w, btn->h, radius, edge);
+
+    tx = btn->x + (btn->w - text_width(btn->label, 1)) / 2;
+    ty = btn->y + (btn->h - FONT_H) / 2;
+    draw_text(img, tx + 1, ty + 1, PIT_ARGB(120, 0x00, 0x00, 0x08), btn->label, 1);
+    draw_text(img, tx, ty, label, btn->label, 1);
+
+    /* A gold underline joins the selected tab to the content below it. */
+    if (selected) {
+        fill_rect(img, btn->x + 8, btn->y + btn->h, btn->w - 16, 2, C_ACCENT);
+        fill_rect(img, btn->x + btn->w / 2 - 1, btn->y + btn->h + 2, 2, 1, C_AMBER);
+    }
+}
+
+/* MODS toggle switch: a small gold/steel track with a sliding knob. */
+static void draw_toggle(pit_image *img, ui_button *btn, int on)
+{
+    int radius = btn->h / 2;
+    int hot = btn->hovered || btn->focus_sel;
+    int knob = TOGGLE_KNOB_W;
+    int kx;
+    int ky = btn->y + (btn->h - knob) / 2;
+
+    if (on) {
+        fill_round_gradient(img, btn->x, btn->y, btn->w, btn->h, radius,
+                            hot ? C_AMBER_HI : C_AMBER, C_ACCENT);
+    } else {
+        fill_round_gradient(img, btn->x, btn->y, btn->w, btn->h, radius,
+                            C_PANEL_LO, C_WELL);
+    }
+    stroke_round_rect(img, btn->x, btn->y, btn->w, btn->h, radius,
+                      (hot || on) ? C_AMBER_HI : C_EDGE_SOFT);
+
+    /* Pressing an ON toggle nudges the knob inward; an OFF toggle pops up. */
+    if (btn->pressed) {
+        ky += on ? 1 : -1;
+    }
+    kx = on ? btn->x + btn->w - knob - 2 : btn->x + 2;
+    fill_round_gradient(img, kx, ky, knob, knob, 3, C_TEXT_HI, C_TEXT);
+    stroke_round_rect(img, kx, ky, knob, knob, 3, C_EDGE);
 }
 
 static void draw_progress(pit_image *img, int x, int y, int w, int h,
@@ -725,8 +869,11 @@ typedef struct {
 
     char input_path[512];
     char output_path[512];
-    int  editing;          /* 0 = none, 1 = input, 2 = output */
-    ui_button buttons[3];
+    int  tab;            /* tab_id */
+    int  hard_mode;      /* the optional data mod is on */
+    int  editing;        /* 0 = none, 1 = input, 2 = output */
+    int  focus;          /* FOCUS_* slot */
+    ui_button buttons[BTN_COUNT];
     int button_count;
 } ui_app;
 
@@ -736,20 +883,21 @@ static ui_app app;
 static pit_image canvas_storage;
 
 /*
- * Fills out_path with "<input>.hardmode.nds". Length is checked rather than
- * relying on snprintf to truncate, so a long path reports instead of silently
- * producing a name that collides with another ROM.
+ * Fills out_path with "<input>.hardmode.nds" while the mod is on, or
+ * "<input>.prepared.nds" without it. Length is checked rather than relying on
+ * snprintf to truncate, so a long path reports instead of silently producing a
+ * name that collides with another ROM.
  */
 static int set_default_output(char *out_path, size_t out_size, const char *input_path)
 {
     size_t len = strlen(input_path);
-    static const char suffix[] = ".hardmode.nds";
+    const char *suffix = app.hard_mode ? ".hardmode.nds" : ".prepared.nds";
 
-    if (len + sizeof(suffix) > out_size) {
+    if (len + strlen(suffix) + 1 > out_size) {
         return 0;
     }
     memcpy(out_path, input_path, len);
-    memcpy(out_path + len, suffix, sizeof(suffix));
+    strcpy(out_path + len, suffix);
     return 1;
 }
 
@@ -791,11 +939,12 @@ static int patch_worker(void *ctx)
 {
     pit_patch_info info;
     pit_patch_result result;
+    char text[128];
 
     (void)ctx;
     memset(&info, 0, sizeof(info));
 
-    result = pit_patcher_run(app.input_path, app.output_path,
+    result = pit_patcher_run(app.input_path, app.output_path, app.hard_mode,
                              on_patch_log, NULL, &info);
 
     SDL_LockMutex(app.lock);
@@ -804,10 +953,12 @@ static int patch_worker(void *ctx)
     app.busy = 0;
     app.done = 1;
     if (result == PIT_PATCH_OK) {
-        char text[128];
-
-        snprintf(text, sizeof(text), "Patched %u records, %u fields.",
-                 info.records_patched, info.fields_written);
+        if (info.records_patched > 0) {
+            snprintf(text, sizeof(text), "Patched %u records, %u fields.",
+                     info.records_patched, info.fields_written);
+        } else {
+            snprintf(text, sizeof(text), "Prepared ROM; no mods applied.");
+        }
         log_add(LOG_OK, text);
     } else {
         log_add(LOG_ERROR, pit_patch_result_text(result));
@@ -931,7 +1082,7 @@ static void draw_header(pit_image *img)
     draw_text(img, MARGIN + 1, 11 + 1, PIT_ARGB(160, 0x00, 0x00, 0x08),
               "PiT PATCHER", 3);
     draw_text(img, MARGIN, 10, C_TEXT_HI, "PiT PATCHER", 3);
-    draw_text(img, MARGIN + 2, 30, C_ACCENT, "HARD MODE PATCHER", 1);
+    draw_text(img, MARGIN + 2, 30, C_ACCENT, "DECOMP ROM WORKSHOP", 1);
 
     /* Version chip, right aligned. */
     {
@@ -980,46 +1131,35 @@ static void draw_chip(pit_image *img, int x, int y, int w, int h,
     draw_text(img, x + 8, y + 12, hot ? C_AMBER_HI : C_AMBER, value, 1);
 }
 
-static void render(void)
+static void draw_footer(pit_image *img)
 {
-    pit_image *img = app.canvas;
+    const char *tag = "(57%)";
+
+    fill_rect(img, 0, FOOTER_Y - 2, UI_W, 1, C_EDGE_SOFT);
+    draw_text(img, MARGIN, FOOTER_Y, C_DIM,
+              "FOR THE PARTNERS IN TIME DECOMPILATION", 1);
+    draw_text(img, UI_W - MARGIN - text_width(tag, 1), FOOTER_Y, C_AMBER,
+              tag, 1);
+}
+
+static const char *field_label(int i)
+{
+    return (i == 0) ? "SOURCE" : "OUTPUT";
+}
+
+static void draw_fields(pit_image *img)
+{
     int i;
 
-    draw_backdrop(img);
-    draw_header(img);
-
-    /* ---------------------------------------------------------------- plan */
-    draw_card(img, PLAN_X, PLAN_Y, PLAN_W, PLAN_H, 4);
-
-    draw_text(img, PLAN_X + 12, PLAN_Y + 9, C_ACCENT, "PATCH PLAN", 1);
-    {
-        const char *summary = "98 RECORDS";
-
-        draw_text(img, PLAN_X + PLAN_W - 12 - text_width(summary, 1),
-                  PLAN_Y + 9, C_DIM, summary, 1);
-    }
-    fill_rect(img, PLAN_X + 12, PLAN_Y + 20, PLAN_W - 24, 1, C_EDGE_SOFT);
-
-    for (i = 0; i < (int)PIT_TRANSFORM_COUNT; i++) {
-        const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
-        int col = i % CHIP_COUNT;
-        int row = i / CHIP_COUNT;
-        int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
-        int cy = CHIP_Y0 + row * (CHIP_H + 4);
-
-        draw_chip(img, cx, cy, CHIP_W, CHIP_H, t->label, t->scale_text, 0);
-    }
-
-    /* -------------------------------------------------------------- fields */
     for (i = 0; i < 2; i++) {
-        const char *label = (i == 0) ? "SOURCE" : "OUTPUT";
         const char *value = (i == 0)
                                 ? (app.input_path[0] ? app.input_path : "CHOOSE EUR ROM")
                                 : (app.output_path[0] ? app.output_path : "PATCHED OUT");
         int editing = (app.editing == i + 1);
         int fy = FIELD_Y0 + i * FIELD_DY;
 
-        draw_text(img, MARGIN, fy + 4, editing ? C_AMBER : C_DIM, label, 1);
+        draw_text(img, MARGIN, fy + 4, editing ? C_AMBER : C_DIM,
+                  field_label(i), 1);
         draw_well(img, FIELD_X, fy, FIELD_W, FIELD_H, editing);
         if (!editing) {
             draw_text(img, FIELD_X + 4, fy + 4, C_TEXT, value, 1);
@@ -1036,16 +1176,39 @@ static void render(void)
             }
         }
     }
+}
 
-    /* ------------------------------------------------------------- actions */
+/* PATCH tab: the fields, the plan status, the primary action and the log. */
+static void draw_patch_tab(pit_image *img)
+{
+    char text[32];
+    pit_pixel color;
+    int i;
+
+    draw_fields(img);
+
+    /* Plan status on the left, keyboard hints on the right. */
+    draw_text(img, MARGIN, MODS_Y,
+              app.hard_mode ? C_AMBER : C_DIM,
+              app.hard_mode ? "MODS: HARD MODE" : "MODS: NONE", 1);
+    {
+        const char *keys = "TAB FOCUS  ENTER PATCH  ESC QUIT";
+
+        draw_text(img, UI_W - MARGIN - text_width(keys, 1), MODS_Y, C_DIM,
+                  keys, 1);
+    }
+
     for (i = 0; i < app.button_count; i++) {
-        draw_button(img, &app.buttons[i]);
+        ui_button *btn = &app.buttons[i];
+
+        if (btn->id == BTN_BROWSE_IN || btn->id == BTN_BROWSE_OUT ||
+            btn->id == BTN_PATCH) {
+            draw_button(img, btn);
+        }
     }
 
     /* Status line. */
     {
-        char text[32];
-        pit_pixel color;
         const char *caption = "STATUS";
 
         if (app.busy) {
@@ -1066,7 +1229,7 @@ static void render(void)
         draw_text(img, STATUS_X + text_width(caption, 1) + 8, PATCH_Y + 4, color,
                   text, 1);
     }
-    draw_progress(img, STATUS_X, BAR_Y, BAR_W, BAR_H, app.fraction);
+    draw_progress(img, BAR_X, BAR_Y, BAR_W, BAR_H, app.fraction);
 
     /* ----------------------------------------------------------------- log */
     draw_card(img, LOG_X, LOG_Y, LOG_W, LOG_H, 4);
@@ -1096,38 +1259,287 @@ static void render(void)
     }
 }
 
+/* MODS tab: the optional data mods. Each mod is a card with a toggle; when the
+ * toggle is on the tuned stats show as chips, like the old plan card did. */
+static void draw_mods_tab(pit_image *img)
+{
+    const char *state = app.hard_mode ? "ON" : "OFF";
+    ui_button *toggle = &app.buttons[BTN_TOGGLE - BTN_TAB_PATCH];
+    int i;
+
+    draw_card(img, MODS_CARD_X, MODS_CARD_Y, MODS_CARD_W, MODS_CARD_H, 4);
+
+    draw_text(img, MODS_CARD_X + 12, MODS_CARD_Y + 9, C_ACCENT, "MODS", 1);
+    {
+        const char *tag = "OPTIONAL";
+
+        draw_text(img, MODS_CARD_X + MODS_CARD_W - 12 - text_width(tag, 1),
+                  MODS_CARD_Y + 9, C_DIM, tag, 1);
+    }
+    fill_rect(img, MODS_CARD_X + 12, MODS_CARD_Y + 20, MODS_CARD_W - 24, 1,
+              C_EDGE_SOFT);
+
+    /* Toggle row. */
+    draw_toggle(img, toggle, app.hard_mode);
+    draw_text(img, MODS_NAME_X, MODS_NAME_Y, C_TEXT_HI, "HARD MODE", 1);
+    {
+        int sw = text_width(state, 1);
+
+        draw_text(img, MODS_CARD_X + MODS_CARD_W - 12 - sw,
+                  TOGGLE_Y + TOGGLE_H / 2 - 4,
+                  app.hard_mode ? C_AMBER : C_DIM, state, 1);
+    }
+
+    draw_text(img, MODS_CARD_X + 12, MODS_DESC_Y, C_DIM,
+              "A DATA MOD THAT RAISES ENEMY STATS: HP, POW, DEF", 1);
+    draw_text(img, MODS_CARD_X + 12, MODS_DESC_Y + LINE_H, C_DIM,
+              "AND SPD UP, PLUS 75% MORE EXPERIENCE AND COINS.", 1);
+
+    fill_rect(img, MODS_CARD_X + 12, MODS_DIV_Y, MODS_CARD_W - 24, 1,
+              C_EDGE_SOFT);
+
+    if (app.hard_mode) {
+        for (i = 0; i < (int)PIT_TRANSFORM_COUNT; i++) {
+            const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
+            int col = i % CHIP_COUNT;
+            int row = i / CHIP_COUNT;
+            int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
+            int cy = CHIP_Y0 + row * CHIP_DY;
+
+            draw_chip(img, cx, cy, CHIP_W, CHIP_H, t->label, t->scale_text, 1);
+        }
+    } else {
+        draw_text(img, MODS_CARD_X + 12, CHIP_Y0, C_DIM,
+                  "OFF: THE PATCH ONLY VERIFIES AND PREPARES YOUR", 1);
+        draw_text(img, MODS_CARD_X + 12, CHIP_Y0 + LINE_H, C_DIM,
+                  "EUR COPY - NO MOD IS APPLIED. TAP THE TOGGLE TO", 1);
+        draw_text(img, MODS_CARD_X + 12, CHIP_Y0 + 2 * LINE_H, C_DIM,
+                  "ENABLE HARD MODE, THEN PATCH.", 1);
+    }
+
+    draw_text(img, MARGIN, MODS_HINT_Y, C_DIM,
+              "MODS ARE OPTIONAL DATA EDITS TO YOUR OWN ROM COPY.", 1);
+}
+
+/* ABOUT tab: what this tool is for, and the honest state of the decompilation.
+ * Every line stays under the card's text width (54 glyphs), so nothing clips. */
+static void draw_about_tab(pit_image *img)
+{
+    static const char *lines[] = {
+        "THIS PATCHER WORKS WITH YOUR OWN EUR COPY OF",
+        "MARIO & LUIGI: PARTNERS IN TIME. IT VERIFIES THE",
+        "ROM BY SHA-1, FINDS ITS STAT TABLE, AND WRITES A",
+        "ROM FOR THE DECOMPILATION PROJECT.",
+        "",
+        "THE PROJECT IS ONLY ABOUT 57% RECONSTRUCTED, SO",
+        "THE RESULT MAY NOT BOOT NATIVELY ON A CONSOLE OR",
+        "EMULATOR YET - WE TAKE THE CHANCE ANYWAY.",
+        "",
+        "HARD MODE IS AN OPTIONAL DATA MOD (MODS TAB) THAT",
+        "RAISES ENEMY STATS TO MAKE THE GAME HARDER. IT IS",
+        "NOT REQUIRED TO USE THIS TOOL.",
+    };
+    int i;
+
+    draw_card(img, ABOUT_CARD_X, ABOUT_CARD_Y, ABOUT_CARD_W, ABOUT_CARD_H, 4);
+
+    draw_text(img, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 9, C_ACCENT, "ABOUT", 1);
+    {
+        const char *tag = "PIT PATCHER";
+
+        draw_text(img, ABOUT_CARD_X + ABOUT_CARD_W - 12 - text_width(tag, 1),
+                  ABOUT_CARD_Y + 9, C_DIM, tag, 1);
+    }
+    fill_rect(img, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 20, ABOUT_CARD_W - 24, 1,
+              C_EDGE_SOFT);
+
+    draw_text(img, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 32, C_TEXT_HI,
+              "PARTNERS IN TIME - DECOMPILATION EDITION", 1);
+    fill_rect(img, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 42, ABOUT_CARD_W - 24, 1,
+              C_EDGE_SOFT);
+
+    for (i = 0; i < (int)(sizeof(lines) / sizeof(lines[0])); i++) {
+        int ly = ABOUT_CARD_Y + 54 + i * LINE_H;
+
+        draw_text(img, ABOUT_CARD_X + 12, ly,
+                  (lines[i][0] == '\0') ? C_DIM : C_TEXT, lines[i], 1);
+    }
+
+    {
+        char info[80];
+
+        snprintf(info, sizeof(info), "%s v%s | %d x %d-BYTE RECORDS",
+                 PIT_PLAN_ID, PIT_PLAN_VERSION,
+                 (int)PIT_RECORD_COUNT, (int)PIT_RECORD_SIZE);
+        draw_text(img, ABOUT_CARD_X + 12,
+                  ABOUT_CARD_Y + ABOUT_CARD_H - 14, C_DIM, info, 1);
+    }
+}
+
+static void render(void)
+{
+    pit_image *img = app.canvas;
+    int i;
+
+    draw_backdrop(img);
+    draw_header(img);
+
+    /* Focus highlight for the controls before anything is drawn. */
+    for (i = 0; i < app.button_count; i++) {
+        ui_button *btn = &app.buttons[i];
+
+        btn->focus_sel = 0;
+        switch (btn->id) {
+        case BTN_BROWSE_IN:  btn->focus_sel = (app.focus == FOCUS_BROWSE_IN); break;
+        case BTN_BROWSE_OUT: btn->focus_sel = (app.focus == FOCUS_BROWSE_OUT); break;
+        case BTN_PATCH:      btn->focus_sel = (app.focus == FOCUS_PATCH); break;
+        case BTN_TOGGLE:     btn->focus_sel = (app.focus == FOCUS_TOGGLE); break;
+        default:             break;
+        }
+    }
+
+    /* Tabs. */
+    for (i = 0; i < TAB_COUNT; i++) {
+        ui_button *btn = &app.buttons[i];
+
+        draw_tab(img, btn, app.tab == i);
+    }
+
+    if (app.tab == TAB_MODS) {
+        draw_mods_tab(img);
+    } else if (app.tab == TAB_ABOUT) {
+        draw_about_tab(img);
+    } else {
+        draw_patch_tab(img);
+    }
+
+    draw_footer(img);
+}
+
 /* --------------------------------------------------------------------- input */
 
-/* Button geometry is fixed at setup so render() never mutates the hit tests. */
+/* Button geometry is fixed at setup so render() never mutates the hit tests.
+ * The first TAB_COUNT slots are the tabs, then the mods toggle, then the PATCH
+ * tab's browse buttons and its primary action. */
 static void setup_buttons(void)
 {
+    static const char *tab_label[TAB_COUNT] = { "PATCH", "MODS", "ABOUT" };
+    int tab;
+    int i = 0;
+
     memset(app.buttons, 0, sizeof(app.buttons));
 
-    app.buttons[0].id = BTN_BROWSE_IN;
-    app.buttons[0].x = BROWSE_X;
-    app.buttons[0].y = FIELD_Y0 - 2;
-    app.buttons[0].w = BROWSE_W;
-    app.buttons[0].h = BROWSE_H;
-    app.buttons[0].label = "BROWSE";
-    app.buttons[0].enabled = 1;
+    for (tab = 0; tab < TAB_COUNT; tab++) {
+        app.buttons[i].id = (button_id)(BTN_TAB_PATCH + tab);
+        app.buttons[i].x = TAB_X0 + tab * (TAB_W + TAB_GAP);
+        app.buttons[i].y = TAB_Y;
+        app.buttons[i].w = TAB_W;
+        app.buttons[i].h = TAB_H;
+        app.buttons[i].label = tab_label[tab];
+        app.buttons[i].enabled = 1;
+        i++;
+    }
 
-    app.buttons[1].id = BTN_BROWSE_OUT;
-    app.buttons[1].x = BROWSE_X;
-    app.buttons[1].y = FIELD_Y0 + FIELD_DY - 2;
-    app.buttons[1].w = BROWSE_W;
-    app.buttons[1].h = BROWSE_H;
-    app.buttons[1].label = "BROWSE";
-    app.buttons[1].enabled = 1;
+    app.buttons[i].id = BTN_TOGGLE;
+    app.buttons[i].x = TOGGLE_X;
+    app.buttons[i].y = TOGGLE_Y;
+    app.buttons[i].w = TOGGLE_W;
+    app.buttons[i].h = TOGGLE_H;
+    app.buttons[i].label = "";
+    app.buttons[i].enabled = 1;
+    i++;
 
-    app.buttons[2].id = BTN_PATCH;
-    app.buttons[2].x = PATCH_X;
-    app.buttons[2].y = PATCH_Y;
-    app.buttons[2].w = PATCH_W;
-    app.buttons[2].h = PATCH_H;
-    app.buttons[2].label = "PATCH";
-    app.buttons[2].enabled = 1;
+    app.buttons[i].id = BTN_BROWSE_IN;
+    app.buttons[i].x = BROWSE_X;
+    app.buttons[i].y = FIELD_Y0 - 2;
+    app.buttons[i].w = BROWSE_W;
+    app.buttons[i].h = BROWSE_H;
+    app.buttons[i].label = "BROWSE";
+    app.buttons[i].enabled = 1;
+    i++;
 
-    app.button_count = 3;
+    app.buttons[i].id = BTN_BROWSE_OUT;
+    app.buttons[i].x = BROWSE_X;
+    app.buttons[i].y = FIELD_Y0 + FIELD_DY - 2;
+    app.buttons[i].w = BROWSE_W;
+    app.buttons[i].h = BROWSE_H;
+    app.buttons[i].label = "BROWSE";
+    app.buttons[i].enabled = 1;
+    i++;
+
+    app.buttons[i].id = BTN_PATCH;
+    app.buttons[i].x = PATCH_X;
+    app.buttons[i].y = PATCH_Y;
+    app.buttons[i].w = PATCH_W;
+    app.buttons[i].h = PATCH_H;
+    app.buttons[i].label = "PATCH";
+    app.buttons[i].enabled = 1;
+    i++;
+
+    app.button_count = i;
+}
+
+/* Focus owns the editing state, so only set editing through here. */
+static void set_focus(int focus)
+{
+    app.focus = focus;
+    app.editing = (focus == FOCUS_SRC) ? 1 : (focus == FOCUS_OUT) ? 2 : 0;
+}
+
+static void switch_tab(int tab)
+{
+    if (tab < 0) {
+        tab = TAB_COUNT - 1;
+    }
+    if (tab >= TAB_COUNT) {
+        tab = 0;
+    }
+    app.tab = tab;
+    set_focus(FOCUS_NONE);
+}
+
+static button_id focus_to_button(int focus)
+{
+    switch (focus) {
+    case FOCUS_BROWSE_IN:  return BTN_BROWSE_IN;
+    case FOCUS_BROWSE_OUT: return BTN_BROWSE_OUT;
+    case FOCUS_PATCH:      return BTN_PATCH;
+    case FOCUS_TOGGLE:     return BTN_TOGGLE;
+    default:               return BTN_NONE;
+    }
+}
+
+static void focus_cycle(int backward)
+{
+    static const int patch_cycle[] = {
+        FOCUS_SRC, FOCUS_BROWSE_IN, FOCUS_OUT, FOCUS_BROWSE_OUT, FOCUS_PATCH
+    };
+    const int count = (int)(sizeof(patch_cycle) / sizeof(patch_cycle[0]));
+    int idx = -1;
+    int i;
+
+    if (app.tab == TAB_MODS) {
+        set_focus(FOCUS_TOGGLE);
+        return;
+    }
+    if (app.tab == TAB_ABOUT) {
+        set_focus(FOCUS_NONE);
+        return;
+    }
+    for (i = 0; i < count; i++) {
+        if (patch_cycle[i] == app.focus) {
+            idx = i;
+            break;
+        }
+    }
+    if (idx < 0) {
+        idx = backward ? count - 1 : 0;
+    } else if (backward) {
+        idx = (idx + count - 1) % count;
+    } else {
+        idx = (idx + 1) % count;
+    }
+    set_focus(patch_cycle[idx]);
 }
 
 static char *editing_buffer(void)
@@ -1140,6 +1552,8 @@ static char *editing_buffer(void)
     }
     return NULL;
 }
+
+static void activate(button_id id);   /* defined after the key handling */
 
 static void handle_text_input(const char *text)
 {
@@ -1159,28 +1573,55 @@ static void handle_text_input(const char *text)
     }
 }
 
-static void handle_key(SDL_Keycode key)
+static void handle_key(SDL_Keycode key, Uint16 mod)
 {
     char *buffer = editing_buffer();
     size_t len;
 
     switch (key) {
     case SDLK_ESCAPE:
-        if (app.busy) {
+        if (buffer) {
+            set_focus(FOCUS_NONE);
+        } else if (app.busy) {
             log_add(LOG_WARN, "Still working; wait for the current step.");
         } else {
             app.done = 2;
         }
         break;
     case SDLK_RETURN:
+    case SDLK_KP_ENTER:
         if (buffer) {
-            app.editing = 0;
+            set_focus(FOCUS_NONE);
         } else {
-            start_patch();
+            button_id id = focus_to_button(app.focus);
+
+            if (id != BTN_NONE) {
+                activate(id);
+            } else if (app.tab == TAB_PATCH) {
+                start_patch();
+            }
         }
         break;
-    case SDLK_TAB:
-        app.editing = (app.editing == 1) ? 2 : (app.editing == 2 ? 0 : 1);
+    case SDLK_SPACE:
+        if (!buffer) {
+            button_id id = focus_to_button(app.focus);
+
+            if (id != BTN_NONE) {
+                activate(id);
+            }
+        }
+        break;
+    case SDLK_TAB: {
+        int backward = (mod & KMOD_SHIFT) != 0;
+
+        focus_cycle(backward);
+        break;
+    }
+    case SDLK_LEFT:
+    case SDLK_RIGHT:
+        if (!buffer) {
+            switch_tab(app.tab + (key == SDLK_RIGHT ? 1 : -1));
+        }
         break;
     case SDLK_BACKSPACE:
         if (buffer) {
@@ -1191,7 +1632,7 @@ static void handle_key(SDL_Keycode key)
         }
         break;
     case SDLK_s:
-        if (!buffer && !app.busy) {
+        if (!buffer && !app.busy && app.tab == TAB_PATCH) {
             if (app.input_path[0] && app.output_path[0] == '\0') {
                 if (set_default_output(app.output_path, sizeof(app.output_path),
                                        app.input_path)) {
@@ -1222,11 +1663,41 @@ static void handle_mouse_motion(int mx, int my)
     }
 }
 
+/* A click that lands in an editable well puts the keyboard focus there. */
+static int field_hit(int mx, int my, int *field)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        int fy = FIELD_Y0 + i * FIELD_DY;
+
+        if (mx >= FIELD_X && mx < FIELD_X + FIELD_W &&
+            my >= fy && my < fy + FIELD_H) {
+            *field = (i == 0) ? FOCUS_SRC : FOCUS_OUT;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void activate(button_id id)
 {
     switch (id) {
+    case BTN_TAB_PATCH:
+    case BTN_TAB_MODS:
+    case BTN_TAB_ABOUT:
+        switch_tab(id - (int)BTN_TAB_PATCH);
+        break;
+    case BTN_TOGGLE:
+        if (app.tab == TAB_MODS) {
+            app.hard_mode = !app.hard_mode;
+            set_focus(FOCUS_TOGGLE);
+            log_add(LOG_INFO, app.hard_mode ? "Hard Mode ON: enemy stats are tuned."
+                                            : "Hard Mode OFF: prepare only.");
+        }
+        break;
     case BTN_BROWSE_IN:
-        if (app.busy) {
+        if (app.tab != TAB_PATCH || app.busy) {
             break;
         }
         if (browse_file(app.input_path, sizeof(app.input_path), 0)) {
@@ -1238,12 +1709,17 @@ static void activate(button_id id)
         }
         break;
     case BTN_BROWSE_OUT:
-        if (!app.busy && browse_file(app.output_path, sizeof(app.output_path), 1)) {
+        if (app.tab != TAB_PATCH || app.busy) {
+            break;
+        }
+        if (browse_file(app.output_path, sizeof(app.output_path), 1)) {
             log_add(LOG_INFO, "Output path selected.");
         }
         break;
     case BTN_PATCH:
-        start_patch();
+        if (app.tab == TAB_PATCH) {
+            start_patch();
+        }
         break;
     default:
         break;
@@ -1300,6 +1776,28 @@ static void dump_ascii(int step_x, int step_y)
     }
 }
 
+static int parse_tab_arg(const char *text)
+{
+    if (strcmp(text, "MODS") == 0) {
+        return TAB_MODS;
+    }
+    if (strcmp(text, "ABOUT") == 0) {
+        return TAB_ABOUT;
+    }
+    if (strcmp(text, "PATCH") == 0) {
+        return TAB_PATCH;
+    }
+    return atoi(text);
+}
+
+static void usage_flags(const char *argv0)
+{
+    fprintf(stderr,
+            "usage: %s [--screenshot out.png|--dump-ascii] [--tab PATCH|MODS|ABOUT]\n"
+            "            [--mods on|off] [--hover N] [--simulate] [input.nds [output.nds]]\n",
+            argv0);
+}
+
 int pit_patcher_ui_main(int argc, char **argv)
 {
     SDL_Event event;
@@ -1311,18 +1809,41 @@ int pit_patcher_ui_main(int argc, char **argv)
     int simulate = 0;
     int dump = 0;
     int hover = -1;
+    int positional = 0;
     int i;
 
     for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc) {
+        const char *arg = argv[i];
+
+        if (strcmp(arg, "--screenshot") == 0 && i + 1 < argc) {
             screenshot_path = argv[++i];
-        } else if (strcmp(argv[i], "--dump-ascii") == 0) {
+        } else if (strcmp(arg, "--dump-ascii") == 0) {
             screenshot_path = "-";
             dump = 1;
-        } else if (strcmp(argv[i], "--simulate") == 0) {
+        } else if (strcmp(arg, "--simulate") == 0) {
             simulate = 1;
-        } else if (strcmp(argv[i], "--hover") == 0 && i + 1 < argc) {
+        } else if (strcmp(arg, "--tab") == 0 && i + 1 < argc) {
+            app.tab = parse_tab_arg(argv[++i]);
+        } else if (strcmp(arg, "--mods") == 0 && i + 1 < argc) {
+            const char *flag = argv[++i];
+
+            app.hard_mode = (strcmp(flag, "on") == 0 || strcmp(flag, "1") == 0);
+        } else if (strcmp(arg, "--hover") == 0 && i + 1 < argc) {
             hover = atoi(argv[++i]);
+        } else if (arg[0] == '-') {
+            usage_flags(argv[0]);
+            free(rgba);
+            return 2;
+        } else if (positional == 0) {
+            snprintf(app.input_path, sizeof(app.input_path), "%s", arg);
+            positional++;
+        } else if (positional == 1) {
+            snprintf(app.output_path, sizeof(app.output_path), "%s", arg);
+            positional++;
+        } else {
+            usage_flags(argv[0]);
+            free(rgba);
+            return 2;
         }
     }
 
@@ -1331,26 +1852,13 @@ int pit_patcher_ui_main(int argc, char **argv)
         return 1;
     }
 
-    memset(&app, 0, sizeof(app));
     app.total_steps = PIT_PATCH_STEPS;
     setup_buttons();
     /* Seeded here rather than in render(), so the headless screenshot and the
      * window show the same log. */
     log_add(LOG_INFO, "Select a supported EUR ROM to begin.");
-    log_add(LOG_INFO, "Tab switches fields, Enter patches, Esc quits.");
-
-    if (screenshot_path && argc > 1) {
-        snprintf(app.input_path, sizeof(app.input_path), "%s", argv[1]);
-    }
-    if (screenshot_path && argc > 2) {
-        snprintf(app.output_path, sizeof(app.output_path), "%s", argv[2]);
-    }
-    if (argc > 1 && !screenshot_path) {
-        snprintf(app.input_path, sizeof(app.input_path), "%s", argv[1]);
-    }
-    if (argc > 2 && !screenshot_path) {
-        snprintf(app.output_path, sizeof(app.output_path), "%s", argv[2]);
-    }
+    log_add(LOG_INFO, "Tab moves focus, Enter activates, Esc quits.");
+    log_add(LOG_INFO, "Hard Mode is optional: open the MODS tab.");
 
     if (pit_image_alloc(&canvas_storage, UI_W, UI_H) != 0) {
         fprintf(stderr, "could not allocate the %dx%d canvas\n", UI_W, UI_H);
@@ -1385,7 +1893,7 @@ int pit_patcher_ui_main(int argc, char **argv)
         if (dump) {
             dump_ascii(2, 4);
         }
-        if (screenshot_path && !dump) {
+        if (!dump) {
             if (pit_png_write(screenshot_path, app.canvas) != 0) {
                 fprintf(stderr, "could not write %s\n", screenshot_path);
                 rc = 1;
@@ -1404,7 +1912,7 @@ int pit_patcher_ui_main(int argc, char **argv)
         return 1;
     }
 
-    app.window = SDL_CreateWindow("PiT Patcher - Hard Mode",
+    app.window = SDL_CreateWindow("PiT Patcher - Decomp",
                                   SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                   UI_W * 2, UI_H * 2, SDL_WINDOW_RESIZABLE);
     app.renderer = app.window ? SDL_CreateRenderer(app.window, -1, 0) : NULL;
@@ -1439,8 +1947,6 @@ int pit_patcher_ui_main(int argc, char **argv)
     }
 
     while (running && app.done != 2) {
-        int mouse_down = 0;
-
         SDL_LockMutex(app.lock);
         render();
         SDL_UnlockMutex(app.lock);
@@ -1458,7 +1964,7 @@ int pit_patcher_ui_main(int argc, char **argv)
                 running = 0;
                 break;
             case SDL_KEYDOWN:
-                handle_key(event.key.keysym.sym);
+                handle_key(event.key.keysym.sym, event.key.keysym.mod);
                 break;
             case SDL_TEXTINPUT:
                 handle_text_input(event.text.text);
@@ -1474,11 +1980,28 @@ int pit_patcher_ui_main(int argc, char **argv)
             }
             case SDL_MOUSEBUTTONDOWN:
                 if (event.button.button == SDL_BUTTON_LEFT) {
-                    mouse_down = 1;
+                    int field = FOCUS_NONE;
+
                     handle_mouse_motion(mouse_x, mouse_y);
-                    for (i = 0; i < app.button_count; i++) {
-                        if (app.buttons[i].hovered && app.buttons[i].enabled) {
-                            app.buttons[i].pressed = 1;
+                    if (app.tab == TAB_PATCH && field_hit(mouse_x, mouse_y, &field)) {
+                        set_focus(field);
+                    } else {
+                        for (i = 0; i < app.button_count; i++) {
+                            if (app.buttons[i].hovered && app.buttons[i].enabled) {
+                                app.buttons[i].pressed = 1;
+                                if (app.buttons[i].id == BTN_BROWSE_IN ||
+                                    app.buttons[i].id == BTN_BROWSE_OUT ||
+                                    app.buttons[i].id == BTN_PATCH ||
+                                    app.buttons[i].id == BTN_TOGGLE) {
+                                    set_focus(app.buttons[i].id == BTN_BROWSE_IN
+                                                  ? FOCUS_BROWSE_IN
+                                                  : app.buttons[i].id == BTN_BROWSE_OUT
+                                                  ? FOCUS_BROWSE_OUT
+                                                  : app.buttons[i].id == BTN_PATCH
+                                                  ? FOCUS_PATCH
+                                                  : FOCUS_TOGGLE);
+                                }
+                            }
                         }
                     }
                 }
@@ -1498,7 +2021,6 @@ int pit_patcher_ui_main(int argc, char **argv)
                 break;
             }
         }
-        (void)mouse_down;
         SDL_Delay(16);
     }
 

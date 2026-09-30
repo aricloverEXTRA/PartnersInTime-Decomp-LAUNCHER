@@ -43,37 +43,28 @@ JAVA_UI = (
 
 C_INT = re.compile(r"^#define\s+([A-Z][A-Z0-9_]*)\s+(.+?)\s*$")
 JAVA_INT = re.compile(
-    r"^\s*(?:public|private)?\s*static\s+final\s+int\s+([A-Z][A-Z0-9_]*)\s*=\s*(.+?);\s*$"
+    r"^\s*(?:public|private)?\s*static\s+final\s+int\s+"
+    r"([A-Z][A-Z0-9_]*)\s*=\s*(.+?);\s*$",
+    re.DOTALL,
+)
+JAVA_INT_LINE = re.compile(
+    r"^\s*(?:public|private)?\s*static\s+final\s+int\s+([A-Z][A-Z0-9_]*)\s*=\s*$"
 )
 
-# Names that are not part of the shared contract.
-#
-# LOG_LEVEL_* are the C enum values for log severity; Android reuses the same
-# numbers but exposes them as a separate public enum rather than macros, and
-# they are not a layout or colour.
-SKIP = {
-    "LOG_LEVEL_INFO",
-    "LOG_LEVEL_OK",
-    "LOG_LEVEL_WARN",
-    "LOG_LEVEL_ERROR",
+# Names that are not part of the shared contract. True for the C renderer's
+# button-table size, which is a drawing parameter the Android view never needs
+# (it dispatches on explicit ids instead of walking a table).
+ONE_SIDED = {
+    "BTN_COUNT",
 }
 
-# The C log levels are an enum rather than macros, so the enum body is collected
-# as ordinary integer constants. The Android view mirrors the same four values.
+# The C side declares plain integer enums (log severity, tab ids, button ids)
+# rather than macros for the identity enumerations; their bodies are collected
+# like ordinary integer constants so the same numbers are compared on both
+# sides. Any enum whose member is not a bare integer or `= <int>` form is a
+# different kind of object and is skipped whole.
 C_ENUM_OPEN = re.compile(r"^typedef\s+enum\s*\{")
 C_ENUM_CLOSE = re.compile(r"^\}\s*\w+\s*;")
-
-# Names that may exist on only one side. Each entry needs a reason: they are
-# identity enumerations or drawing parameters, not a shared measurement.
-ONE_SIDED = {
-    # Button identities. The C side uses an enum and the Java side private ints
-    # for its hit-test slots; neither is a measurement.
-    "BTN_BROWSE_IN",
-    "BTN_BROWSE_OUT",
-    "BTN_PATCH",
-    "BTN_BROWSE_SOURCE",
-    "BTN_BROWSE_OUTPUT",
-}
 
 
 def strip_comments(expr: str) -> str:
@@ -156,29 +147,59 @@ def collect(path: pathlib.Path, pattern: re.Pattern) -> dict[str, str]:
     values: dict[str, str] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         m = pattern.match(line)
-        if m and m.group(1) not in SKIP:
+        if m and m.group(1) not in ONE_SIDED:
+            values[m.group(1)] = m.group(2)
+    return values
+
+
+def collect_java(path: pathlib.Path) -> dict[str, str]:
+    """Collect Android constants, folding lines split by the formatter.
+
+    Two layout values (``TAB_W``, ``CHIP_W``) are written with the expression
+    on the line after the ``=``; that continuation must be joined back onto its
+    declaration before the single-line pattern can see it.
+    """
+    values: dict[str, str] = {}
+    pending: str | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if pending:
+            values[pending] = line.rstrip(";").strip()
+            pending = None
+            continue
+        m = JAVA_INT_LINE.match(line)
+        if m and m.group(1) not in ONE_SIDED:
+            pending = m.group(1)
+            continue
+        m = JAVA_INT.match(line)
+        if m and m.group(1) not in ONE_SIDED:
             values[m.group(1)] = m.group(2)
     return values
 
 
 def collect_c_enums(path: pathlib.Path) -> dict[str, str]:
-    """Collect plain integer enum members, which the C side uses for log levels.
+    """Collect plain integer enum members, which the C side uses for log levels,
+    tab identities and button identities.
 
     Only bodies whose members are all bare integers or simple `= <int>` forms
     are taken, so an enum of pointers or struct members is skipped instead of
-    being misread as a shared constant.
+    being misread as a shared constant. Each body starts counting from zero.
     """
 
     values: dict[str, str] = {}
     inside = False
     next_value = 0
+    current: dict[str, str] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         if not inside:
             if C_ENUM_OPEN.match(line):
                 inside = True
+                next_value = 0
+                current = {}
             continue
         if C_ENUM_CLOSE.match(line):
             inside = False
+            if current:
+                values.update(current)
             continue
         body = line.strip().rstrip(",")
         if not body or body.startswith(("/*", "*", "//")):
@@ -186,20 +207,20 @@ def collect_c_enums(path: pathlib.Path) -> dict[str, str]:
         name, sep, expr = body.partition("=")
         name = name.strip()
         if not re.fullmatch(r"[A-Z][A-Z0-9_]*", name):
-            values.clear()
-            break
+            current = {}
+            continue
         if not sep:
             # An omitted initialiser means "one past the previous member".
             expr = str(next_value)
         elif not re.fullmatch(r"[0-9+\-*/() ]+", expr.strip()):
-            values.clear()
-            break
+            current = {}
+            continue
         else:
             expr = expr.strip()
-            next_value = arithexpr(expr, values) + 1
-            values[name] = expr
+            next_value = arithexpr(expr, current) + 1
+            current[name] = expr
             continue
-        values[name] = expr
+        current[name] = expr
         next_value += 1
     return values
 
@@ -237,7 +258,7 @@ def main() -> int:
     # The log levels are an enum on the C side; they are part of the same
     # contract as the palette, because both files map them to colours.
     c_raw.update(collect_c_enums(C_UI))
-    java_raw = collect(JAVA_UI, JAVA_INT)
+    java_raw = collect_java(JAVA_UI)
     c_vals, c_stuck = resolve_all(c_raw)
     java_vals, java_stuck = resolve_all(java_raw)
 

@@ -10,7 +10,7 @@ package com.partnersintime.patcher;
  * output as the C build, which is how a silent drift between the two would be
  * caught.
  *
- * <p>Usage: {@code PitSelfTest <rom.nds> <out.nds>}
+ * <p>Usage: {@code PitSelfTest [--no-mods] <rom.nds> <out.nds>}
  */
 public final class PitSelfTest {
 
@@ -18,15 +18,27 @@ public final class PitSelfTest {
     }
 
     public static void main(String[] args) throws Exception {
+        boolean applyPlan = true;
+        while (args.length > 0 && args[0].startsWith("--")) {
+            if (args[0].equals("--no-mods")) {
+                applyPlan = false;
+            } else {
+                System.err.println("usage: PitSelfTest [--no-mods] <rom.nds> <out.nds>");
+                System.exit(2);
+            }
+            String[] rest = new String[args.length - 1];
+            System.arraycopy(args, 1, rest, 0, rest.length);
+            args = rest;
+        }
         if (args.length != 2) {
-            System.err.println("usage: PitSelfTest <rom.nds> <out.nds>");
+            System.err.println("usage: PitSelfTest [--no-mods] <rom.nds> <out.nds>");
             System.exit(2);
         }
 
         byte[] rom = readAll(args[0]);
         byte[] out = new byte[rom.length];
 
-        Patcher.Result result = Patcher.run(rom, out, new Patcher.Listener() {
+        Patcher.Result result = Patcher.run(rom, out, applyPlan, new Patcher.Listener() {
             @Override
             public void onStep(int step, String message, double fraction) {
                 System.out.printf("  [%d/%d] %5.1f%%  %s%n",
@@ -38,6 +50,7 @@ public final class PitSelfTest {
         System.out.println("result      : " + Patcher.resultText(result.code)
                 + " (code " + result.code + ")");
         System.out.println("sha1        : " + result.inputSha1);
+        System.out.println("plan applied: " + applyPlan);
         if (result.targetOffset != 0 || result.targetSize != 0) {
             System.out.printf("target      : id %d at 0x%08X, %d bytes%n",
                     result.targetId, result.targetOffset, result.targetSize);

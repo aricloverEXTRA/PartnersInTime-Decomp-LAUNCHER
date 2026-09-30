@@ -185,23 +185,48 @@ if ($SkipUi) {
         $frameDir = Join-Path $portRoot 'build\ui-frames'
         New-Item -ItemType Directory -Force $frameDir | Out-Null
 
-        # Two frames: idle and mid-patch. Both are drawn by the same render() the
-        # window uses, so these catch layout and legibility regressions without a
-        # display.
-        Invoke-Check 'launcher frame: idle layout and legibility' {
-            & $patcherExe --screenshot (Join-Path $frameDir 'idle.png')
+        # Five frames, one per screen state: the PATCH tab at rest and mid-patch,
+        # the MODS tab with the mod off and on, and the ABOUT tab. All are drawn
+        # by the same render() the window uses, so these catch layout and
+        # legibility regressions without a display.
+        Invoke-Check 'launcher frame: PATCH tab, idle' {
+            & $patcherExe --screenshot (Join-Path $frameDir 'idle.png') --tab PATCH
             if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
             Push-Location $portRoot
             try {
                 Invoke-Python @('tools\check_ui.py', 'build\ui-frames\idle.png')
             } finally { Pop-Location }
         }
-        Invoke-Check 'launcher frame: mid-patch state' {
-            & $patcherExe --screenshot (Join-Path $frameDir 'busy.png') --simulate
+        Invoke-Check 'launcher frame: PATCH tab, mid-patch' {
+            & $patcherExe --screenshot (Join-Path $frameDir 'busy.png') --tab PATCH --simulate
             if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
             Push-Location $portRoot
             try {
                 Invoke-Python @('tools\check_ui.py', 'build\ui-frames\busy.png', '--expect-half')
+            } finally { Pop-Location }
+        }
+        Invoke-Check 'launcher frame: MODS tab, mod off' {
+            & $patcherExe --screenshot (Join-Path $frameDir 'mods.png') --tab MODS --mods off
+            if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
+            Push-Location $portRoot
+            try {
+                Invoke-Python @('tools\check_ui.py', 'build\ui-frames\mods.png')
+            } finally { Pop-Location }
+        }
+        Invoke-Check 'launcher frame: MODS tab, mod on' {
+            & $patcherExe --screenshot (Join-Path $frameDir 'mods-on.png') --tab MODS --mods on
+            if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
+            Push-Location $portRoot
+            try {
+                Invoke-Python @('tools\check_ui.py', 'build\ui-frames\mods-on.png')
+            } finally { Pop-Location }
+        }
+        Invoke-Check 'launcher frame: ABOUT tab' {
+            & $patcherExe --screenshot (Join-Path $frameDir 'about.png') --tab ABOUT
+            if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
+            Push-Location $portRoot
+            try {
+                Invoke-Python @('tools\check_ui.py', 'build\ui-frames\about.png')
             } finally { Pop-Location }
         }
     }
