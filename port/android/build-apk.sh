@@ -170,6 +170,12 @@ else
 fi
 
 echo
+# The intermediates are removed so that a caller's `pit-patcher-*.apk` glob
+# matches exactly one file. Otherwise the aligned copy stays behind on the
+# unsigned path and the caller has to guess which of the two is the result.
+rm -f "$aligned"
+[ "$apk" = "$out_dir/pit-patcher-unsigned.apk" ] || rm -f "$out_dir/pit-patcher-unsigned.apk"
+
 echo "APK: $apk"
 echo "Size: $(du -h "$apk" | cut -f1)"
 echo

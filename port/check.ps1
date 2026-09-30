@@ -28,8 +28,13 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $portRoot = $PSScriptRoot
-$buildDir = Join-Path $portRoot 'build\checks'
+$buildDir = Join-Path $portRoot 'build/checks'
 $failed = 0
+
+# Tests with -eq 'Windows_NT' rather than $IsWindows, which does not exist in
+# Windows PowerShell 5.1, so the same script runs on both the Windows and the
+# Linux CI job.
+$isWindows = $env:OS -eq 'Windows_NT'
 
 function Invoke-Check {
     param([string] $Name, [scriptblock] $Body)
@@ -47,37 +52,52 @@ function Invoke-Check {
     }
 }
 
+# The name to look for depends on the host: Windows has py/python, the Linux
+# runner has python3 and no `python` unless something installs it.
 $python = (Get-Command py -ErrorAction SilentlyContinue).Source
 if (-not $python) { $python = (Get-Command python -ErrorAction SilentlyContinue).Source }
-if (-not $python) { throw 'No Python found: install Python 3.11+ or put py/python on PATH.' }
+if (-not $python) { $python = (Get-Command python3 -ErrorAction SilentlyContinue).Source }
+if (-not $python) { throw 'No Python found: install Python 3.11+ or put py/python/python3 on PATH.' }
 function Invoke-Python {
     param([string[]] $Arguments)
     if ($python -match 'py(\.exe)?$') { & $python -3.12 @Arguments }
     else { & $python @Arguments }
 }
 
+# Resolves a JDK tool on either host. JAVA_HOME is preferred, because that is
+# what the CI job set up, and PATH is the developer's fallback.
+function Get-JdkTool {
+    param([string] $Name)
+    $fileName = if ($isWindows) { "$Name.exe" } else { $Name }
+    if ($env:JAVA_HOME) {
+        $candidate = Join-Path $env:JAVA_HOME "bin/$fileName"
+        if (Test-Path $candidate) { return $candidate }
+    }
+    return (Get-Command $Name -ErrorAction SilentlyContinue).Source
+}
+
 Invoke-Check 'generated patch data is current' {
     Push-Location $portRoot
-    try { Invoke-Python @('tools\gen_patchplan.py', '--check') } finally { Pop-Location }
+    try { Invoke-Python @('tools/gen_patchplan.py', '--check') } finally { Pop-Location }
 }
 
 Invoke-Check 'font glyphs are valid and match the generated tables' {
     Push-Location $portRoot
-    try { Invoke-Python @('tools\check_font.py') } finally { Pop-Location }
+    try { Invoke-Python @('tools/check_font.py') } finally { Pop-Location }
 }
 
 Invoke-Check 'Windows and Android layouts match' {
-    # Needs the Android SDK: aapt2 resolves the classpath so the view's Canvas
-    # calls are type-checked. Skipped with a message when it is absent, since a
-    # developer without the SDK should still get the rest of the suite.
-    $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME }
-           elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT }
-           else { 'C:\Users\ruthi\AppData\Local\Temp\opencode\toolchain\android-sdk' }
-    $androidJar = Get-ChildItem (Join-Path $sdk 'platforms') -Directory -ErrorAction SilentlyContinue |
-        Sort-Object Name -Descending | Select-Object -First 1 |
-        ForEach-Object { Join-Path $_.FullName 'android.jar' }
-    $javac = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin\javac.exe' }
-             else { (Get-Command javac -ErrorAction SilentlyContinue).Source }
+    # Needs the Android SDK: aapt2's android.jar is the classpath, so the view's
+    # Canvas calls are actually type-checked rather than merely read. Skipped
+    # with a message when it is absent, so a developer without the SDK still gets
+    # the rest of the suite.
+    $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { $env:ANDROID_SDK_ROOT }
+    $androidJar = if ($sdk) {
+        Get-ChildItem (Join-Path $sdk 'platforms') -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending | Select-Object -First 1 |
+            ForEach-Object { Join-Path $_.FullName 'android.jar' }
+    }
+    $javac = Get-JdkTool 'javac'
 
     if (-not $androidJar -or -not (Test-Path $androidJar) -or -not $javac) {
         Write-Host '    (no Android SDK or JDK; Android sources not type-checked)'
@@ -85,7 +105,7 @@ Invoke-Check 'Windows and Android layouts match' {
     }
     $viewClasses = Join-Path $buildDir 'android-view'
     New-Item -ItemType Directory -Force $viewClasses | Out-Null
-    $pkgDir = Join-Path $portRoot 'android\app\src\main\java\com\partnersintime\patcher'
+    $pkgDir = Join-Path $portRoot 'android/app/src/main/java/com/partnersintime/patcher'
     & $javac -nowarn -encoding UTF-8 -classpath $androidJar -d $viewClasses `
         (Join-Path $pkgDir 'PatchData.java') (Join-Path $pkgDir 'PatcherView.java')
     if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
@@ -93,7 +113,7 @@ Invoke-Check 'Windows and Android layouts match' {
 
 Invoke-Check 'Windows and Android layout constants agree' {
     Push-Location $portRoot
-    try { Invoke-Python @('tools\check_ui_parity.py') } finally { Pop-Location }
+    try { Invoke-Python @('tools/check_ui_parity.py') } finally { Pop-Location }
 }
 
 Invoke-Check 'no ROM or extracted game data in the tree' {
@@ -101,7 +121,8 @@ Invoke-Check 'no ROM or extracted game data in the tree' {
     try {
         $bad = Get-ChildItem . -Recurse -File -ErrorAction SilentlyContinue |
             Where-Object {
-                $_.FullName -notmatch '\\build(\\|$)' -and
+                # Both separators, because this runs on Windows and on the Linux CI.
+                $_.FullName -notmatch '[\\/]build([\\/]|$)' -and
                 ($_.Extension -in @('.nds', '.gba', '.rom', '.sav') -or
                  $_.Name -match '^baserom|enemies\.json|\.keystore$')
             } |
@@ -111,15 +132,8 @@ Invoke-Check 'no ROM or extracted game data in the tree' {
 }
 
 if (-not $SkipJava) {
-    $javac = $null
-    if ($env:JAVA_HOME) { $javac = Join-Path $env:JAVA_HOME 'bin\javac.exe' }
-    if (-not $javac -or -not (Test-Path $javac)) {
-        $javac = (Get-Command javac -ErrorAction SilentlyContinue).Source
-    }
-    $java = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin\java.exe' } else { $null }
-    if (-not $java -or -not (Test-Path $java)) {
-        $java = (Get-Command java -ErrorAction SilentlyContinue).Source
-    }
+    $javac = Get-JdkTool 'javac'
+    $java = Get-JdkTool 'java'
 
     if (-not $javac -or -not $java) {
         Write-Host ''
@@ -129,11 +143,11 @@ if (-not $SkipJava) {
 
         # Only the Android-independent classes: MainActivity and PatcherView
         # need android.* and cannot run on a desktop JVM.
-        $pkg = Join-Path $portRoot 'android\app\src\main\java\com\partnersintime\patcher'
+        $pkg = Join-Path $portRoot 'android/app/src/main/java/com/partnersintime/patcher'
         $srcs = @('PatchData.java', 'Patcher.java', 'NitroFs.java', 'Sha1.java') |
             ForEach-Object { Join-Path $pkg $_ }
-        $srcs += Join-Path $portRoot 'tools\java\com\partnersintime\patcher\PitSelfTest.java'
-        $srcs += Join-Path $portRoot 'tools\java\com\partnersintime\patcher\PitUnitTest.java'
+        $srcs += Join-Path $portRoot 'tools/java/com/partnersintime/patcher/PitSelfTest.java'
+        $srcs += Join-Path $portRoot 'tools/java/com/partnersintime/patcher/PitUnitTest.java'
 
         Invoke-Check 'Java patcher compiles without warnings' {
             & $javac -Xlint:all -Werror -d $buildDir @srcs

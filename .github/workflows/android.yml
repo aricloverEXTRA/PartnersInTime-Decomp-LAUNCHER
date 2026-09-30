@@ -5,6 +5,13 @@
 # script drives them in the APK's required order and stops on the first nonzero
 # exit, which a shell script would not do.
 #
+# The Android SDK is NOT set up by an action. The runner image already ships a
+# complete SDK, and android-actions/setup-android's default `packages` input asks
+# sdkmanager for a package named `tools` that Google removed from its
+# repository, so that action fails outright. Using the preinstalled SDK and
+# asking for the two specific packages this build needs is both simpler and
+# current.
+#
 # Signing: the release key is a repository secret and is never committed. When
 # the secret is absent, as on a fork, the job still builds and uploads an
 # unsigned APK rather than failing, so a pull request from a fork is useful.
@@ -29,32 +36,42 @@ concurrency:
 jobs:
   apk:
     name: Build APK
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest, which is scheduled to move to Ubuntu 26.
+    # An image migration can change the JDK, the SDK layout and the shell
+    # default underneath a build that was working.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up the Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept SDK licenses
-        run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager 'platform-tools' 'platforms;android-34' 'build-tools;34.0.0'
-
       - name: Report toolchain
         run: |
           java -version
-          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_HOME=${ANDROID_HOME:-unset}"
+          ls -d "${ANDROID_HOME}/cmdline-tools"/* 2>/dev/null || true
+
+      # The image's SDK is already licensed, but accepting non-interactively
+      # makes the step idempotent if that ever stops being true. Only the two
+      # packages this build actually uses are requested; platform-tools is
+      # already present and is listed only so a bare image is covered.
+      - name: Prepare the Android SDK
+        run: |
+          sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$sdkmanager" ]; then
+            sdkmanager="$(find "${ANDROID_HOME}/cmdline-tools" -name sdkmanager -type f | sort | tail -1)"
+          fi
+          echo "Using $sdkmanager"
+          yes | "$sdkmanager" --licenses > /dev/null || true
+          "$sdkmanager" 'platforms;android-34' 'build-tools;34.0.0'
 
       - name: Run checks
         # The same suite the Windows job runs. The launcher frame check is
@@ -96,7 +113,7 @@ jobs:
             >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pit-patcher-apk
           path: port/android/app/build/pit-patcher-*.apk

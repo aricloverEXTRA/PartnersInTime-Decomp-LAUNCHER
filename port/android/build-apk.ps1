@@ -39,10 +39,12 @@ $javaRoot    = Join-Path $manifestDir 'java'
 $resRoot     = Join-Path $manifestDir 'res'
 $packageName = 'com.partnersintime.patcher'
 
-# Build tools and platform, overridable for a different SDK layout.
+# Build tools and platform, overridable for a different SDK layout. The SDK is
+# located from the environment rather than from a hardcoded developer path, so
+# the same script works on a workstation, in CI and on anyone else's machine.
 $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME }
        elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT }
-       else { 'C:\Users\ruthi\AppData\Local\Temp\opencode\toolchain\android-sdk' }
+       else { throw 'No Android SDK found: set ANDROID_HOME or ANDROID_SDK_ROOT.' }
 
 $buildTools = Get-ChildItem (Join-Path $sdk 'build-tools') -Directory |
     Sort-Object Name -Descending | Select-Object -First 1
@@ -191,6 +193,14 @@ if ($Unsigned) {
 }
 
 Write-Host ''
+# The intermediates are removed so that a caller's `pit-patcher-*.apk` glob
+# matches exactly one file. Otherwise the aligned copy stays behind and the
+# caller has to guess which of the two is the result.
+Remove-Item $alignedApk -Force -ErrorAction SilentlyContinue
+if ($apk -ne $unsignedApk) {
+    Remove-Item $unsignedApk -Force -ErrorAction SilentlyContinue
+}
+
 Write-Host "APK: $apk"
 Write-Host "Size: $([math]::Round((Get-Item $apk).Length / 1MB, 2)) MiB"
 Write-Host "Package: $packageName"
