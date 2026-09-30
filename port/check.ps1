@@ -120,8 +120,9 @@ Invoke-Check 'Windows and Android layouts match' {
     $viewClasses = Join-Path $buildDir 'android-view'
     New-Item -ItemType Directory -Force $viewClasses | Out-Null
     $pkgDir = Join-Path $portRoot 'android/app/src/main/java/com/partnersintime/patcher'
-    & $javac -nowarn -encoding UTF-8 -classpath $androidJar -d $viewClasses `
-        (Join-Path $pkgDir 'PatchData.java') (Join-Path $pkgDir 'PatcherView.java')
+    $androidSources = Get-ChildItem (Join-Path $pkgDir '*.java') -File |
+        Select-Object -ExpandProperty FullName
+    & $javac -nowarn -encoding UTF-8 -classpath $androidJar -d $viewClasses @androidSources
     if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 }
 

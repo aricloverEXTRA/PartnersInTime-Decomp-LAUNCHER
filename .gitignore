@@ -57,7 +57,6 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 asm/
-
 # User-supplied or extracted game content and proprietary local tools.
 /private/
 /data/*/
@@ -69,3 +68,7 @@ asm/
 /Sprites/
 /IDA*/
 /References/
+
+# Release signing key material. The keystore and its base64 are kept out of the
+# repository; CI only ever sees them as GitHub Actions secrets.
+/.local-keys/

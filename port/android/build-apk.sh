@@ -154,7 +154,7 @@ else
   printf '%s' "$ANDROID_KEYSTORE" | base64 --decode > "$keystore"
 
   password="${ANDROID_KEYSTORE_PASSWORD:?set ANDROID_KEYSTORE_PASSWORD}"
-  alias_name="${ANDROID_KEY_ALIAS:-pitpatcher}"
+  alias_name="${ANDROID_KEY_ALIAS:-aricloverEXTRA}"
   apk="$out_dir/pit-patcher-release.apk"
 
   # --v3-signing-enabled false keeps the signature scheme v1/v2 only, so the APK

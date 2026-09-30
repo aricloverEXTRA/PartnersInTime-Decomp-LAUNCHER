@@ -49,6 +49,9 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         view.setCallback(this);
         setContentView(view);
         view.addLog(LOG_INFO, "Select your EUR ROM, then choose an output name.");
+        for (String line : CompatInfo.report(this)) {
+            view.addLog(LOG_INFO, line);
+        }
     }
 
     @Override
@@ -61,8 +64,13 @@ public final class MainActivity extends Activity implements PatcherView.Callback
     public void onBrowseSource() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
+        /*
+         * All files. A provider reports .nds as application/octet-stream or as
+         * its own made-up type, and never as application/x-nintendo-ds-rom;
+         * restricting the picker to that extra hides the cartridge entirely on
+         * some devices. Letting everything through is what makes it findable.
+         */
         intent.setType("*/*");
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {"application/x-nintendo-ds-rom"});
         startActivityForResult(intent, REQ_OPEN_ROM);
     }
 

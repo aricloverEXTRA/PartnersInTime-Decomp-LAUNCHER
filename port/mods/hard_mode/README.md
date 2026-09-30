@@ -141,10 +141,10 @@ The wrapper probes only `python.exe`/`python` on `PATH` and requires 3.11+. On
 this workstation `python` is 3.9.1, so the build stops even though `py -3.12` is
 installed. The error message suggests running it "from a shell where `py -3`
 selects it", but the script never actually tries `py -3`. Work around it by
-putting a new enough interpreter first:
+putting a new enough interpreter first, using the launcher to find the install:
 
 ```powershell
-$env:PATH="C:\Users\ruthi\AppData\Local\Programs\Python\Python312;"+$env:PATH
+$env:PATH = (py -3.12 -c "import sys,os; print(os.path.dirname(sys.executable))") + $env:PATH
 ```
 
 

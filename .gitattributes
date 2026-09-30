@@ -24,3 +24,7 @@ CMakeLists.txt text eol=crlf
 port/tools/patch_sources/* text eol=lf
 port/android/app/src/main/java/**/*.java text eol=lf
 port/src/core/pit_patch_data.h text eol=lf
+
+# Plain text config: LF in the index and the working tree, so this repo
+# root file is byte-identical on every checkout.
+.gitignore text eol=lf

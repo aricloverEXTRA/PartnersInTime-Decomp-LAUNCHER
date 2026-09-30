@@ -87,6 +87,7 @@ jobs:
         # with "permission denied" rather than a build error.
         run: |
           if [ -n "${ANDROID_KEYSTORE:-}" ]; then
+            echo "signer=${ANDROID_KEY_ALIAS:-aricloverEXTRA}" >> "$GITHUB_OUTPUT"
             bash ./port/android/build-apk.sh
           else
             echo "No signing secret; building an unsigned APK."
@@ -107,6 +108,8 @@ jobs:
           if [ "${{ steps.build.outputs.unsigned }}" = "true" ]; then
             echo "This APK is **unsigned** and will not install until it is signed." \
               >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Signed as \`**${{ steps.build.outputs.signer }}**\`." >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "The APK contains no ROM data. It needs the user's own EUR cartridge." \

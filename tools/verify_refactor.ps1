@@ -12,10 +12,12 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $root
 
-$ninjaDir = 'C:\Program Files\JetBrains\CLion 2023.2.2\bin\ninja\win\x64'
-if (Test-Path $ninjaDir) { $env:PATH = "$ninjaDir;$env:PATH" }
-$pwshExe = 'C:\Users\Julian\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe'
-if (-not (Test-Path $pwshExe)) { $pwshExe = 'powershell.exe' }
+# Both tools are located from PATH rather than a developer's absolute install
+# path, so the script works on any machine with a working toolchain.
+$ninja = Get-Command ninja.exe -ErrorAction SilentlyContinue
+if (-not $ninja) { throw 'ninja not found on PATH: add a Ninja install first.' }
+$pwshExe = (Get-Command pwsh.exe -ErrorAction SilentlyContinue).Source
+if (-not $pwshExe) { $pwshExe = 'powershell.exe' }
 
 function Step($name, [scriptblock]$body) {
     Write-Host "== $name" -ForegroundColor Cyan

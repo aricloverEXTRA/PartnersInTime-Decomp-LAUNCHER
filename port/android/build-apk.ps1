@@ -178,16 +178,16 @@ if ($Unsigned) {
         # A throwaway local key, generated here and never committed. Release
         # APKs are signed with the project's own key outside this script.
         Invoke-Step 'keytool' $keytool @('-genkeypair', '-keystore', $keystore,
-            '-storepass', 'android', '-keypass', 'android', '-alias', 'pitpatcher',
+            '-storepass', 'android', '-keypass', 'android', '-alias', 'aricloverEXTRA',
             '-keyalg', 'RSA', '-keysize', '2048', '-validity', '10000',
-            '-dname', 'CN=PiT Patcher, OU=Port, O=PartnersInTime, C=US')
+            '-dname', 'CN=aricloverEXTRA, OU=Port, O=PartnersInTime, C=US')
     }
     # --v3-signing-enabled false keeps the signature scheme v1/v2 only, so the
     # APK verifies all the way down to the declared minSdk. The v3+ block
     # carries a SHA-256 signature that older platforms reject outright.
     Invoke-Step 'apksigner' $apksigner @('sign', '--ks', $keystore,
         '--ks-pass', 'pass:android', '--key-pass', 'pass:android',
-        '--ks-key-alias', 'pitpatcher', '--min-sdk-version', '21',
+        '--ks-key-alias', 'aricloverEXTRA', '--min-sdk-version', '21',
         '--v3-signing-enabled', 'false', '--out', $apk, $alignedApk)
     Invoke-Step 'apksigner verify' $apksigner @('verify', '--min-sdk-version', '21', $apk)
 }
