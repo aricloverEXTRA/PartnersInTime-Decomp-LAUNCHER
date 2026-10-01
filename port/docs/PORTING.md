@@ -107,25 +107,26 @@ wrong - three details cost real debugging time:
 The first archive file id also comes from the FNT root record, **not** from
 deriving it from the FAT's ARM-binary entries.
 
-## The patcher
+## The launcher
 
 A separate, self-contained tool rather than part of the presentation shell. It
 has no dependency on the port's runtime, so it works today even though the game
 does not.
 
-`src/core/pit_patcher.c` is the whole pipeline. It checks the cartridge size,
+`src/core/pit_patcher.c` is the core pipeline. It checks the cartridge size,
 SHA-1, title, game code and header CRC-16; finds `BData/BDataMon.dat` through
 the NitroFS reader; optionally scales the 98 stat records; recomputes the header
-CRC; and writes the result. The source ROM is never modified.
+CRC; and writes a copy. `src/core/pit_ingest.c` then exports the generated data
+the decompilation needs — the cartridge banner as a PNG, the NitroFS file tree,
+a probe of `sound_data.sdat`, and a manifest — next to the copy. The source ROM
+is never modified.
 
-The launcher has three tabs — **PATCH**, **MODS**, **ABOUT** — and the Hard Mode
+The launcher has three tabs — **ROM**, **MODS**, **ABOUT** — and the Hard Mode
 mod is an option inside **MODS**, **off by default**. With the mod off, the
-patcher only verifies and prepares the user's own EUR copy for a bootable
-reconstruction (the ~57% decompilation in this repository, which does not run
-the game yet — we take the chance anyway); the output is suffixed
-`.prepared.nds`. With the mod on, the 98 stat records are scaled and the output
-is suffixed `.hardmode.nds`. The two prepared copies are named differently so
-they cannot be mistaken for each other.
+launcher verifies the user's own EUR cartridge and prepares the copy without a
+mod; the output is suffixed `.prepared.nds`. With the mod on, the 98 stat
+records are scaled and the output is suffixed `.hardmode.nds`. The two prepared
+copies are named differently so they cannot be mistaken for each other.
 
 ### One plan, two languages
 
@@ -179,13 +180,13 @@ Current results, against the supported EUR cartridge:
 | Patched ROM vs. the balanced Python profile export | exact match, 588 fields over 98 records |
 | C output vs. Java output, mod on | byte-identical |
 | C output vs. Java output, mod off (prepare-only) | byte-identical |
-| Java unit tests | 949 checks, 0 failed |
+| Java unit tests | 964 checks, 0 failed |
 | UI layout | rendered headlessly to PNG and text on every Windows build |
 
 The last one matters more than it looks. `pit_patcher.exe --screenshot` draws
 through the same `render()` the window uses and `--dump-ascii` serialises the
 canvas to text, so a layout that cannot be drawn fails the build instead of
-shipping. The UI checks cover all three tabs — the PATCH tab at rest and
+shipping. The UI checks cover all three tabs — the ROM tab at rest and
 mid-patch, the MODS tab with the mod off and on, and the ABOUT tab — so a
 layout change to one screen cannot silently regress another.
 
@@ -197,7 +198,7 @@ not a playable build.
 
 The Android app is plain Java against the platform APIs: no SDL, no NDK, no
 Gradle. `Patcher.java`, `NitroFs.java` and `Sha1.java` have no `android.*`
-dependency at all, which is what makes them testable on a desktop JVM — 949
+dependency at all, which is what makes them testable on a desktop JVM — 964
 class-path checks run without a device. `MainActivity` adds Storage Access
 Framework file access and a worker thread; the app declares no storage
 permission, so it only ever touches the two documents the user picked.

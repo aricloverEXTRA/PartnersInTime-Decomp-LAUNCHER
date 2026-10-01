@@ -1,12 +1,15 @@
-# PiT Patcher
+# PiT Launcher
 
-A ROM preparation tool for the European release of *Mario & Luigi: Partners in
-Time* (`ARMP`, SHA-1 `ba4ec2f99b4f2e0047601552bccf00aa73e28701`).
+A launcher for the European release of *Mario & Luigi: Partners in Time*
+(`ARMP`, SHA-1 `ba4ec2f99b4f2e0047601552bccf00aa73e28701`).
 
-It works on the ~57% reconstructed decompilation in this repository: the patcher
-verifies that the supplied file really is the EUR cartridge, pre-checks the
-patch site through the NitroFS directory table, and prepares a patched copy for
-the day the reconstruction reaches a bootable state. We take the chance anyway.
+Your own EUR cartridge is the only source of the game. The launcher verifies
+that the supplied file really is that ROM, pre-checks the stat table through
+the NitroFS directory tree, prepares a copy for the decompilation project in
+this repository, and exports the generated data the project needs — the
+cartridge banner as a PNG, the NitroFS file tree, a probe of
+`sound_data.sdat`, and a manifest — next to the copy. No Nintendo content is
+downloaded, shipped or stored in this tool or its APK.
 
 ## Hard Mode is optional
 
@@ -23,7 +26,7 @@ experience and coin drops:
 | Experience | x7/4 |
 | Coins | x7/4 |
 
-With the mod **off**, the patcher does not edit the copy beyond repairing its
+With the mod **off**, the launcher does not edit the copy beyond repairing its
 header CRC; the output is suffixed `.prepared.nds`. With the mod **on**, the 98
 stat records are scaled and the output is suffixed `.hardmode.nds`. The choice
 is remembered on the screen and re-applied to the output file name, so you can
@@ -62,13 +65,13 @@ which is ignored.
 
 ## Using it
 
-The launcher has three tabs — **PATCH**, **MODS**, **ABOUT** — with mouse,
+The launcher has three tabs — **ROM**, **MODS**, **ABOUT** — with mouse,
 touch and keyboard support.
 
 1. Choose your EUR ROM.
 2. Choose an output file. The output must not be the source.
 3. Optionally open **MODS** and switch **HARD MODE** on.
-4. Press **PATCH**.
+4. Press **INGEST**.
 
 The app verifies the ROM size, SHA-1, title, game code and header CRC-16,
 locates `BData/BDataMon.dat` through the NitroFS directory table, and — with
@@ -79,13 +82,15 @@ always works on a copy, so a failure never damages the source.
 
 **A prepared ROM is not expected to boot yet.** The decompilation in this
 repository is incomplete: there is no bootable reconstruction, so nothing in
-this project can run the game today. The patcher demonstrates a working,
-verified patch pipeline against real cartridge data. We take the chance anyway.
+this project can run the game today. The launcher demonstrates a working,
+verified pipeline: real cartridge data is verified and passed to the
+decompilation, nothing more. No Nintendo content is shipped, extracted or
+committed here.
 
 ## Layout
 
 ```
-src/core/            patch pipeline, ROM/FNT reader, SHA-1, PNG writer
+src/core/            patch pipeline, ROM/FNT reader, SHA-1, PNG writer, data export
 src/platform/sdl2/   graphical patcher
 tools/               plan generator, font generator and verification scripts
 android/             pure-Java patcher, same generated plan
@@ -110,9 +115,9 @@ Everything that does not need a cartridge:
 That covers the generated plan being current, the font's 95 glyphs and their
 byte-identical C and Java tables, the Windows and Android layout constants
 agreeing, the absence of ROM data in the tree, the Java patcher compiling
-warning-free under `-Xlint:all -Werror`, 949 unit assertions, and five
+warning-free under `-Xlint:all -Werror`, 964 unit assertions, and five
 headlessly rendered launcher frames checked for layout, contrast and palette
-provenance (the PATCH tab at rest and mid-patch, the MODS tab with the mod off
+provenance (the ROM tab at rest and mid-patch, the MODS tab with the mod off
 and on, and the ABOUT tab).
 
 Checks that do need your own EUR ROM, and are therefore not part of CI:

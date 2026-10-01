@@ -44,7 +44,7 @@ public final class Patcher {
 
     public static String resultText(int code) {
         switch (code) {
-            case OK:                return "Patched ROM written.";
+            case OK:                return "ROM verified; copy written.";
             case ERR_ARGS:          return "No source ROM was selected.";
             case ERR_READ:          return "The source ROM could not be read.";
             case ERR_SIZE:          return "That file is not a 64 MiB NDS ROM.";
@@ -53,7 +53,7 @@ public final class Patcher {
             case ERR_CRC:           return "Cartridge header CRC-16 does not verify.";
             case ERR_TARGET:        return "Target file is missing from this ROM's NitroFS.";
             case ERR_TARGET_SIZE:   return "Target file is not the expected record table.";
-            case ERR_WRITE:         return "The patched ROM could not be written.";
+            case ERR_WRITE:         return "The copy could not be written.";
             default:                return "Unknown error.";
         }
     }
@@ -96,6 +96,12 @@ public final class Patcher {
 
     private static void readU16(byte[] data, int offset, int[] out) {
         out[0] = (data[offset] & 0xFF) | ((data[offset + 1] & 0xFF) << 8);
+    }
+
+    private static void readU32(byte[] data, int offset, int[] out) {
+        out[0] = (data[offset] & 0xFF) | ((data[offset + 1] & 0xFF) << 8)
+                | ((data[offset + 2] & 0xFF) << 16)
+                | ((data[offset + 3] & 0xFF) << 24);
     }
 
     private static void writeU16(byte[] data, int offset, int value) {
@@ -241,5 +247,107 @@ public final class Patcher {
         step(listener, 8, String.format("Header CRC-16 set to %04X.", crc), 0.94);
 
         return result;
+    }
+
+    /** Read-only snapshot of the user's cartridge, derived from its own bytes. */
+    public static final class Probe {
+        public boolean bannerPresent;
+        public int bannerOffset;
+        public int bannerVersion;
+        public int bannerCrc16;
+        public String bannerTitle = "";
+        public boolean bannerTitleOk;
+        public int archiveFiles;
+        public boolean sdatPresent;
+        public int sdatVersionMajor;
+        public int sdatVersionMinor;
+        public int sdatSections;
+    }
+
+    /**
+     * Decodes the cartridge fields the decomp reads, mirroring the ingest banner
+     * and the C SDAT probe. The banner header is version-first: {@code u16} version
+     * at +0 then the stored {@code u16} crc16 at +2, matching pit_nds_banner.c.
+     * The banner title is UTF-16LE with line breaks folded to spaces, capped at
+     * 32 code units; a control character or a non-ASCII unit makes the title
+     * unreadable. Sound is looked up under its real path
+     * {@code Sound/sound_data.sdat}, with the SDAT version and section count read
+     * little-endian like the C probe.
+     */
+    public static Probe probe(byte[] rom) {
+        Probe p = new Probe();
+
+        if (rom == null || rom.length < 0x140) {
+            return p;
+        }
+
+        int[] u32 = new int[1];
+        int[] u16 = new int[1];
+        readU32(rom, 0x68, u32);
+        int bannerOffset = u32[0];
+        if (bannerOffset != 0 && bannerOffset + 2 <= rom.length) {
+            readU16(rom, bannerOffset, u16);
+            int version = u16[0];
+
+            if (version >= 1 && version <= 3) {
+                p.bannerPresent = true;
+                p.bannerOffset = bannerOffset;
+                p.bannerVersion = version;
+                readU16(rom, bannerOffset + 2, u16);
+                p.bannerCrc16 = u16[0];
+
+                int titleAt = bannerOffset + (version == 1 ? 0x340 : 0x400);
+                StringBuilder sb = new StringBuilder(32);
+                boolean ok = true;
+
+                for (int i = 0; i < 32 && titleAt + (long) i * 2 + 2 <= rom.length; i++) {
+                    char lo = (char) (rom[titleAt + i * 2] & 0xFF);
+                    char hi = (char) (rom[titleAt + i * 2 + 1] & 0xFF);
+
+                    if (hi != 0 || lo == 0) {
+                        break;
+                    }
+                    if (lo == '\r' || lo == '\n' || lo == '\t') {
+                        sb.append(' ');
+                        continue;
+                    }
+                    if (lo < 0x20 || lo >= 0x7F) {
+                        ok = false;
+                        break;
+                    }
+                    sb.append(lo);
+                }
+                p.bannerTitle = sb.toString();
+                p.bannerTitleOk = ok && p.bannerTitle.length() > 0;
+            }
+        }
+
+        readU32(rom, 0x40, u32);
+        int fntOffset = u32[0];
+        readU32(rom, 0x4C, u32);
+        int fatSize = u32[0];
+        int fatRecords = fatSize >= 8 ? fatSize / 8 : 0;
+
+        if (fntOffset != 0 && fntOffset + 6 <= rom.length && fatRecords > 0) {
+            readU16(rom, fntOffset + 4, u16);
+            p.archiveFiles = Math.max(0, fatRecords - u16[0]);
+        } else {
+            p.archiveFiles = 0;
+        }
+
+        NitroFs.Entry sdat = NitroFs.find(rom, "Sound/sound_data.sdat");
+        if (sdat != null) {
+            p.sdatPresent = true;
+            if ((long) sdat.offset + 0x10 <= rom.length) {
+                readU16(rom, sdat.offset + 6, u16);
+                int version = u16[0];
+
+                p.sdatVersionMajor = (version >> 8) & 0xFF;
+                p.sdatVersionMinor = version & 0xFF;
+                readU16(rom, sdat.offset + 0x0E, u16);
+                p.sdatSections = u16[0];
+            }
+        }
+        return p;
     }
 }

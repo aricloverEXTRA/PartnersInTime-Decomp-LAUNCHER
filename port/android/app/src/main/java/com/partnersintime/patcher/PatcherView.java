@@ -21,7 +21,7 @@ import java.util.List;
  * the screen, and text is blitted from {@link PatchData#FONT8X8} as rectangles
  * rather than drawn with a system typeface. That keeps the two builds visually
  * identical and avoids shipping a font file, and it means the UI needs no
- * resources beyond the string table in {@link Strings}.
+ * resources beyond its own string literals.
  *
  * <p>The layout, palette and drawing order mirror
  * {@code port/src/platform/sdl2/pit_patcher_ui.c} one to one. Every colour is a
@@ -34,7 +34,7 @@ import java.util.List;
  * lets the activity own all state, so the same layout can be exercised in a
  * test without an Android runtime.
  *
- * <p>The screen is split into tabs, matching the C build: PATCH (the core
+ * <p>The screen is split into tabs, matching the C build: ROM (the core
  * flow), MODS (optional data mods, off by default) and ABOUT (what this tool is
  * for). Both touch and the D-pad / Tab keyboard work: Tab or the D-pad move the
  * focus around the visible tab, Enter/Space activate the focused control, and
@@ -526,8 +526,8 @@ public final class PatcherView extends View {
         }
         hline(canvas, 0, HEADER_H - 1, UI_W, C_EDGE_SOFT);
 
-        textScaled(canvas, MARGIN + 1, 11, "PiT PATCHER", C_SHADOW, 3);
-        textScaled(canvas, MARGIN, 10, "PiT PATCHER", C_TEXT_HI, 3);
+        textScaled(canvas, MARGIN + 1, 11, "PiT LAUNCHER", C_SHADOW, 3);
+        textScaled(canvas, MARGIN, 10, "PiT LAUNCHER", C_TEXT_HI, 3);
         text(canvas, MARGIN + 2, 30, "DECOMP ROM WORKSHOP", C_ACCENT);
 
         /* Version chip, right aligned. */
@@ -612,7 +612,7 @@ public final class PatcherView extends View {
     private void drawFooter(Canvas canvas) {
         hline(canvas, 0, FOOTER_Y - 2, UI_W, C_EDGE_SOFT);
         text(canvas, MARGIN, FOOTER_Y, "FOR THE PARTNERS IN TIME DECOMPILATION", C_DIM);
-        text(canvas, UI_W - MARGIN - textWidth("(57%)"), FOOTER_Y, "(57%)", C_AMBER);
+        text(canvas, UI_W - MARGIN - textWidth("YOUR ROM"), FOOTER_Y, "YOUR ROM", C_AMBER);
     }
 
     /* ---------------------------------------------------------------- mods */
@@ -669,12 +669,12 @@ public final class PatcherView extends View {
                         PatchData.TRANSFORM_SCALE[i], true);
             }
         } else {
-            text(canvas, MODS_CARD_X + 12, CHIP_Y0,
-                    "OFF: THE PATCH ONLY VERIFIES AND PREPARES YOUR", C_DIM);
-            text(canvas, MODS_CARD_X + 12, CHIP_Y0 + LINE_H,
-                    "EUR COPY - NO MOD IS APPLIED. TAP THE TOGGLE TO", C_DIM);
-            text(canvas, MODS_CARD_X + 12, CHIP_Y0 + 2 * LINE_H,
-                    "ENABLE HARD MODE, THEN PATCH.", C_DIM);
+text(canvas, MODS_CARD_X + 12, CHIP_Y0,
+                "OFF: THE LAUNCHER VERIFIES YOUR EUR ROM AND", C_DIM);
+        text(canvas, MODS_CARD_X + 12, CHIP_Y0 + LINE_H,
+                "PASSES IT TO THE DECOMP - NO MOD IS APPLIED.", C_DIM);
+        text(canvas, MODS_CARD_X + 12, CHIP_Y0 + 2 * LINE_H,
+                "TAP THE TOGGLE FOR HARD MODE, THEN INGEST.", C_DIM);
         }
 
         text(canvas, MARGIN, MODS_HINT_Y,
@@ -685,24 +685,26 @@ public final class PatcherView extends View {
 
     private void drawAboutTab(Canvas canvas) {
         String[] lines = {
-            "THIS PATCHER WORKS WITH YOUR OWN EUR COPY OF",
-            "MARIO & LUIGI: PARTNERS IN TIME. IT VERIFIES THE",
-            "ROM BY SHA-1, FINDS ITS STAT TABLE, AND WRITES A",
-            "ROM FOR THE DECOMPILATION PROJECT.",
+            "THIS LAUNCHER WORKS WITH YOUR OWN EUR COPY OF",
+            "MARIO & LUIGI: PARTNERS IN TIME ('ARMP'). IT",
+            "VERIFIES THE ROM BY SHA-1 AND HEADER CRC-16,",
+            "THEN PASSES YOUR CARTRIDGE TO THE DECOMP.",
             "",
-            "THE PROJECT IS ONLY ABOUT 57% RECONSTRUCTED, SO",
-            "THE RESULT MAY NOT BOOT NATIVELY ON A CONSOLE OR",
-            "EMULATOR YET - WE TAKE THE CHANCE ANYWAY.",
+            "THE GAME, ITS ASSETS AND ITS AUDIO STAY YOURS.",
             "",
-            "HARD MODE IS AN OPTIONAL DATA MOD (MODS TAB) THAT",
-            "RAISES ENEMY STATS TO MAKE THE GAME HARDER. IT IS",
-            "NOT REQUIRED TO USE THIS TOOL.",
+            "PARTNERS IN TIME IS A DECOMPILATION, NOT A",
+            "REBUILD: THE SOURCE RE-CREATES THE GAME FROM",
+            "YOUR ROM'S OWN DATA. NO NINTENDO CONTENT IS",
+            "SHIPPED, EXTRACTED OR COMMITTED HERE.",
+            "",
+            "HARD MODE IS AN OPTIONAL DATA MOD (MODS TAB)",
+            "THAT RAISES ENEMY STATS. IT IS OFF BY DEFAULT.",
         };
 
         drawCard(canvas, ABOUT_CARD_X, ABOUT_CARD_Y, ABOUT_CARD_W, ABOUT_CARD_H, 4);
         text(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 9, "ABOUT", C_ACCENT);
-        text(canvas, ABOUT_CARD_X + ABOUT_CARD_W - 12 - textWidth("PIT PATCHER"),
-                ABOUT_CARD_Y + 9, "PIT PATCHER", C_DIM);
+        text(canvas, ABOUT_CARD_X + ABOUT_CARD_W - 12 - textWidth("PIT LAUNCHER"),
+                ABOUT_CARD_Y + 9, "PIT LAUNCHER", C_DIM);
         hline(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 20, ABOUT_CARD_W - 24, C_EDGE_SOFT);
 
         text(canvas, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 32,
@@ -729,7 +731,7 @@ public final class PatcherView extends View {
         for (int i = 0; i < 2; i++) {
             String label = i == 0 ? "SOURCE" : "OUTPUT";
             String value = values[i].isEmpty()
-                    ? (i == 0 ? "CHOOSE EUR ROM" : "PATCHED OUT") : values[i];
+                    ? (i == 0 ? "CHOOSE EUR ROM" : "PREPARED COPY") : values[i];
             int fy = FIELD_Y0 + i * FIELD_DY;
 
             text(canvas, MARGIN, fy + 4, label, C_DIM);
@@ -784,7 +786,7 @@ public final class PatcherView extends View {
                 hotIn, false, true);
         drawButton(canvas, BROWSE_X, FIELD_Y0 + FIELD_DY - 2, BROWSE_W, BROWSE_H, "BROWSE",
                 hotOut, false, true);
-        drawButton(canvas, PATCH_X, PATCH_Y, PATCH_W, PATCH_H, "PATCH",
+        drawButton(canvas, PATCH_X, PATCH_Y, PATCH_W, PATCH_H, "INGEST",
                 hotPatch, true, patchEnabled());
 
         String caption = "STATUS";
@@ -871,8 +873,8 @@ public final class PatcherView extends View {
         /* Plan status on the left, keyboard hints on the right. */
         text(canvas, MARGIN, MODS_Y, state.hardMode ? "MODS: HARD MODE" : "MODS: NONE",
                 state.hardMode ? C_AMBER : C_DIM);
-        text(canvas, UI_W - MARGIN - textWidth("TAB FOCUS  ENTER PATCH  ESC QUIT"),
-                MODS_Y, "TAB FOCUS  ENTER PATCH  ESC QUIT", C_DIM);
+        text(canvas, UI_W - MARGIN - textWidth("TAB FOCUS  ENTER INGEST  ESC QUIT"),
+                MODS_Y, "TAB FOCUS  ENTER INGEST  ESC QUIT", C_DIM);
 
         drawActions(canvas);
         drawLog(canvas);
@@ -882,7 +884,7 @@ public final class PatcherView extends View {
         drawBackdrop(canvas);
         drawHeader(canvas);
 
-        drawTab(canvas, TAB_PATCH, "PATCH");
+        drawTab(canvas, TAB_PATCH, "ROM");
         drawTab(canvas, TAB_MODS, "MODS");
         drawTab(canvas, TAB_ABOUT, "ABOUT");
 

@@ -185,11 +185,11 @@ if ($SkipUi) {
         $frameDir = Join-Path $portRoot 'build\ui-frames'
         New-Item -ItemType Directory -Force $frameDir | Out-Null
 
-        # Five frames, one per screen state: the PATCH tab at rest and mid-patch,
+        # Five frames, one per screen state: the ROM tab at rest and mid-patch,
         # the MODS tab with the mod off and on, and the ABOUT tab. All are drawn
         # by the same render() the window uses, so these catch layout and
         # legibility regressions without a display.
-        Invoke-Check 'launcher frame: PATCH tab, idle' {
+        Invoke-Check 'launcher frame: ROM tab, idle' {
             & $patcherExe --screenshot (Join-Path $frameDir 'idle.png') --tab PATCH
             if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
             Push-Location $portRoot
@@ -197,7 +197,7 @@ if ($SkipUi) {
                 Invoke-Python @('tools\check_ui.py', 'build\ui-frames\idle.png')
             } finally { Pop-Location }
         }
-        Invoke-Check 'launcher frame: PATCH tab, mid-patch' {
+        Invoke-Check 'launcher frame: ROM tab, mid-patch' {
             & $patcherExe --screenshot (Join-Path $frameDir 'busy.png') --tab PATCH --simulate
             if ($LASTEXITCODE -ne 0) { throw "pit_patcher exited $LASTEXITCODE" }
             Push-Location $portRoot

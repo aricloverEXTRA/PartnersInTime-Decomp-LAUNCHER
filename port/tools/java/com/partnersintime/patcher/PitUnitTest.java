@@ -244,10 +244,6 @@ public final class PitUnitTest {
 
     private static void testNitroFs() {
         byte[] rom = romWithArchive("BDataMon.dat", 0x00340000, 4312);
-        /*
-         * find() refuses an FNT smaller than the real cartridge's 0x5A4, so the
-         * fixture is padded to a realistic size rather than a minimal one.
-         */
         put32(rom, 0x44, 0x600);
         NitroFs.Entry entry = NitroFs.find(rom, "BDataMon.dat");
         check("archive entry found", entry != null);
@@ -280,6 +276,94 @@ public final class PitUnitTest {
         check("undersized fnt returns null", NitroFs.find(tiny, "BDataMon.dat") == null);
     }
 
+    /** A ROM-sized buffer with a Sound/sound_data.sdat tree, a banner and SDAT. */
+    private static byte[] romWithSdat() {
+        byte[] rom = romWithArchive("BDataMon.dat", 0x00340000, 4312);
+        int fntOffset = 0x1000;
+
+        /* Directory records, then the subtables they point at. */
+        put32(rom, fntOffset, 0x200);       /* root subtable offset */
+        put16(rom, fntOffset + 4, 0);       /* root first file id */
+        put16(rom, fntOffset + 6, 0xF000);  /* root parent */
+        put32(rom, fntOffset + 8, 0x300);   /* Sound subtable offset */
+        put16(rom, fntOffset + 12, 1);      /* Sound first file id */
+        put16(rom, fntOffset + 14, 0xF000); /* Sound parent */
+
+        /* Root subtable: BDataMon.dat, then the Sound directory entry. */
+        int rootSub = fntOffset + 0x200;
+        byte[] name = "BDataMon.dat".getBytes();
+        rom[rootSub] = (byte) name.length;
+        System.arraycopy(name, 0, rom, rootSub + 1, name.length);
+        int e = rootSub + 1 + name.length;
+        byte[] snd = "Sound".getBytes();
+        rom[e] = (byte) (0x80 | snd.length);
+        System.arraycopy(snd, 0, rom, e + 1, snd.length);
+        put16(rom, e + 1 + snd.length, 0xF001);
+        rom[e + 1 + snd.length + 2] = 0;
+
+        /* Sound subtable: sound_data.sdat, taking the implicit id 1. */
+        int sub = fntOffset + 0x300;
+        byte[] dat = "sound_data.sdat".getBytes();
+        rom[sub] = (byte) dat.length;
+        System.arraycopy(dat, 0, rom, sub + 1, dat.length);
+        rom[sub + 1 + dat.length] = 0;
+
+        put32(rom, 0x44, 0x600);
+        put32(rom, 0x4C, 16);
+
+        /* Second FAT record: the sound bank, SDAT header little-endian at its head. */
+        int sdat = 0x00800000;
+        put32(rom, 0x2008, sdat);
+        put32(rom, 0x200C, sdat + 0x9000);
+        rom[sdat] = 'S';
+        rom[sdat + 1] = 'D';
+        rom[sdat + 2] = 'A';
+        rom[sdat + 3] = 'T';
+        rom[sdat + 4] = (byte) 0xFF;
+        rom[sdat + 5] = (byte) 0xFE;
+        rom[sdat + 6] = 0x00;
+        rom[sdat + 7] = 0x01;
+        put32(rom, sdat + 8, 0x9000);
+        put16(rom, sdat + 0x0C, 0x40);
+        put16(rom, sdat + 0x0E, 4);
+        put32(rom, sdat + 0x10, 0x40);
+
+        /* Cartridge banner with the EUR CRC and a plain one-line EN title. */
+        int banner = 0x00100000;
+        put32(rom, 0x68, banner);
+        put16(rom, banner, 1);           /* banner version at +0 */
+        put16(rom, banner + 2, 0x2BB0);  /* stored crc16 at +2 */
+        String title = "MARIO & LUIGI 2";
+        for (int i = 0; i < title.length(); i++) {
+            rom[banner + 0x340 + i * 2] = (byte) title.charAt(i);
+            rom[banner + 0x340 + i * 2 + 1] = 0;
+        }
+        return rom;
+    }
+
+    private static void testProbe() {
+        Patcher.Probe absent = Patcher.probe(null);
+        check("null rom probe absent", !absent.bannerTitleOk && !absent.sdatPresent);
+        check("short rom probe absent", !Patcher.probe(new byte[16]).bannerPresent);
+
+        Patcher.Probe p = Patcher.probe(romWithSdat());
+        check("fixture banner present", p.bannerPresent);
+        check("fixture banner title ok", p.bannerTitleOk);
+        checkEq("banner version", p.bannerVersion, 1);
+        checkEq("banner crc", p.bannerCrc16, 0x2BB0);
+        check("banner title text", "MARIO & LUIGI 2".equals(p.bannerTitle));
+        checkEq("archive files", p.archiveFiles, 2);
+        check("sdat present", p.sdatPresent);
+        checkEq("sdat major", p.sdatVersionMajor, 1);
+        checkEq("sdat minor", p.sdatVersionMinor, 0);
+        checkEq("sdat sections", p.sdatSections, 4);
+
+        Patcher.Probe bare = Patcher.probe(romWithArchive("BDataMon.dat", 0x340000, 4312));
+        check("bare rom no banner", !bare.bannerTitleOk);
+        checkEq("bare rom archive files", bare.archiveFiles, 1);
+        check("bare rom no sdat", !bare.sdatPresent);
+    }
+
     public static void main(String[] args) {
         testScaleRounding();
         testClamping();
@@ -289,6 +373,7 @@ public final class PitUnitTest {
         testCrc();
         testRejectsBadInput();
         testNitroFs();
+        testProbe();
 
         System.out.println(checks + " checks, " + failures.size() + " failed");
         for (String failure : failures) {

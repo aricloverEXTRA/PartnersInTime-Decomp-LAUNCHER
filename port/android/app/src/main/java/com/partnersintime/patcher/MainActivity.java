@@ -60,7 +60,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
     public void onTab(int tab) {
         view.setTab(tab);
         view.addLog(LOG_INFO, tab == PatcherView.TAB_MODS ? "MODS tab."
-                : (tab == PatcherView.TAB_ABOUT ? "ABOUT tab." : "PATCH tab."));
+                : (tab == PatcherView.TAB_ABOUT ? "ABOUT tab." : "ROM tab."));
     }
 
     @Override
@@ -225,6 +225,28 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                         if (!writeAll(destination, out)) {
                             result.code = Patcher.ERR_WRITE;
                             out = null;
+                        }
+                    }
+
+                    if (result.code == Patcher.OK) {
+                        log(LOG_INFO, "Probing your ROM for the decomp...");
+                        Patcher.Probe probe = Patcher.probe(rom);
+                        if (probe.bannerTitleOk) {
+                            log(LOG_INFO, String.format(
+                                    "Banner: v%d, CRC-16 %04X, title \"%s\".",
+                                    probe.bannerVersion, probe.bannerCrc16,
+                                    probe.bannerTitle));
+                        } else {
+                            log(LOG_INFO, "Banner: none present in this ROM.");
+                        }
+                        log(LOG_INFO, "NitroFS: " + probe.archiveFiles + " archive files.");
+                        if (probe.sdatPresent) {
+                            log(LOG_INFO, String.format(
+                                    "sound_data.sdat: SDAT v%d.%d, %d sections.",
+                                    probe.sdatVersionMajor, probe.sdatVersionMinor,
+                                    probe.sdatSections));
+                        } else {
+                            log(LOG_INFO, "sound_data.sdat: not found in this ROM.");
                         }
                     }
                 } catch (OutOfMemoryError e) {

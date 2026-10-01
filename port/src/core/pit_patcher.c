@@ -85,7 +85,7 @@ static void hex_digest(const unsigned char *digest, char *out)
 const char *pit_patch_result_text(pit_patch_result result)
 {
     switch (result) {
-    case PIT_PATCH_OK:              return "Patched ROM written.";
+    case PIT_PATCH_OK:              return "ROM verified; copy written.";
     case PIT_PATCH_ERR_ARGS:        return "No input ROM was selected.";
     case PIT_PATCH_ERR_READ:        return "The input ROM could not be read.";
     case PIT_PATCH_ERR_SIZE:        return "That file is not a 64 MiB NDS ROM.";
@@ -94,7 +94,7 @@ const char *pit_patch_result_text(pit_patch_result result)
     case PIT_PATCH_ERR_CRC:         return "Cartridge header CRC-16 does not verify.";
     case PIT_PATCH_ERR_TARGET:      return "Target file is missing from this ROM's NitroFS.";
     case PIT_PATCH_ERR_TARGET_SIZE: return "Target file is not the expected record table.";
-    case PIT_PATCH_ERR_WRITE:       return "The patched ROM could not be written.";
+    case PIT_PATCH_ERR_WRITE:       return "The copy could not be written.";
     case PIT_PATCH_ERR_PLAN:        return "The patch plan has no enabled transforms.";
     default:                       return "Unknown error.";
     }
@@ -336,7 +336,7 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
     }
 
     /* Step 9: write the result. */
-    log_step(log, ctx, 9, "Writing patched ROM...", 0.94);
+    log_step(log, ctx, 9, "Writing prepared copy...", 0.94);
     {
         FILE *fp = fopen(output_path, "wb");
         size_t written_bytes = 0;
@@ -374,6 +374,6 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
         }
     }
     free(patched);
-    log_step(log, ctx, 9, "Patched ROM written.", 1.0);
+    log_step(log, ctx, 9, "ROM verified; copy written.", 1.0);
     return PIT_PATCH_OK;
 }

@@ -238,7 +238,7 @@ def check_footer(rows):
     """The status tag on the right must be warm, and the left tag dim text."""
     tag = [px(rows, x, FOOTER_Y) for x in range(UI_W - MARGIN - 48, UI_W - MARGIN - 4)]
     if len([c for c in tag if is_warm(c)]) < 12:
-        fail("footer '(57%)' tag is not warm: %d warm of %d pixels" % (len([c for c in tag if is_warm(c)]), len(tag)))
+        fail("footer status tag is not warm: %d warm of %d pixels" % (len([c for c in tag if is_warm(c)]), len(tag)))
 
 
 def check_tabs(rows, selected):

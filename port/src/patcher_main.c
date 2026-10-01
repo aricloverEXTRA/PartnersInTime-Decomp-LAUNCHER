@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "core/pit_ingest.h"
 #include "core/pit_patcher.h"
 
 typedef struct {
@@ -32,12 +33,15 @@ static void on_log(void *ctx, int step, const char *message, double fraction)
 static void usage(const char *argv0)
 {
     fprintf(stderr,
-            "usage: %s [--no-mods] <input.nds> <output.nds>\n"
+            "usage: %s [--no-mods] [--ingest <dir>] <input.nds> <output.nds>\n"
             "\n"
-            "Verifies a Partners in Time (EUR) ROM and writes a prepared copy\n"
-            "for the PiT decompilation project. By default the %s data mod is\n"
-            "applied to the user's own copy; --no-mods verifies and copies the\n"
-            "ROM without applying any mod.\n",
+            "Verifies a Partners in Time (EUR) ROM and writes a copy for the\n"
+            "PiT decompilation project. Your OWN ROM is the only source of\n"
+            "the game's assets and audio: nothing is downloaded or shipped.\n"
+            "By default the %s data mod is applied to the copy; --no-mods\n"
+            "verifies and copies without a mod. With --ingest, generated data\n"
+            "(banner, NitroFS tree, SDAT probe, manifest) is exported to\n"
+            "<dir>.\n",
             argv0, "hard_mode");
 }
 
@@ -47,18 +51,23 @@ int main(int argc, char **argv)
     pit_patch_info info;
     pit_patch_result result;
     int apply_plan = 1;
+    const char *ingest_dir = NULL;
     const char *input;
     const char *output;
 
     while (argc > 1 && argv[1][0] == '-' && argv[1][0] != '\0') {
         if (strcmp(argv[1], "--no-mods") == 0) {
             apply_plan = 0;
+            argc--;
+            argv++;
+        } else if (strcmp(argv[1], "--ingest") == 0 && argc > 2) {
+            ingest_dir = argv[2];
+            argc -= 2;
+            argv += 2;
         } else {
             usage(argv[0]);
             return 2;
         }
-        argc--;
-        argv++;
     }
     if (argc != 3) {
         usage(argv[0]);
@@ -79,6 +88,14 @@ int main(int argc, char **argv)
         printf("target offset   : 0x%08X\n", info.target_offset);
         printf("header CRC-16   : %04X\n", info.header_crc);
         printf("source SHA-1    : %s\n", info.input_sha1);
+        if (ingest_dir) {
+            printf("\n");
+            if (pit_ingest_run(input, ingest_dir, &info, on_log, &state) != 0) {
+                fprintf(stderr, "generated data export failed\n");
+                return 1;
+            }
+            printf("generated data exported to %s\n", ingest_dir);
+        }
     }
     return result == PIT_PATCH_OK ? 0 : 1;
 }

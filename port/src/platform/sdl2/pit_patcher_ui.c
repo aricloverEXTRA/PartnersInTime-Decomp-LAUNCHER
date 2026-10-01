@@ -12,12 +12,12 @@
  * mutex, because the callback arrives from the worker while the main loop is
  * repainting.
  *
- * The UI is split into tabs. PATCH is the core flow (verify + prepare, with the
- * plan applied when the MODS toggles it on). MODS holds the optional data mods,
- * and ABOUT explains what the tool is for: preparing the user's own EUR ROM for
- * the Partners in Time decompilation project, which is only partially
- * reconstructed and may not boot yet. Keyboard support mirrors the Android
- * build: Tab cycles focus, arrow keys change tabs, Enter/Space activate.
+ * The UI is split into tabs. ROM is the core flow (verify the user's own EUR
+ * cartridge, write a prepared copy, and export the generated data the decomp
+ * needs). MODS holds the optional data mods, and ABOUT explains what the tool
+ * is for: your own Partner in Time ROM is the only source of the game's
+ * assets and audio. Keyboard support mirrors the Android build: Tab cycles
+ * focus, arrow keys change tabs, Enter/Space activate.
  */
 
 #include <SDL.h>
@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "core/pit_gfx.h"
+#include "core/pit_ingest.h"
 #include "core/pit_patch_data.h"
 #include "core/pit_patcher.h"
 #include "core/pit_png.h"
@@ -901,6 +902,32 @@ static int set_default_output(char *out_path, size_t out_size, const char *input
     return 1;
 }
 
+/*
+ * Fills out with "<dir-of-output>/generated" so the exported data sits next to
+ * the prepared copy. A bare file name has no directory, so the folder is placed
+ * beside it in the working directory.
+ */
+static void output_export_dir(char *out, size_t out_size, const char *output_path)
+{
+    const char *sep = NULL;
+    size_t len = strlen(output_path);
+    size_t i;
+
+    for (i = 0; i < len; i++) {
+        if (output_path[i] == '/' || output_path[i] == '\\') {
+            sep = output_path + i;
+        }
+    }
+    if (sep && (size_t)(sep - output_path) + 1u + sizeof("generated") <= out_size) {
+        size_t n = (size_t)(sep - output_path);
+
+        memcpy(out, output_path, n);
+        memcpy(out + n, "generated", sizeof("generated"));
+    } else {
+        snprintf(out, out_size, "generated");
+    }
+}
+
 /* ------------------------------------------------------------------- logging */
 
 static void log_add(log_level level, const char *text)
@@ -963,6 +990,18 @@ static int patch_worker(void *ctx)
     } else {
         log_add(LOG_ERROR, pit_patch_result_text(result));
     }
+    if (result == PIT_PATCH_OK) {
+        char export_dir[512];
+
+        output_export_dir(export_dir, sizeof(export_dir), app.output_path);
+        if (pit_ingest_run(app.input_path, export_dir, &info, on_patch_log,
+                           NULL) != 0) {
+            log_add(LOG_WARN,
+                    "Generated data export failed; the copy is still valid.");
+        } else {
+            log_add(LOG_OK, "Generated data exported.");
+        }
+    }
     app.fraction = 1.0;
     SDL_UnlockMutex(app.lock);
     return 0;
@@ -1016,7 +1055,7 @@ static int browse_file(char *out, size_t out_size, int save)
     static const char filter[] =
         "Nintendo DS ROM (*.nds;*.dsi)\0*.nds;*.dsi\0"
         "All files (*.*)\0*.*\0\0";
-    const char *title = save ? "Save patched ROM" : "Choose source ROM";
+    const char *title = save ? "Save prepared copy" : "Choose source ROM";
     OPENFILENAMEA ofn;
 
     memset(&ofn, 0, sizeof(ofn));
@@ -1080,8 +1119,8 @@ static void draw_header(pit_image *img)
 
     /* Title with a 1px shadow. */
     draw_text(img, MARGIN + 1, 11 + 1, PIT_ARGB(160, 0x00, 0x00, 0x08),
-              "PiT PATCHER", 3);
-    draw_text(img, MARGIN, 10, C_TEXT_HI, "PiT PATCHER", 3);
+              "PiT LAUNCHER", 3);
+    draw_text(img, MARGIN, 10, C_TEXT_HI, "PiT LAUNCHER", 3);
     draw_text(img, MARGIN + 2, 30, C_ACCENT, "DECOMP ROM WORKSHOP", 1);
 
     /* Version chip, right aligned. */
@@ -1133,7 +1172,7 @@ static void draw_chip(pit_image *img, int x, int y, int w, int h,
 
 static void draw_footer(pit_image *img)
 {
-    const char *tag = "(57%)";
+    const char *tag = "YOUR ROM";
 
     fill_rect(img, 0, FOOTER_Y - 2, UI_W, 1, C_EDGE_SOFT);
     draw_text(img, MARGIN, FOOTER_Y, C_DIM,
@@ -1154,7 +1193,7 @@ static void draw_fields(pit_image *img)
     for (i = 0; i < 2; i++) {
         const char *value = (i == 0)
                                 ? (app.input_path[0] ? app.input_path : "CHOOSE EUR ROM")
-                                : (app.output_path[0] ? app.output_path : "PATCHED OUT");
+                                : (app.output_path[0] ? app.output_path : "PREPARED COPY");
         int editing = (app.editing == i + 1);
         int fy = FIELD_Y0 + i * FIELD_DY;
 
@@ -1192,7 +1231,7 @@ static void draw_patch_tab(pit_image *img)
               app.hard_mode ? C_AMBER : C_DIM,
               app.hard_mode ? "MODS: HARD MODE" : "MODS: NONE", 1);
     {
-        const char *keys = "TAB FOCUS  ENTER PATCH  ESC QUIT";
+        const char *keys = "TAB FOCUS  ENTER INGEST  ESC QUIT";
 
         draw_text(img, UI_W - MARGIN - text_width(keys, 1), MODS_Y, C_DIM,
                   keys, 1);
@@ -1310,11 +1349,11 @@ static void draw_mods_tab(pit_image *img)
         }
     } else {
         draw_text(img, MODS_CARD_X + 12, CHIP_Y0, C_DIM,
-                  "OFF: THE PATCH ONLY VERIFIES AND PREPARES YOUR", 1);
+                  "OFF: THE LAUNCHER VERIFIES YOUR EUR ROM AND", 1);
         draw_text(img, MODS_CARD_X + 12, CHIP_Y0 + LINE_H, C_DIM,
-                  "EUR COPY - NO MOD IS APPLIED. TAP THE TOGGLE TO", 1);
+                  "PASSES IT TO THE DECOMP - NO MOD IS APPLIED.", 1);
         draw_text(img, MODS_CARD_X + 12, CHIP_Y0 + 2 * LINE_H, C_DIM,
-                  "ENABLE HARD MODE, THEN PATCH.", 1);
+                  "TAP THE TOGGLE FOR HARD MODE, THEN INGEST.", 1);
     }
 
     draw_text(img, MARGIN, MODS_HINT_Y, C_DIM,
@@ -1326,18 +1365,20 @@ static void draw_mods_tab(pit_image *img)
 static void draw_about_tab(pit_image *img)
 {
     static const char *lines[] = {
-        "THIS PATCHER WORKS WITH YOUR OWN EUR COPY OF",
-        "MARIO & LUIGI: PARTNERS IN TIME. IT VERIFIES THE",
-        "ROM BY SHA-1, FINDS ITS STAT TABLE, AND WRITES A",
-        "ROM FOR THE DECOMPILATION PROJECT.",
+        "THIS LAUNCHER WORKS WITH YOUR OWN EUR COPY OF",
+        "MARIO & LUIGI: PARTNERS IN TIME ('ARMP'). IT",
+        "VERIFIES THE ROM BY SHA-1 AND HEADER CRC-16,",
+        "THEN PASSES YOUR CARTRIDGE TO THE DECOMP.",
         "",
-        "THE PROJECT IS ONLY ABOUT 57% RECONSTRUCTED, SO",
-        "THE RESULT MAY NOT BOOT NATIVELY ON A CONSOLE OR",
-        "EMULATOR YET - WE TAKE THE CHANCE ANYWAY.",
+        "THE GAME, ITS ASSETS AND ITS AUDIO STAY YOURS.",
         "",
-        "HARD MODE IS AN OPTIONAL DATA MOD (MODS TAB) THAT",
-        "RAISES ENEMY STATS TO MAKE THE GAME HARDER. IT IS",
-        "NOT REQUIRED TO USE THIS TOOL.",
+        "PARTNERS IN TIME IS A DECOMPILATION, NOT A",
+        "REBUILD: THE SOURCE RE-CREATES THE GAME FROM",
+        "YOUR ROM'S OWN DATA. NO NINTENDO CONTENT IS",
+        "SHIPPED, EXTRACTED OR COMMITTED HERE.",
+        "",
+        "HARD MODE IS AN OPTIONAL DATA MOD (MODS TAB)",
+        "THAT RAISES ENEMY STATS. IT IS OFF BY DEFAULT.",
     };
     int i;
 
@@ -1345,7 +1386,7 @@ static void draw_about_tab(pit_image *img)
 
     draw_text(img, ABOUT_CARD_X + 12, ABOUT_CARD_Y + 9, C_ACCENT, "ABOUT", 1);
     {
-        const char *tag = "PIT PATCHER";
+        const char *tag = "PIT LAUNCHER";
 
         draw_text(img, ABOUT_CARD_X + ABOUT_CARD_W - 12 - text_width(tag, 1),
                   ABOUT_CARD_Y + 9, C_DIM, tag, 1);
@@ -1423,7 +1464,7 @@ static void render(void)
  * tab's browse buttons and its primary action. */
 static void setup_buttons(void)
 {
-    static const char *tab_label[TAB_COUNT] = { "PATCH", "MODS", "ABOUT" };
+    static const char *tab_label[TAB_COUNT] = { "ROM", "MODS", "ABOUT" };
     int tab;
     int i = 0;
 
@@ -1472,7 +1513,7 @@ static void setup_buttons(void)
     app.buttons[i].y = PATCH_Y;
     app.buttons[i].w = PATCH_W;
     app.buttons[i].h = PATCH_H;
-    app.buttons[i].label = "PATCH";
+    app.buttons[i].label = "INGEST";
     app.buttons[i].enabled = 1;
     i++;
 
@@ -1693,7 +1734,7 @@ static void activate(button_id id)
             app.hard_mode = !app.hard_mode;
             set_focus(FOCUS_TOGGLE);
             log_add(LOG_INFO, app.hard_mode ? "Hard Mode ON: enemy stats are tuned."
-                                            : "Hard Mode OFF: prepare only.");
+                                            : "Hard Mode OFF: the copy is prepared without mods.");
         }
         break;
     case BTN_BROWSE_IN:
@@ -1778,6 +1819,9 @@ static void dump_ascii(int step_x, int step_y)
 
 static int parse_tab_arg(const char *text)
 {
+    if (strcmp(text, "ROM") == 0) {
+        return TAB_PATCH;
+    }
     if (strcmp(text, "MODS") == 0) {
         return TAB_MODS;
     }
@@ -1793,7 +1837,7 @@ static int parse_tab_arg(const char *text)
 static void usage_flags(const char *argv0)
 {
     fprintf(stderr,
-            "usage: %s [--screenshot out.png|--dump-ascii] [--tab PATCH|MODS|ABOUT]\n"
+            "usage: %s [--screenshot out.png|--dump-ascii] [--tab ROM|MODS|ABOUT]\n"
             "            [--mods on|off] [--hover N] [--simulate] [input.nds [output.nds]]\n",
             argv0);
 }
@@ -1856,7 +1900,7 @@ int pit_patcher_ui_main(int argc, char **argv)
     setup_buttons();
     /* Seeded here rather than in render(), so the headless screenshot and the
      * window show the same log. */
-    log_add(LOG_INFO, "Select a supported EUR ROM to begin.");
+    log_add(LOG_INFO, "Your EUR ROM is the only data source.");
     log_add(LOG_INFO, "Tab moves focus, Enter activates, Esc quits.");
     log_add(LOG_INFO, "Hard Mode is optional: open the MODS tab.");
 
@@ -1882,9 +1926,9 @@ int pit_patcher_ui_main(int argc, char **argv)
             log_add(LOG_INFO, "SHA-1 matches the supported EUR release.");
             log_add(LOG_INFO, "Title MARIO&LUIGI2 (ARMP) confirmed.");
             log_add(LOG_INFO, "Header CRC-16 D0BC verified.");
-            log_add(LOG_INFO, "Found BData/BDataMon.dat at 0x00340000.");
-            log_add(LOG_INFO, "Patched record 49/98...");
-            log_add(LOG_WARN, "Output directory is not writable; check permissions.");
+            log_add(LOG_INFO, "Banner decoded: 32x32 icon, EN title read.");
+            log_add(LOG_INFO, "sound_data.sdat: SDAT v1.0, 4 sections.");
+            log_add(LOG_WARN, "Simulated frame only; no ROM was touched.");
         }
         if (hover >= 0 && hover < app.button_count) {
             app.buttons[hover].hovered = 1;
@@ -1912,7 +1956,7 @@ int pit_patcher_ui_main(int argc, char **argv)
         return 1;
     }
 
-    app.window = SDL_CreateWindow("PiT Patcher - Decomp",
+    app.window = SDL_CreateWindow("PiT Launcher - Decomp",
                                   SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                   UI_W * 2, UI_H * 2, SDL_WINDOW_RESIZABLE);
     app.renderer = app.window ? SDL_CreateRenderer(app.window, -1, 0) : NULL;

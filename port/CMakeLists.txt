@@ -27,6 +27,7 @@ FetchContent_MakeAvailable(SDL2)
 add_library(pit_core STATIC
   src/core/pit_archive.c
   src/core/pit_gfx.c
+  src/core/pit_ingest.c
   src/core/pit_nds_banner.c
   src/core/pit_patch_data.h
   src/core/pit_patcher.c
