@@ -412,4 +412,58 @@ public final class Patcher {
         }
         return p;
     }
+
+    /**
+     * Raised when a stream is not exactly one cartridge long.
+     *
+     * <p>Reading into a single exactly-sized buffer detects a wrong length
+     * before the bytes reach {@link #run}, so the count has to travel with the
+     * failure instead of being reported by the patcher.
+     */
+    public static final class WrongSize extends Exception {
+        private static final long serialVersionUID = 1L;
+        /** Bytes actually present; for a larger stream this is a lower bound. */
+        public final int found;
+
+        WrongSize(int found) {
+            this.found = found;
+        }
+    }
+
+    /**
+     * Reads a cartridge into one exactly-sized buffer.
+     *
+     * <p>Deliberately not built through a growable stream: filling one 64 MiB
+     * cartridge that way needs a 64 MiB staging buffer plus a 64 MiB copy out of
+     * it, which on a phone is often the difference between working and an
+     * {@link OutOfMemoryError}. The buffer is allocated once, at its final
+     * size, and filled in place.
+     *
+     * @return the cartridge bytes
+     * @throws WrongSize if the stream is not exactly {@link PatchData#ROM_SIZE}
+     *         bytes, carrying the size actually found
+     * @throws java.io.IOException if the stream fails
+     */
+    public static byte[] readCartridge(java.io.InputStream in) throws java.io.IOException,
+            WrongSize {
+        byte[] rom = new byte[PatchData.ROM_SIZE];
+        int total = 0;
+
+        while (total < rom.length) {
+            int n = in.read(rom, total, rom.length - total);
+
+            if (n < 0) {
+                break;
+            }
+            total += n;
+        }
+        /* Short means truncated; a byte still available means too large. */
+        if (total != rom.length) {
+            throw new WrongSize(total);
+        }
+        if (in.read() >= 0) {
+            throw new WrongSize(rom.length + 1);
+        }
+        return rom;
+    }
 }

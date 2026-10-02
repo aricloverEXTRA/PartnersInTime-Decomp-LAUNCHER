@@ -91,6 +91,11 @@ profile without clicking through the UI:
 | `--mod <id>` | select a profile by its declared `id`, preferring it over the built-in row |
 | `--mods-dir <dir>` | read profiles from `<dir>` instead of `mods\` |
 | `--list-mods` | print the profiles that would load, then exit |
+| `--in-place` | patch through one buffer instead of two, as the Android app must |
+
+`--in-place` is a testing aid, not something you normally need: it reproduces
+the memory behaviour of the Android app on a desktop JVM so both can be checked
+against each other.
 
 ## What you need
 

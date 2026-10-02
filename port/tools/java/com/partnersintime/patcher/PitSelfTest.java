@@ -10,13 +10,13 @@ package com.partnersintime.patcher;
  * output as the C build, which is how a silent drift between the two would be
  * caught.
  *
- * <p>Usage: {@code PitSelfTest [--no-mods] [--mods-dir <dir>] [--mod <id>]
- * <rom.nds> <out.nds>}
+ * <p>Usage: {@code PitSelfTest [--no-mods] [--in-place] [--mods-dir <dir>]
+ * [--mod <id>] <rom.nds> <out.nds>}
  */
 public final class PitSelfTest {
 
     private static final String USAGE =
-            "usage: PitSelfTest [--no-mods] [--mods-dir <dir>] [--mod <id>] "
+            "usage: PitSelfTest [--no-mods] [--in-place] [--mods-dir <dir>] [--mod <id>] "
                     + "<rom.nds> <out.nds>";
 
     private PitSelfTest() {
@@ -27,9 +27,12 @@ public final class PitSelfTest {
         String modsDir = "mods";
         String modId = null;
         boolean listRequested = false;
+        boolean inPlace = false;
         while (args.length > 0 && args[0].startsWith("--")) {
             if (args[0].equals("--no-mods")) {
                 applyPlan = false;
+            } else if (args[0].equals("--in-place")) {
+                inPlace = true;
             } else if (args[0].equals("--list-mods")) {
                 /*
                  * Recorded rather than acted on, so "--mods-dir" is still
@@ -79,7 +82,15 @@ public final class PitSelfTest {
         }
 
         byte[] rom = readAll(args[0]);
-        byte[] out = new byte[rom.length];
+        /*
+         * The Android app hands Patcher.run the same array twice, because a
+         * 64 MiB cartridge cannot afford a second buffer on a phone. That is
+         * only sound because Patcher.run verifies size, SHA-1, header and the
+         * NitroFS tables before it copies, and afterwards works solely on the
+         * destination. --in-place exercises that path here so the assumption is
+         * tested rather than assumed.
+         */
+        byte[] out = inPlace ? rom : new byte[rom.length];
 
         Patcher.Result result = Patcher.run(rom, out, applyPlan, profile,
                 new Patcher.Listener() {

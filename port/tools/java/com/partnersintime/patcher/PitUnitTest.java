@@ -683,7 +683,93 @@ public final class PitUnitTest {
         check("bare rom no sdat", !bare.sdatPresent);
     }
 
-    public static void main(String[] args) {
+    /**
+     * The Android app reads into one exactly-sized buffer so a 64 MiB cartridge
+     * does not need 128 MiB of heap. That makes the size check load-bearing, so
+     * the boundaries are pinned here rather than only on a device.
+     */
+    private static void testReadCartridge() throws Exception {
+        int size = PatchData.ROM_SIZE;
+
+        byte[] exact = new byte[size];
+        for (int i = 0; i < size; i += 4096) {
+            exact[i] = (byte) i;
+        }
+        byte[] read = Patcher.readCartridge(new java.io.ByteArrayInputStream(exact));
+        checkEq("exact size accepted", read.length, size);
+        check("exact size content", java.util.Arrays.equals(exact, read));
+        check("no staging copy left behind", read != exact);
+
+        checkEq("one byte short reports found", wrongSize(size - 1), size - 1);
+        checkEq("empty reports found", wrongSize(0), 0);
+        checkEq("one byte long reports found", wrongSize(size + 1L), size + 1L);
+        checkEq("endless stream reports found", wrongSize(-1L), size + 1L);
+
+        /* A stream that dribbles one byte at a time must still fill the buffer. */
+        byte[] dribbled = new byte[size];
+        check("dribbled stream fills",
+                Patcher.readCartridge(new SlowStream(dribbled)).length == size);
+    }
+
+    /**
+     * @param length bytes to offer, or -1 for a stream that never ends
+     * @return the size reported by the failure, or -1 if none was reported
+     */
+    private static long wrongSize(long length) {
+        java.io.InputStream in;
+        if (length < 0) {
+            in = new EndlessStream();
+        } else {
+            in = new java.io.ByteArrayInputStream(new byte[(int) length]);
+        }
+        try {
+            Patcher.readCartridge(in);
+            return -1;
+        } catch (Patcher.WrongSize e) {
+            return e.found;
+        } catch (java.io.IOException e) {
+            return -1;
+        }
+    }
+
+    /** Hands out one byte per read, the way a slow provider stream can. */
+    private static final class SlowStream extends java.io.InputStream {
+        private final byte[] data;
+        private int at;
+
+        SlowStream(byte[] data) {
+            this.data = data;
+        }
+
+        @Override
+        public int read() {
+            return at < data.length ? data[at++] & 0xFF : -1;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) {
+            if (at >= data.length) {
+                return -1;
+            }
+            b[off] = data[at++];
+            return 1;
+        }
+    }
+
+    /** Never ends, so the length check cannot rely on a short read. */
+    private static final class EndlessStream extends java.io.InputStream {
+        @Override
+        public int read() {
+            return 0;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) {
+            return len;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
         testScaleRounding();
         testClamping();
         testPlanIntegrity();
@@ -700,6 +786,7 @@ public final class PitUnitTest {
         testProfileFields();
         testShippedProfileMatchesOracle();
         testProbe();
+        testReadCartridge();
 
         System.out.println(checks + " checks, " + failures.size() + " failed");
         for (String failure : failures) {

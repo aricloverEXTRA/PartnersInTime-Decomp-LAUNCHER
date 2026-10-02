@@ -189,6 +189,78 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         super.onDestroy();
     }
 
+    /*
+     * Android can kill a backgrounded process at any time, which would otherwise
+     * silently discard the two picked documents and the selected mod. A desktop
+     * window is not destroyed behind the user's back, so this has no counterpart
+     * to mirror on Windows; saving the small amount of state that describes the
+     * session is the platform-native answer.
+     *
+     * A URI is only restored if the provider still grants access, so a document
+     * whose grant did not persist is reported rather than failing later with a
+     * SecurityException mid-patch.
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+
+        out.putInt("tab", view.state().tab);
+        out.putInt("mod", view.state().modIndex);
+        out.putString("source", source == null ? null : source.toString());
+        out.putString("destination", destination == null ? null
+                : destination.toString());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle saved) {
+        super.onRestoreInstanceState(saved);
+
+        view.setTab(saved.getInt("tab", PatcherView.TAB_PATCH));
+        view.setModIndex(saved.getInt("mod", 0));
+
+        Uri restoredSource = restoreUri(saved.getString("source"));
+        Uri restoredOutput = restoreUri(saved.getString("destination"));
+        source = restoredSource;
+        destination = restoredOutput;
+        view.setPaths(restoredSource == null ? "" : displayName(restoredSource),
+                restoredOutput == null ? "" : displayName(restoredOutput));
+
+        if (restoredSource != null) {
+            view.addLog(LOG_INFO, "Restored source: " + displayName(restoredSource));
+        }
+        if (restoredOutput != null) {
+            view.addLog(LOG_INFO, "Restored output: " + displayName(restoredOutput));
+        }
+        if (source == null || destination == null) {
+            view.addLog(LOG_WARN, "Android reclaimed one of the picked files. "
+                    + "Choose it again to patch.");
+        }
+    }
+
+    /**
+     * Rebuilds a URI and confirms the app may still read it.
+     *
+     * <p>{@code takePersistableUriPermission} is requested when a document is
+     * first chosen so the grant outlives the process. Providers are not required
+     * to support that, so a provider that refuses simply leaves the URI
+     * unrestored and the user picks the file again.
+     */
+    private Uri restoreUri(String text) {
+        if (text == null) {
+            return null;
+        }
+        Uri uri = Uri.parse(text);
+
+        try {
+            getContentResolver().openInputStream(uri).close();
+        } catch (Exception e) {
+            view.addLog(LOG_WARN, "Cannot reopen " + displayName(uri)
+                    + "; choose it again.");
+            return null;
+        }
+        return uri;
+    }
+
     @Override
     public void onBrowseSource() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -219,6 +291,24 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         }
         Uri uri = data.getData();
         String name = displayName(uri);
+
+        /*
+         * Hold the grant across a process death. Without this, a document
+         * chosen now becomes unreadable if Android reclaims the activity while
+         * the app is in the background, and the user has to pick it again.
+         * Providers are not obliged to support it, so failure here is not
+         * fatal; onSaveInstanceState simply will not restore that document.
+         */
+        try {
+            int flags = data.getFlags()
+                    & (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                       | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            if (flags != 0) {
+                getContentResolver().takePersistableUriPermission(uri, flags);
+            }
+        } catch (Exception e) {
+            /* Not every provider offers a persistable grant; carry on. */
+        }
 
         if (request == REQ_OPEN_ROM) {
             source = uri;
@@ -316,39 +406,29 @@ public final class MainActivity extends Activity implements PatcherView.Callback
             public void run() {
                 Patcher.Result result = new Patcher.Result();
                 byte[] rom = null;
-                byte[] out = null;
                 int romLen = 0;
+                Patcher.Listener listener = new Patcher.Listener() {
+                    @Override
+                    public void onStep(int step, String message, double fraction) {
+                        progress(step, message, fraction);
+                    }
+                };
 
                 try {
-                    rom = readAll(source, PatchData.ROM_SIZE + 1);
+                    rom = readRom(source);
                     if (rom == null) {
                         result.code = Patcher.ERR_READ;
                     } else {
                         romLen = rom.length;
-                        out = new byte[rom.length];
-                        Patcher.Listener listener = new Patcher.Listener() {
-                            @Override
-                            public void onStep(int step, String message, double fraction) {
-                                progress(step, message, fraction);
-                            }
-                        };
-                        result = Patcher.run(rom, out, applyPlan, profile, listener);
-                        if (result.code != Patcher.OK) {
-                            out = null;
-                        }
-                    }
 
-                    if (result.code == Patcher.OK) {
-                        log(LOG_INFO, "Writing output...");
-                        if (!writeAll(destination, out)) {
-                            result.code = Patcher.ERR_WRITE;
-                            out = null;
-                        }
-                    }
-
-                    if (result.code == Patcher.OK) {
-                        log(LOG_INFO, "Probing your ROM for the decomp...");
+                        /*
+                         * The probe describes the cartridge that was handed in,
+                         * so it runs before the patch. The patch rewrites the
+                         * header CRC-16, which the probe reports, and reading it
+                         * afterwards would describe the output instead.
+                         */
                         Patcher.Probe probe = Patcher.probe(rom);
+
                         if (probe.bannerTitleOk) {
                             log(LOG_INFO, String.format(
                                     "Banner: v%d, CRC-16 %04X, title \"%s\".",
@@ -366,20 +446,50 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                         } else {
                             log(LOG_INFO, "sound_data.sdat: not found in this ROM.");
                         }
+
+                        /*
+                         * Patched in place. Patcher.run verifies the size,
+                         * SHA-1, header and NitroFS tables before it copies, and
+                         * then works only on the destination buffer, so handing
+                         * it the same array twice is a self-copy and halves the
+                         * memory a 64 MiB cartridge needs.
+                         */
+                        result = Patcher.run(rom, rom, applyPlan, profile, listener);
+                        if (result.code != Patcher.OK) {
+                            rom = null;
+                        }
+                    }
+
+                    if (result.code == Patcher.OK) {
+                        log(LOG_INFO, "Writing output...");
+                        if (!writeAll(destination, rom)) {
+                            result.code = Patcher.ERR_WRITE;
+                            rom = null;
+                        }
                     }
                 } catch (OutOfMemoryError e) {
                     /*
-                     * A 128 MiB working set needs a large heap. Saying so is far
+                     * One 64 MiB buffer is all a patch needs. Saying so is far
                      * more useful than a crash dialog, and the device is
                      * otherwise fine.
                      */
                     result.code = Patcher.ERR_READ;
-                    log(LOG_WARN, "Not enough memory: 128 MiB is required.");
-                    out = null;
+                    log(LOG_WARN, "Not enough memory: 64 MiB is required.");
+                    rom = null;
+                } catch (Patcher.WrongSize e) {
+                    /*
+                     * A single buffer means the wrong size is detected before
+                     * Patcher.run ever sees the bytes, so the count it would
+                     * normally report has to be reported here.
+                     */
+                    result.code = Patcher.ERR_SIZE;
+                    log(LOG_WARN, "Expected " + PatchData.ROM_SIZE
+                            + " bytes, found " + e.found + ".");
+                    rom = null;
                 } catch (Exception e) {
                     result.code = Patcher.ERR_READ;
                     log(LOG_ERROR, e.getClass().getSimpleName() + ": " + e.getMessage());
-                    out = null;
+                    rom = null;
                 } finally {
                     rom = null;
                 }
@@ -388,7 +498,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                     return;
                 }
                 if (result.code == Patcher.OK) {
-                    out = null;
+                    rom = null;
                     if (applyPlan) {
                         log(LOG_OK, String.format(
                                 "Patched %d records, %d fields. Header CRC-16 %04X.",
@@ -404,26 +514,24 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         }, "pit-patch").start();
     }
 
-    /** Reads the document, refusing anything larger than the expected cartridge. */
-    private byte[] readAll(Uri uri, int limit) throws Exception {
+    /**
+     * Opens the picked document and reads it into a single buffer.
+     *
+     * <p>The sizing rule lives in {@link Patcher#readCartridge} so it can be
+     * tested on a desktop JVM; this method only deals with Storage Access
+     * Framework plumbing and leaves the stream's lifetime to the caller.
+     *
+     * @return the cartridge bytes, or null if the document could not be opened
+     * @throws Patcher.WrongSize if the document is not exactly one
+     *         supported-size cartridge, carrying the size actually found
+     */
+    private byte[] readRom(Uri uri) throws Exception {
         java.io.InputStream in = getContentResolver().openInputStream(uri);
         if (in == null) {
             return null;
         }
         try {
-            java.io.ByteArrayOutputStream buffer =
-                    new java.io.ByteArrayOutputStream(PatchData.ROM_SIZE);
-            byte[] chunk = new byte[65536];
-            int total = 0;
-            int n;
-            while ((n = in.read(chunk)) > 0) {
-                total += n;
-                if (total > limit) {
-                    return null;
-                }
-                buffer.write(chunk, 0, n);
-            }
-            return buffer.toByteArray();
+            return Patcher.readCartridge(in);
         } finally {
             in.close();
         }

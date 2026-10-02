@@ -216,6 +216,41 @@ class-path checks run without a device. `MainActivity` adds Storage Access
 Framework file access and a worker thread; the app declares no storage
 permission, so it only ever touches the two documents the user picked.
 
+### Android-only behaviour
+
+A phone is not a desktop, and the launcher does not imitate one where the
+difference is a real constraint.
+
+**Memory.** A cartridge is 64 MiB. The C build can afford a separate input and
+output buffer, but a phone heap cannot hold two of them plus a 480x320 UI, so
+`MainActivity` reads the ROM into one exact-sized array and hands the same array
+to `Patcher.run` as both arguments. That is sound only because `Patcher.run`
+verifies size, SHA-1, header CRC and the NitroFS tables *before* it writes
+anything, and afterwards touches only the destination. `tools/check_c_java_parity.py`
+proves the two modes agree byte for byte on a real cartridge, and
+`PitSelfTest --in-place` exposes the same path on the desktop JVM.
+
+Reading the bytes is `Patcher.readCartridge`, which allocates once at the final
+size and fills in place rather than growing through a stream. Because the length
+is settled before `Patcher.run` is reached, the wrong-length case throws
+`Patcher.WrongSize` so the byte count survives; otherwise a wrong file would be
+reported as an unreadable ROM instead of a wrongly sized one. `PitUnitTest`
+covers the boundaries, including a stream that hands out one byte per read.
+
+**Process death.** Android may reclaim a backgrounded process at any time,
+which would silently drop the two picked documents and the selected mod; a
+desktop window is not destroyed behind the user's back, so there is nothing to
+mirror on Windows. `onSaveInstanceState` records the tab, mod index and both
+URIs, and `onRestoreInstanceState` puts them back. Documents are picked with
+`takePersistableUriPermission` so the grant outlives the process. A provider
+that does not support persistable grants, or whose grant was revoked, is
+reported and the affected file is simply re-picked rather than failing later
+with a `SecurityException` mid-patch.
+
+Both behaviours live in `MainActivity`, apart from `readCartridge`. `Patcher.java`,
+`NitroFs.java`, `ModProfile.java` and `Sha1.java` stay free of `android.*`
+imports, which is why the patcher itself remains testable on a desktop JVM.
+
 `PatcherView` draws the 480x320 interface by hand: the same three-tab design the
 C build renders, with text blitted from the same generated 8x8 font the C build
 uses. `tools/check_ui_parity.py` makes the two agree by failing if any shared

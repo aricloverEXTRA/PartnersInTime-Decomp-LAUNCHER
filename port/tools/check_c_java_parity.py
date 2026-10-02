@@ -251,6 +251,25 @@ def main() -> int:
                                    port, work):
             return 1
 
+        print()
+        print("checking that patching in place matches patching out of place...")
+        # The Android app hands Patcher.run one buffer for both arguments, since
+        # a phone cannot spare a second 64 MiB array. That is only sound because
+        # the run verifies the cartridge before it writes, so the two modes must
+        # produce identical bytes.
+        java_separate = work / "java_separate.nds"
+        java_shared = work / "java_shared.nds"
+        run(java_base + [str(args.rom), str(java_separate)], port)
+        run(java_base + ["--in-place", str(args.rom), str(java_shared)], port)
+        separate_hash = sha1_file(java_separate)
+        shared_hash = sha1_file(java_shared)
+        print(f"separate buffers {separate_hash}")
+        print(f"one buffer       {shared_hash}")
+        if separate_hash != shared_hash:
+            print("MISMATCH (in-place): patching in place changed the output")
+            return 1
+        print("EXACT MATCH (in-place): both produced identical ROMs")
+
         return 0
 
 
