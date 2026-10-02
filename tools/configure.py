@@ -99,8 +99,13 @@ WINE = args.wine if platform.system != "windows" else ""
 DSD = str(args.dsd or os.path.join('.', str(root_path / f"dsd{EXE}")))
 OBJDIFF = os.path.join('.', str(root_path / f"objdiff-cli{EXE}"))
 CC = os.path.join('.', str(mwcc_path / "mwccarm.exe"))
+AS = os.path.join('.', str(mwcc_path / "mwasmarm.exe"))
 LD = os.path.join('.', str(mwcc_path / "mwldarm.exe"))
 PYTHON = sys.executable
+
+# Standalone assembler target. The MWCC assembler takes an ARM family name rather
+# than a device name; arm946e is ARMv5TE, which is the level that provides CLZ.
+ASM_PROCESSOR = "arm5TE"
 
 
 class Project:
@@ -243,6 +248,18 @@ def main():
         )
         n.newline()
 
+        # Routines that were hand-written assembly in the original NITROSDK are
+        # kept as .s units. They cannot be reproduced from C by MWCC 1.2, and per
+        # docs/PROGRESS.md their bytes are counted as ASM, never as C/C++.
+        asm_cmd = (
+            f'{WINE} "{AS}" -c -little -processor {ASM_PROCESSOR} -o $out $in'
+        )
+        n.rule(
+            name="asm",
+            command=asm_cmd,
+        )
+        n.newline()
+
         n.rule(
             name="lcf",
             command=(f"{PYTHON} tools/apply_linker_aliases.py --dsd {DSD} --config $config_path"
@@ -318,6 +335,7 @@ def main():
         add_extract_build(n, project)
         add_delink_and_lcf_builds(n, project)
         add_mwcc_builds(n, project, mwcc_implicit)
+        add_asm_builds(n, project)
         # Compile unlinked drafts as well when checking source health. They stay
         # out of the exact ROM until explicitly enabled in linked_sources.txt.
         n.build(outputs="objects", rule="phony", inputs=project.source_object_files())
@@ -472,6 +490,17 @@ def add_mwcc_builds(n: ninja_syntax.Writer, project: Project, mwcc_implicit: lis
         n.newline()
 
 
+def add_asm_builds(n: ninja_syntax.Writer, project: Project):
+    for source_file in get_asm_files([src_path, libs_path]):
+        src_obj_path = project.game_build / source_file
+        n.build(
+            inputs=str(source_file),
+            rule="asm",
+            outputs=str(src_obj_path.with_suffix(".o")),
+        )
+        n.newline()
+
+
 def get_c_cpp_files(dirs: list[Path]):
     for dir in dirs:
         for root, _, files in os.walk(dir):
@@ -481,12 +510,25 @@ def get_c_cpp_files(dirs: list[Path]):
                     yield root / file
 
 
+def get_asm_files(dirs: list[Path]):
+    for dir in dirs:
+        for root, _, files in os.walk(dir):
+            root = Path(root)
+            for file in files:
+                if is_asm(file):
+                    yield root / file
+
+
 def is_cpp(name: str):
     return Path(name).suffix in [".cpp"]
 
 
 def is_c(name: str):
     return Path(name).suffix in [".c"]
+
+
+def is_asm(name: str):
+    return Path(name).suffix in [".s"]
 
 
 def add_delink_and_lcf_builds(n: ninja_syntax.Writer, project: Project):

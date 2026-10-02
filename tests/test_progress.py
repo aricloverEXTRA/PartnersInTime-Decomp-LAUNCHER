@@ -81,6 +81,6 @@ def test_linked_init_code_counts_but_constructor_data_and_drafts_do_not(tmp_path
         "\ndraft.cpp:\n"
         "    .init start:0x2010 end:0x2020\n"
     )
-    code, covered = progress.parse_delinks(delinks, {"startup.cpp"})
+    code, covered, _asm = progress.parse_delinks(delinks, {"startup.cpp"})
     assert code == [progress.Range(0x1000, 0x1040), progress.Range(0x2000, 0x2040)]
     assert [(item.start, item.end) for item in covered] == [(0x1000, 0x1010), (0x2000, 0x2010)]

@@ -1,4 +1,4 @@
-func_01ff8000 kind:function(arm,size=0x58) addr:0x01ff8000
+OS_IntrMain kind:function(arm,size=0x58) addr:0x01ff8000
 func_01ff8058 kind:function(arm,size=0x154) addr:0x01ff8058
 func_01ff81ac kind:function(arm,size=0xb0) addr:0x01ff81ac
 func_01ff825c kind:function(arm,size=0x14) addr:0x01ff825c

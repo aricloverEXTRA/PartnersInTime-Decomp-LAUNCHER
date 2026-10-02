@@ -5,10 +5,10 @@
   "totals": {
     "mapped_code_bytes": 1563700,
     "matching_c_bytes": 890748,
-    "symbolic_asm_bytes": 4040,
-    "remaining_bytes": 668912,
+    "symbolic_asm_bytes": 4128,
+    "remaining_bytes": 668824,
     "matching_c_percent": 56.9641,
-    "source_coverage_percent": 57.2225,
+    "source_coverage_percent": 57.2281,
     "arm7_symbolic_bytes": 43852
   },
   "components": [
@@ -26,8 +26,8 @@
       "label": "ARM9 ITCM",
       "mapped_code_bytes": 1940,
       "matching_c_bytes": 1112,
-      "symbolic_asm_bytes": 0,
-      "remaining_bytes": 828,
+      "symbolic_asm_bytes": 88,
+      "remaining_bytes": 740,
       "function_symbols": 13
     },
     {

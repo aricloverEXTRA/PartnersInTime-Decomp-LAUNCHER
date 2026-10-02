@@ -54,7 +54,7 @@ def main() -> None:
 
     replacements: dict[str, Path] = {}
     for source_file in source_files:
-        if source_file.suffix not in {".c", ".cpp"}:
+        if source_file.suffix not in {".c", ".cpp", ".s"}:
             raise ValueError(f"Unsupported linked source file: {source_file}")
         if not source_file.is_file():
             raise FileNotFoundError(f"Linked source file does not exist: {source_file}")

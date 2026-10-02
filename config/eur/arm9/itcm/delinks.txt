@@ -2,6 +2,9 @@
     .bss        start:0x01ff87a0 end:0x01ff87a0 kind:bss align:32
 
 
+src/nitro/os/os_intr_itcm.s:
+    .text start:0x01ff8000 end:0x01ff8058
+
 src/nitro/os/os_reset_itcm.c:
     .text start:0x01ff8270 end:0x01ff84c0
 

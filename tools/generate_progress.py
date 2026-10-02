@@ -143,10 +143,11 @@ def parse_linked_sources(version: str) -> set[str]:
 
 def parse_delinks(
     path: Path, matching_sources: set[str]
-) -> tuple[list[Range], list[CoverageRange]]:
+) -> tuple[list[Range], list[CoverageRange], list[CoverageRange]]:
     code_ranges: list[Range] = []
     code_sections: set[str] = set()
-    source_ranges: list[CoverageRange] = []
+    c_ranges: list[CoverageRange] = []
+    asm_ranges: list[CoverageRange] = []
     source: str | None = None
 
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -166,23 +167,34 @@ def parse_delinks(
             continue
 
         source_path = ROOT / source
+        suffix = Path(source).suffix
         if (
             section.group("section") in code_sections
-            and Path(source).suffix in {".c", ".cpp"}
             and source.replace("\\", "/") in matching_sources
             and source_path.is_file()
         ):
-            source_ranges.append(
-                CoverageRange(
-                    item.start,
-                    item.end,
-                    STATUS_C,
-                    source_path.stem,
-                    source,
+            if suffix in {".c", ".cpp"}:
+                c_ranges.append(
+                    CoverageRange(
+                        item.start,
+                        item.end,
+                        STATUS_C,
+                        source_path.stem,
+                        source,
+                    )
                 )
-            )
+            elif suffix == ".s":
+                asm_ranges.append(
+                    CoverageRange(
+                        item.start,
+                        item.end,
+                        STATUS_ASM,
+                        source_path.stem,
+                        source,
+                    )
+                )
 
-    return code_ranges, source_ranges
+    return code_ranges, c_ranges, asm_ranges
 
 
 def parse_functions(path: Path) -> list[tuple[str, Range]]:
@@ -332,11 +344,12 @@ def collect_progress(version: str = "eur") -> tuple[list[Component], int]:
         missing = delinks if not delinks.is_file() else symbols
         if not delinks.is_file() or not symbols.is_file():
             raise FileNotFoundError(f"missing progress input: {missing}")
-        code_ranges, c_ranges = parse_delinks(delinks, matching_sources)
+        code_ranges, c_ranges, linked_asm_ranges = parse_delinks(delinks, matching_sources)
         if not code_ranges:
             continue
         c_ranges = clip_coverage(c_ranges, code_ranges)
-        asm_ranges = clip_coverage(patch_ranges.get(key, []), code_ranges)
+        patch_asm_ranges = clip_coverage(patch_ranges.get(key, []), code_ranges)
+        asm_ranges = clip_coverage(linked_asm_ranges + patch_asm_ranges, code_ranges)
         functions = parse_functions(symbols)
         units = build_units(code_ranges, functions, c_ranges, asm_ranges)
         component = Component(
