@@ -17,6 +17,8 @@
 
 #include <stddef.h>
 
+#include "pit_mods.h"
+
 typedef enum {
     PIT_PATCH_OK = 0,
     PIT_PATCH_ERR_ARGS,
@@ -66,6 +68,21 @@ const char *pit_patch_result_text(pit_patch_result result);
 pit_patch_result pit_patcher_run(const char *input_path, const char *output_path,
                                  int apply_plan, pit_patch_log_fn log,
                                  void *ctx, pit_patch_info *info);
+
+/*
+ * The same pipeline with an explicit mod profile. A NULL profile means the
+ * built-in plan, which is what pit_patcher_run passes, so the shipped default
+ * path is unchanged and still produces the same bytes.
+ *
+ * Only the transform set differs between the two. Record layout, the field
+ * offsets and the scaling rule all stay owned by the launcher, so a profile can
+ * choose multipliers but cannot write outside the stat record.
+ */
+pit_patch_result pit_patcher_run_ex(const char *input_path,
+                                    const char *output_path, int apply_plan,
+                                    const pit_mod_profile *profile,
+                                    pit_patch_log_fn log, void *ctx,
+                                    pit_patch_info *info);
 
 /*
  * CRC-16/MODBUS over the first 0x15E header bytes, as this release stores it at

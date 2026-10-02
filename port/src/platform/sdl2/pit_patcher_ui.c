@@ -28,6 +28,7 @@
 
 #include "core/pit_gfx.h"
 #include "core/pit_ingest.h"
+#include "core/pit_mods.h"
 #include "core/pit_patch_data.h"
 #include "core/pit_patcher.h"
 #include "core/pit_png.h"
@@ -122,17 +123,31 @@
 #define MODS_CARD_X   MARGIN
 #define MODS_CARD_Y   84
 #define MODS_CARD_W   (UI_W - 2 * MARGIN)
-#define MODS_CARD_H   160
+/*
+ * Tall enough for the four list rows, the description, and two rows of chips:
+ *   84 + 20 header + 4*17 list + 4 gap + 2*10 desc + 2 gap + 1 divider
+ *     + 8 + 2*28 chips = 280, leaving room under the card's own bottom edge.
+ */
+#define MODS_CARD_H   196
 #define MODS_HINT_Y   (MODS_CARD_Y + MODS_CARD_H + 10)
-#define TOGGLE_X      (MODS_CARD_X + 16)
-#define TOGGLE_Y      112
-#define TOGGLE_W      32
-#define TOGGLE_H      14
-#define TOGGLE_KNOB_W 12
-#define MODS_NAME_X   (TOGGLE_X + TOGGLE_W + 8)
-#define MODS_NAME_Y   (TOGGLE_Y - 4)
-#define MODS_DESC_Y   130
-#define MODS_DIV_Y    152
+
+/*
+ * The MODS list. One row per profile, including the two built-in rows the
+ * launcher always offers: "no mod" and Hard Mode. Rows are a fixed height so
+ * the visible count is arithmetic rather than measured, and a longer list
+ * scrolls around the selection instead of resizing the card.
+ */
+#define MOD_ROW_H       15
+#define MOD_ROW_GAP     2
+#define MOD_ROW_X      (MODS_CARD_X + 12)
+#define MOD_ROW_W      (MODS_CARD_W - 24)
+#define MOD_ROWS_SHOWN 4
+#define MOD_LIST_Y     (MODS_CARD_Y + 26)
+#define MOD_NAME_X     (MOD_ROW_X + 20)
+#define MOD_COUNT_X    (MOD_ROW_X + MOD_ROW_W - 6)
+
+#define MODS_DESC_Y    (MOD_LIST_Y + MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4)
+#define MODS_DIV_Y     (MODS_DESC_Y + 2 * LINE_H + 2)
 
 #define CHIP_H        24
 #define CHIP_GAP      12
@@ -768,33 +783,7 @@ static void draw_tab(pit_image *img, ui_button *btn, int selected)
     }
 }
 
-/* MODS toggle switch: a small gold/steel track with a sliding knob. */
-static void draw_toggle(pit_image *img, ui_button *btn, int on)
-{
-    int radius = btn->h / 2;
-    int hot = btn->hovered || btn->focus_sel;
-    int knob = TOGGLE_KNOB_W;
-    int kx;
-    int ky = btn->y + (btn->h - knob) / 2;
 
-    if (on) {
-        fill_round_gradient(img, btn->x, btn->y, btn->w, btn->h, radius,
-                            hot ? C_AMBER_HI : C_AMBER, C_ACCENT);
-    } else {
-        fill_round_gradient(img, btn->x, btn->y, btn->w, btn->h, radius,
-                            C_PANEL_LO, C_WELL);
-    }
-    stroke_round_rect(img, btn->x, btn->y, btn->w, btn->h, radius,
-                      (hot || on) ? C_AMBER_HI : C_EDGE_SOFT);
-
-    /* Pressing an ON toggle nudges the knob inward; an OFF toggle pops up. */
-    if (btn->pressed) {
-        ky += on ? 1 : -1;
-    }
-    kx = on ? btn->x + btn->w - knob - 2 : btn->x + 2;
-    fill_round_gradient(img, kx, ky, knob, knob, 3, C_TEXT_HI, C_TEXT);
-    stroke_round_rect(img, kx, ky, knob, knob, 3, C_EDGE);
-}
 
 static void draw_progress(pit_image *img, int x, int y, int w, int h,
                           double fraction)
@@ -871,7 +860,13 @@ typedef struct {
     char input_path[512];
     char output_path[512];
     int  tab;            /* tab_id */
-    int  hard_mode;      /* the optional data mod is on */
+    /*
+     * Index into app.mods.profiles, where 0 is always the "no mod" entry and 1
+     * is the built-in Hard Mode. Profiles are discovered at startup so the tab
+     * can list whatever the user has actually dropped into mods/.
+     */
+    int  mod_index;
+    pit_mod_catalog mods;
     int  editing;        /* 0 = none, 1 = input, 2 = output */
     int  focus;          /* FOCUS_* slot */
     ui_button buttons[BTN_COUNT];
@@ -884,15 +879,104 @@ static ui_app app;
 static pit_image canvas_storage;
 
 /*
- * Fills out_path with "<input>.hardmode.nds" while the mod is on, or
- * "<input>.prepared.nds" without it. Length is checked rather than relying on
- * snprintf to truncate, so a long path reports instead of silently producing a
- * name that collides with another ROM.
+ * The MODS tab always offers two built-in rows and then whatever was found:
+ *
+ *   0  no mod             the copy is verified and left alone
+ *   1  Hard Mode          the compiled-in plan, also shipped as mods/hard_mode
+ *   2+ discovered         mods/<id>/profile.json
+ *
+ * Rows 0 and 1 need no profile.json: the launcher already knows the built-in
+ * plan, and passing a NULL profile selects exactly that plan.
+ */
+static int mod_row_count(void)
+{
+    return 2 + (int)app.mods.count;
+}
+
+static int mod_row_is_discovered(int row)
+{
+    return row >= 2;
+}
+
+static const char *mod_row_name(int row)
+{
+    if (row == 0) {
+        return "NO MOD";
+    }
+    if (row == 1) {
+        return PIT_PLAN_NAME;
+    }
+    if (mod_row_is_discovered(row)) {
+        return app.mods.profiles[row - 2].name;
+    }
+    return "";
+}
+
+static const char *mod_row_id(int row)
+{
+    if (row == 0) {
+        return "";
+    }
+    if (row == 1) {
+        return PIT_PLAN_ID;
+    }
+    if (mod_row_is_discovered(row)) {
+        return app.mods.profiles[row - 2].id;
+    }
+    return "";
+}
+
+/* NULL means "use the built-in plan", which also covers the no-mod row. */
+static const pit_mod_profile *mod_row_profile(int row)
+{
+    if (mod_row_is_discovered(row)) {
+        return &app.mods.profiles[row - 2];
+    }
+    return NULL;
+}
+
+/*
+ * Fills out_path with "<input>.prepared.nds" and, for a selected mod,
+ * "<input>.<mod>.nds", so two different mods applied to the same cartridge
+ * cannot overwrite one another. The two suffixes this launcher shipped with are
+ * unchanged: ".prepared.nds" with no mod and ".hardmode.nds" for Hard Mode.
+ *
+ * A discovered profile's id is free-form text, so it is reduced to
+ * filename-safe characters before it reaches the path; a profile with no usable
+ * id falls back to ".prepared.nds" rather than producing a name the user cannot
+ * type. Length is checked rather than relying on snprintf to truncate, so a long
+ * path reports instead of silently producing a name that collides with another
+ * ROM.
  */
 static int set_default_output(char *out_path, size_t out_size, const char *input_path)
 {
+    const char *id = mod_row_id(app.mod_index);
+    char suffix[64];
+    char safe[32];
+    size_t used = 0;
     size_t len = strlen(input_path);
-    const char *suffix = app.hard_mode ? ".hardmode.nds" : ".prepared.nds";
+    size_t i;
+
+    if (id[0] == '\0') {
+        snprintf(suffix, sizeof(suffix), ".prepared.nds");
+    } else if (strcmp(id, PIT_PLAN_ID) == 0 && app.mod_index == 1) {
+        snprintf(suffix, sizeof(suffix), ".hardmode.nds");
+    } else {
+        for (i = 0; id[i] != '\0' && used + 1 < sizeof(safe); i++) {
+            char ch = id[i];
+
+            if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+                || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-') {
+                safe[used++] = ch;
+            }
+        }
+        safe[used] = '\0';
+        if (used == 0) {
+            snprintf(suffix, sizeof(suffix), ".prepared.nds");
+        } else {
+            snprintf(suffix, sizeof(suffix), ".%s.nds", safe);
+        }
+    }
 
     if (len + strlen(suffix) + 1 > out_size) {
         return 0;
@@ -971,8 +1055,14 @@ static int patch_worker(void *ctx)
     (void)ctx;
     memset(&info, 0, sizeof(info));
 
-    result = pit_patcher_run(app.input_path, app.output_path, app.hard_mode,
-                             on_patch_log, NULL, &info);
+    /*
+     * Row 0 applies no mod at all; every other row passes its profile, with the
+     * built-in Hard Mode row passing NULL so it keeps using the compiled plan.
+     */
+    result = pit_patcher_run_ex(app.input_path, app.output_path,
+                                app.mod_index != 0,
+                                mod_row_profile(app.mod_index),
+                                on_patch_log, NULL, &info);
 
     SDL_LockMutex(app.lock);
     app.result = result;
@@ -1227,9 +1317,14 @@ static void draw_patch_tab(pit_image *img)
     draw_fields(img);
 
     /* Plan status on the left, keyboard hints on the right. */
-    draw_text(img, MARGIN, MODS_Y,
-              app.hard_mode ? C_AMBER : C_DIM,
-              app.hard_mode ? "MODS: HARD MODE" : "MODS: NONE", 1);
+    {
+        char mods[48];
+
+        snprintf(mods, sizeof(mods), "MODS: %s",
+                 app.mod_index == 0 ? "NONE" : mod_row_name(app.mod_index));
+        draw_text(img, MARGIN, MODS_Y,
+                  app.mod_index == 0 ? C_DIM : C_AMBER, mods, 1);
+    }
     {
         const char *keys = "TAB FOCUS  ENTER INGEST  ESC QUIT";
 
@@ -1298,62 +1393,141 @@ static void draw_patch_tab(pit_image *img)
     }
 }
 
-/* MODS tab: the optional data mods. Each mod is a card with a toggle; when the
- * toggle is on the tuned stats show as chips, like the old plan card did. */
+/*
+ * MODS tab: every profile discovered under mods/, plus the two built-in rows.
+ * Selecting a row shows that profile's own transforms, so the chips describe
+ * whatever is actually selected rather than always describing Hard Mode.
+ */
 static void draw_mods_tab(pit_image *img)
 {
-    const char *state = app.hard_mode ? "ON" : "OFF";
-    ui_button *toggle = &app.buttons[BTN_TOGGLE - BTN_TAB_PATCH];
+    ui_button *list = &app.buttons[BTN_TOGGLE - BTN_TAB_PATCH];
+    const pit_mod_profile *profile = mod_row_profile(app.mod_index);
+    int rows = mod_row_count();
+    int first = app.mod_index - MOD_ROWS_SHOWN / 2;
     int i;
+
+    if (first > rows - MOD_ROWS_SHOWN) {
+        first = rows - MOD_ROWS_SHOWN;
+    }
+    if (first < 0) {
+        first = 0;
+    }
 
     draw_card(img, MODS_CARD_X, MODS_CARD_Y, MODS_CARD_W, MODS_CARD_H, 4);
 
     draw_text(img, MODS_CARD_X + 12, MODS_CARD_Y + 9, C_ACCENT, "MODS", 1);
     {
-        const char *tag = "OPTIONAL";
+        char tag[32];
 
+        snprintf(tag, sizeof(tag), "%d FOUND", (int)app.mods.count);
         draw_text(img, MODS_CARD_X + MODS_CARD_W - 12 - text_width(tag, 1),
                   MODS_CARD_Y + 9, C_DIM, tag, 1);
     }
     fill_rect(img, MODS_CARD_X + 12, MODS_CARD_Y + 20, MODS_CARD_W - 24, 1,
               C_EDGE_SOFT);
 
-    /* Toggle row. */
-    draw_toggle(img, toggle, app.hard_mode);
-    draw_text(img, MODS_NAME_X, MODS_NAME_Y, C_TEXT_HI, "HARD MODE", 1);
-    {
-        int sw = text_width(state, 1);
+    /* The list rows. One button covers the whole block; the row hit test in
+     * hit_test decides which row was pressed. */
+    fill_round_rect(img, MOD_ROW_X - 4, MOD_LIST_Y - 2, MOD_ROW_W + 8,
+                    MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4, 3,
+                    C_PANEL_LO);
+    stroke_round_rect(img, MOD_ROW_X - 4, MOD_LIST_Y - 2, MOD_ROW_W + 8,
+                      MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4, 3,
+                      list->hovered || list->focus_sel ? C_AMBER_HI : C_EDGE_SOFT);
 
-        draw_text(img, MODS_CARD_X + MODS_CARD_W - 12 - sw,
-                  TOGGLE_Y + TOGGLE_H / 2 - 4,
-                  app.hard_mode ? C_AMBER : C_DIM, state, 1);
+    for (i = 0; i < MOD_ROWS_SHOWN && first + i < rows; i++) {
+        int row = first + i;
+        int ry = MOD_LIST_Y + i * (MOD_ROW_H + MOD_ROW_GAP);
+        int selected = (row == app.mod_index);
+        const char *name = mod_row_name(row);
+        pit_pixel fg = selected ? C_TEXT_HI : C_TEXT;
+
+        if (selected) {
+            fill_round_rect(img, MOD_ROW_X - 2, ry, MOD_ROW_W, MOD_ROW_H, 2,
+                            C_PANEL_HI);
+            fill_rect(img, MOD_ROW_X, ry + 3, 2, MOD_ROW_H - 6, C_AMBER);
+        }
+        /* A mark shows the shipped profile is the same data as the built-in row. */
+        if (mod_row_is_discovered(row) &&
+            strcmp(mod_row_id(row), PIT_PLAN_ID) == 0) {
+            draw_text(img, MOD_ROW_X + 2, ry + 4, C_AMBER, "*", 1);
+        }
+        draw_text_clipped(img, MOD_NAME_X, ry + 4, fg, name, 1,
+                          MOD_ROW_W - 34);
+        {
+            char count[16];
+
+            snprintf(count, sizeof(count), "%d/%d", row + 1, rows);
+            draw_text(img, MOD_COUNT_X - text_width(count, 1), ry + 4,
+                      selected ? C_AMBER : C_DIM, count, 1);
+        }
     }
 
-    draw_text(img, MODS_CARD_X + 12, MODS_DESC_Y, C_DIM,
-              "A DATA MOD THAT RAISES ENEMY STATS: HP, POW, DEF", 1);
-    draw_text(img, MODS_CARD_X + 12, MODS_DESC_Y + LINE_H, C_DIM,
-              "AND SPD UP, PLUS 75% MORE EXPERIENCE AND COINS.", 1);
+    /* Description of the selected row. */
+    if (app.mod_index == 0) {
+        draw_text(img, MOD_ROW_X, MODS_DESC_Y, C_DIM,
+                  "NO MOD: YOUR EUR ROM IS VERIFIED AND PASSED", 1);
+        draw_text(img, MOD_ROW_X, MODS_DESC_Y + LINE_H, C_DIM,
+                  "TO THE DECOMP UNCHANGED. THIS IS THE DEFAULT.", 1);
+    } else if (profile != NULL && profile->description[0] != '\0') {
+        draw_text_clipped(img, MOD_ROW_X, MODS_DESC_Y, C_DIM,
+                          profile->description, 1, MOD_ROW_W);
+    } else {
+        draw_text(img, MOD_ROW_X, MODS_DESC_Y, C_DIM,
+                  "A DATA MOD THAT RAISES ENEMY STATS AND PAYS", 1);
+        draw_text(img, MOD_ROW_X, MODS_DESC_Y + LINE_H, C_DIM,
+                  "IT BACK WITH MORE EXPERIENCE AND COINS.", 1);
+    }
 
     fill_rect(img, MODS_CARD_X + 12, MODS_DIV_Y, MODS_CARD_W - 24, 1,
               C_EDGE_SOFT);
 
-    if (app.hard_mode) {
-        for (i = 0; i < (int)PIT_TRANSFORM_COUNT; i++) {
-            const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
-            int col = i % CHIP_COUNT;
-            int row = i / CHIP_COUNT;
-            int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
-            int cy = CHIP_Y0 + row * CHIP_DY;
+    /* Chips for the selection: the profile's own transforms when discovered,
+     * the compiled-in table otherwise. */
+    if (app.mod_index != 0) {
+        const pit_mod_profile *shown = profile;
+        int count = 0;
+        int cap = (int)(sizeof(PIT_PLAN_TRANSFORMS) / sizeof(PIT_PLAN_TRANSFORMS[0]));
 
-            draw_chip(img, cx, cy, CHIP_W, CHIP_H, t->label, t->scale_text, 1);
+        if (shown != NULL) {
+            count = (int)shown->transform_count;
+            if (count > cap) {
+                count = cap;
+            }
+            for (i = 0; i < count; i++) {
+                const pit_mod_transform *t = &shown->transforms[i];
+                char scale[24];
+                int col = i % CHIP_COUNT;
+                int row = i / CHIP_COUNT;
+                int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
+                int cy = CHIP_Y0 + row * CHIP_DY;
+
+                if (t->den == 1u) {
+                    snprintf(scale, sizeof(scale), "x%u", t->num);
+                } else {
+                    snprintf(scale, sizeof(scale), "x%u/%u", t->num, t->den);
+                }
+                draw_chip(img, cx, cy, CHIP_W, CHIP_H, t->field, scale,
+                          t->enabled != 0);
+            }
+        } else {
+            for (i = 0; i < cap; i++) {
+                const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
+                int col = i % CHIP_COUNT;
+                int row = i / CHIP_COUNT;
+                int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
+                int cy = CHIP_Y0 + row * CHIP_DY;
+
+                draw_chip(img, cx, cy, CHIP_W, CHIP_H, t->label, t->scale_text, 1);
+            }
         }
     } else {
-        draw_text(img, MODS_CARD_X + 12, CHIP_Y0, C_DIM,
+        draw_text(img, MOD_ROW_X, CHIP_Y0, C_DIM,
                   "OFF: THE LAUNCHER VERIFIES YOUR EUR ROM AND", 1);
-        draw_text(img, MODS_CARD_X + 12, CHIP_Y0 + LINE_H, C_DIM,
+        draw_text(img, MOD_ROW_X, CHIP_Y0 + LINE_H, C_DIM,
                   "PASSES IT TO THE DECOMP - NO MOD IS APPLIED.", 1);
-        draw_text(img, MODS_CARD_X + 12, CHIP_Y0 + 2 * LINE_H, C_DIM,
-                  "TAP THE TOGGLE FOR HARD MODE, THEN INGEST.", 1);
+        draw_text(img, MOD_ROW_X, CHIP_Y0 + 2 * LINE_H, C_DIM,
+                  "PICK HARD MODE OR A PROFILE IN THE LIST, THEN INGEST.", 1);
     }
 
     draw_text(img, MARGIN, MODS_HINT_Y, C_DIM,
@@ -1482,10 +1656,10 @@ static void setup_buttons(void)
     }
 
     app.buttons[i].id = BTN_TOGGLE;
-    app.buttons[i].x = TOGGLE_X;
-    app.buttons[i].y = TOGGLE_Y;
-    app.buttons[i].w = TOGGLE_W;
-    app.buttons[i].h = TOGGLE_H;
+    app.buttons[i].x = MOD_ROW_X - 4;
+    app.buttons[i].y = MOD_LIST_Y - 2;
+    app.buttons[i].w = MOD_ROW_W + 8;
+    app.buttons[i].h = MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4;
     app.buttons[i].label = "";
     app.buttons[i].enabled = 1;
     i++;
@@ -1614,6 +1788,9 @@ static void handle_text_input(const char *text)
     }
 }
 
+static void select_mod(int row);
+static int mod_row_at(int my);
+
 static void handle_key(SDL_Keycode key, Uint16 mod)
 {
     char *buffer = editing_buffer();
@@ -1658,10 +1835,21 @@ static void handle_key(SDL_Keycode key, Uint16 mod)
         focus_cycle(backward);
         break;
     }
+    case SDLK_UP:
+    case SDLK_DOWN:
+        if (!buffer && app.tab == TAB_MODS) {
+            select_mod(app.mod_index + (key == SDLK_DOWN ? 1 : -1));
+        }
+        break;
     case SDLK_LEFT:
     case SDLK_RIGHT:
         if (!buffer) {
-            switch_tab(app.tab + (key == SDLK_RIGHT ? 1 : -1));
+            if (app.tab == TAB_MODS && app.focus == FOCUS_TOGGLE) {
+                /* Left/right steps through the list when the list has focus. */
+                select_mod(app.mod_index + (key == SDLK_RIGHT ? 1 : -1));
+            } else {
+                switch_tab(app.tab + (key == SDLK_RIGHT ? 1 : -1));
+            }
         }
         break;
     case SDLK_BACKSPACE:
@@ -1721,6 +1909,58 @@ static int field_hit(int mx, int my, int *field)
     return 0;
 }
 
+/* Notes the selection and refreshes the default output name to match. */
+static void select_mod(int row)
+{
+    int rows = mod_row_count();
+    const char *previous_id = mod_row_id(app.mod_index);
+    char selection[128];
+
+    if (row < 0) {
+        row = 0;
+    }
+    if (row >= rows) {
+        row = rows - 1;
+    }
+    if (row == app.mod_index) {
+        return;
+    }
+    app.mod_index = row;
+    if (app.input_path[0] != '\0') {
+        set_default_output(app.output_path, sizeof(app.output_path),
+                           app.input_path);
+    }
+    if (app.mod_index == 0) {
+        log_add(LOG_INFO, "Mod OFF: the copy is prepared without mods.");
+    } else if (strcmp(previous_id, mod_row_id(app.mod_index)) != 0) {
+        snprintf(selection, sizeof(selection), "Mod selected: %s.",
+                 mod_row_name(app.mod_index));
+        log_add(LOG_INFO, selection);
+    }
+}
+
+/* Maps a click inside the list block to a visible row. */
+static int mod_row_at(int my)
+{
+    int rows = mod_row_count();
+    int first = app.mod_index - MOD_ROWS_SHOWN / 2;
+
+    if (first > rows - MOD_ROWS_SHOWN) {
+        first = rows - MOD_ROWS_SHOWN;
+    }
+    if (first < 0) {
+        first = 0;
+    }
+    if (my < MOD_LIST_Y || my >= MOD_LIST_Y + MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP)) {
+        return -1;
+    }
+    {
+        int row = first + (my - MOD_LIST_Y) / (MOD_ROW_H + MOD_ROW_GAP);
+
+        return (row < rows) ? row : -1;
+    }
+}
+
 static void activate(button_id id)
 {
     switch (id) {
@@ -1731,10 +1971,7 @@ static void activate(button_id id)
         break;
     case BTN_TOGGLE:
         if (app.tab == TAB_MODS) {
-            app.hard_mode = !app.hard_mode;
             set_focus(FOCUS_TOGGLE);
-            log_add(LOG_INFO, app.hard_mode ? "Hard Mode ON: enemy stats are tuned."
-                                            : "Hard Mode OFF: the copy is prepared without mods.");
         }
         break;
     case BTN_BROWSE_IN:
@@ -1838,7 +2075,8 @@ static void usage_flags(const char *argv0)
 {
     fprintf(stderr,
             "usage: %s [--screenshot out.png|--dump-ascii] [--tab ROM|MODS|ABOUT]\n"
-            "            [--mods on|off] [--hover N] [--simulate] [input.nds [output.nds]]\n",
+            "            [--mod <id>|none] [--mods-dir <dir>] [--mods on|off]\n"
+            "            [--hover N] [--simulate] [input.nds [output.nds]]\n",
             argv0);
 }
 
@@ -1854,6 +2092,8 @@ int pit_patcher_ui_main(int argc, char **argv)
     int dump = 0;
     int hover = -1;
     int positional = 0;
+    const char *mod_id = NULL;
+    const char *mods_dir = "mods";
     int i;
 
     for (i = 1; i < argc; i++) {
@@ -1871,7 +2111,12 @@ int pit_patcher_ui_main(int argc, char **argv)
         } else if (strcmp(arg, "--mods") == 0 && i + 1 < argc) {
             const char *flag = argv[++i];
 
-            app.hard_mode = (strcmp(flag, "on") == 0 || strcmp(flag, "1") == 0);
+            /* Kept for screenshots and scripted runs: on picks Hard Mode. */
+            app.mod_index = (strcmp(flag, "on") == 0 || strcmp(flag, "1") == 0) ? 1 : 0;
+        } else if (strcmp(arg, "--mod") == 0 && i + 1 < argc) {
+            mod_id = argv[++i];
+        } else if (strcmp(arg, "--mods-dir") == 0 && i + 1 < argc) {
+            mods_dir = argv[++i];
         } else if (strcmp(arg, "--hover") == 0 && i + 1 < argc) {
             hover = atoi(argv[++i]);
         } else if (arg[0] == '-') {
@@ -1894,6 +2139,46 @@ int pit_patcher_ui_main(int argc, char **argv)
     if (!rgba) {
         fprintf(stderr, "out of memory\n");
         return 1;
+    }
+
+    /*
+     * Discovered after the arguments, because --mods-dir decides what is scanned:
+     * --mod then resolves an id against exactly the catalog the MODS tab lists.
+     */
+    {
+        char scan_error[256];
+        unsigned int skipped = 0;
+
+        if (pit_mods_scan(mods_dir, &app.mods, scan_error, sizeof(scan_error),
+                          &skipped) < 0) {
+            fprintf(stderr, "warning: %s: %s\n", mods_dir, scan_error);
+        }
+    }
+
+    if (mod_id) {
+        const pit_mod_profile *found;
+
+        if (strcmp(mod_id, "none") == 0) {
+            app.mod_index = 0;
+        } else {
+            found = pit_mods_find(&app.mods, mod_id);
+
+            if (found != NULL) {
+                /*
+                 * A profile declaring this id wins over the compiled-in plan, so
+                 * "--mod hard_mode" exercises the shipped profile when it is
+                 * present. The plan stays reachable through --mods on.
+                 */
+                app.mod_index = 2 + (int)(found - app.mods.profiles);
+            } else if (strcmp(mod_id, PIT_PLAN_ID) == 0) {
+                app.mod_index = 1;
+            } else {
+                fprintf(stderr, "no usable mod with id '%s' under %s\n", mod_id,
+                        mods_dir);
+                free(rgba);
+                return 2;
+            }
+        }
     }
 
     app.total_steps = PIT_PATCH_STEPS;
@@ -2058,6 +2343,17 @@ int pit_patcher_ui_main(int argc, char **argv)
                             activate(app.buttons[i].id);
                         }
                         app.buttons[i].pressed = 0;
+                    }
+                    /*
+                     * The list is one button, so a press has to be mapped back
+                     * to the row the pointer actually landed on.
+                     */
+                    if (app.tab == TAB_MODS) {
+                        int row = mod_row_at(mouse_y);
+
+                        if (row >= 0) {
+                            select_mod(row);
+                        }
                     }
                 }
                 break;

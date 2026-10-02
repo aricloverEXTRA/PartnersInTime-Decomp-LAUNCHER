@@ -157,6 +157,22 @@ try {
 
     Add-StoredEntry $apkStream 'classes.dex' `
         ([System.IO.File]::ReadAllBytes((Join-Path $dexDir 'classes.dex')))
+
+    # The shipped mod profiles ride along as plain assets. MainActivity copies
+    # each one into app-private storage on first run so the same mods/<id>
+    # directory layout works on Android and on the desktop launcher. Entry names
+    # use forward slashes and a fixed timestamp, so two builds of the same
+    # sources stay byte-identical.
+    $modsRoot = Join-Path (Split-Path $PSScriptRoot -Parent) 'mods'
+    if (Test-Path $modsRoot) {
+        foreach ($profile in Get-ChildItem $modsRoot -Recurse -Filter 'profile.json' -File |
+                Sort-Object FullName) {
+            $relative = $profile.FullName.Substring($modsRoot.Length + 1) -replace '\\', '/'
+
+            Add-StoredEntry $apkStream "assets/mods/$relative" `
+                ([System.IO.File]::ReadAllBytes($profile.FullName))
+        }
+    }
 } finally {
     $apkStream.Dispose()
 }

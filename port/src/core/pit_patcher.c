@@ -101,36 +101,86 @@ const char *pit_patch_result_text(pit_patch_result result)
 }
 
 /*
- * Applies one scale exactly.
- *
- * The plan stores scales as integer rationals, so this is half-up rounding on
- * integers with no floating point and no rounding-mode dependency. The Python
- * pipeline that produced the original profile export uses Decimal with
- * ROUND_HALF_UP, and all three agree because the rationals are the exact
- * decimal values (1.1 is 11/10, not the nearest double).
+ * One resolved transform, whichever source it came from. The built-in plan and a
+ * discovered profile are flattened into this so the record loop has a single
+ * code path and a single rounding rule: pit_mods_scale, which is exact half-up
+ * integer arithmetic on the rationals.
  */
-static unsigned int scale_value(unsigned int value, unsigned int num,
-                                unsigned int den, unsigned int min_value,
-                                unsigned int max_value)
-{
-    unsigned long long scaled =
-        ((unsigned long long)value * (unsigned long long)num +
-         (unsigned long long)(den / 2u)) / (unsigned long long)den;
+typedef struct {
+    const char *field;
+    unsigned int offset;   /* byte offset inside the record */
+    unsigned int num;
+    unsigned int den;
+    unsigned int min_value;
+    unsigned int max_value;
+} resolved_transform;
 
-    if (scaled < (unsigned long long)min_value) {
-        return min_value;
+/*
+ * Resolves transform field names against the launcher's own field table,
+ * dropping any the table does not know. A profile that names a field this
+ * release does not have is asking for something that cannot exist, so it is
+ * skipped; if nothing at all resolves the plan is refused rather than writing
+ * an untouched table and reporting it as patched.
+ */
+static unsigned int resolve_transforms(const pit_mod_profile *profile,
+                                       resolved_transform *out,
+                                       unsigned int capacity)
+{
+    unsigned int count = 0;
+    unsigned int i;
+
+    if (profile) {
+        for (i = 0; i < profile->transform_count && count < capacity; i++) {
+            const pit_mod_transform *t = &profile->transforms[i];
+            unsigned int field;
+
+            /* A disabled transform is shown in the MODS list but never applied. */
+            if (!t->enabled) {
+                continue;
+            }
+            for (field = 0; field < PIT_FIELD_COUNT; field++) {
+                if (strcmp(PIT_PLAN_FIELDS[field].name, t->field) == 0) {
+                    out[count].field = PIT_PLAN_FIELDS[field].name;
+                    out[count].offset = PIT_PLAN_FIELDS[field].offset;
+                    out[count].num = t->num;
+                    out[count].den = t->den;
+                    out[count].min_value = t->min_value;
+                    out[count].max_value = t->max_value;
+                    count++;
+                    break;
+                }
+            }
+        }
+        return count;
     }
-    if (scaled > (unsigned long long)max_value) {
-        return max_value;
+
+    for (i = 0; i < PIT_TRANSFORM_COUNT && count < capacity; i++) {
+        const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
+        unsigned int field;
+
+        for (field = 0; field < PIT_FIELD_COUNT; field++) {
+            if (strcmp(PIT_PLAN_FIELDS[field].name, t->field) == 0) {
+                out[count].field = PIT_PLAN_FIELDS[field].name;
+                out[count].offset = PIT_PLAN_FIELDS[field].offset;
+                out[count].num = t->num;
+                out[count].den = t->den;
+                out[count].min_value = t->min_value;
+                out[count].max_value = t->max_value;
+                count++;
+                break;
+            }
+        }
     }
-    return (unsigned int)scaled;
+    return count;
 }
 
 /* ----------------------------------------------------------------- pipeline */
 
-pit_patch_result pit_patcher_run(const char *input_path, const char *output_path,
-                                 int apply_plan, pit_patch_log_fn log,
-                                 void *ctx, pit_patch_info *info)
+pit_patch_result pit_patcher_run_ex(const char *input_path,
+                                    const char *output_path, int apply_plan,
+                                    const pit_mod_profile *profile,
+                                    pit_patch_log_fn log, void *ctx,
+                                    pit_patch_info *info)
 {
     unsigned char *patched = NULL;
     const unsigned char *data = NULL;
@@ -143,14 +193,24 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
     char actual[PIT_SHA1_HEX_LEN];
     unsigned int record;
     unsigned int i;
-    unsigned int field;
     unsigned int written = 0;
+    unsigned int transform_count = 0;
+    resolved_transform transforms[PIT_MOD_TRANSFORM_MAX];
 
     if (info) {
         memset(info, 0, sizeof(*info));
     }
     if (!input_path || !output_path) {
         return PIT_PATCH_ERR_ARGS;
+    }
+
+    if (apply_plan) {
+        transform_count = resolve_transforms(profile, transforms,
+                                             PIT_MOD_TRANSFORM_MAX);
+        if (transform_count == 0) {
+            log_step(log, ctx, 7, "No transform matched a known field...", 0.62);
+            return PIT_PATCH_ERR_PLAN;
+        }
     }
 
     /*
@@ -265,9 +325,13 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
     log_step(log, ctx, 6, message, 0.56);
 
     /* Step 7: make a private copy, then apply the plan if it is enabled. */
-    log_step(log, ctx, 7,
-             apply_plan ? "Applying plan to a copy..." :
-                          "Copying ROM; plan is OFF...", 0.62);
+    if (apply_plan) {
+        snprintf(message, sizeof(message), "Applying %s to a copy...",
+                 profile ? profile->name : PIT_PLAN_NAME);
+        log_step(log, ctx, 7, message, 0.62);
+    } else {
+        log_step(log, ctx, 7, "Copying ROM; plan is OFF...", 0.62);
+    }
     patched = (unsigned char *)malloc(size);
     if (!patched) {
         pit_rom_close(&rom);
@@ -282,25 +346,15 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
             size_t base = (size_t)info->target_offset +
                           (size_t)record * (size_t)PIT_RECORD_SIZE;
 
-            for (i = 0; i < PIT_TRANSFORM_COUNT; i++) {
-                const pit_plan_transform *t = &PIT_PLAN_TRANSFORMS[i];
-                unsigned int offset = PIT_RECORD_SIZE;
+            for (i = 0; i < transform_count; i++) {
+                const resolved_transform *t = &transforms[i];
                 unsigned int value;
                 unsigned int result_value;
 
-                for (field = 0; field < PIT_FIELD_COUNT; field++) {
-                    if (strcmp(PIT_PLAN_FIELDS[field].name, t->field) == 0) {
-                        offset = PIT_PLAN_FIELDS[field].offset;
-                        break;
-                    }
-                }
-                if (offset == PIT_RECORD_SIZE) {
-                    continue;
-                }
-                value = read_u16(patched + base + offset);
-                result_value = scale_value(value, t->num, t->den,
-                                           t->min_value, t->max_value);
-                write_u16(patched + base + offset, result_value);
+                value = read_u16(patched + base + t->offset);
+                result_value = pit_mods_scale(value, t->num, t->den,
+                                              t->min_value, t->max_value);
+                write_u16(patched + base + t->offset, result_value);
                 written++;
             }
 
@@ -313,7 +367,9 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
                                         (double)PIT_RECORD_COUNT));
             }
         }
-        log_step(log, ctx, 7, "All 98 records patched.", 0.86);
+        snprintf(message, sizeof(message), "All %u records patched.",
+                 (unsigned int)PIT_RECORD_COUNT);
+        log_step(log, ctx, 7, message, 0.86);
     } else {
         log_step(log, ctx, 7, "Plan skipped; the copy is unchanged.", 0.86);
     }
@@ -376,4 +432,13 @@ pit_patch_result pit_patcher_run(const char *input_path, const char *output_path
     free(patched);
     log_step(log, ctx, 9, "ROM verified; copy written.", 1.0);
     return PIT_PATCH_OK;
+}
+
+pit_patch_result pit_patcher_run(const char *input_path, const char *output_path,
+                                 int apply_plan, pit_patch_log_fn log,
+                                 void *ctx, pit_patch_info *info)
+{
+    /* A NULL profile selects the built-in plan, so this stays the shipped path. */
+    return pit_patcher_run_ex(input_path, output_path, apply_plan, NULL, log, ctx,
+                              info);
 }

@@ -22,6 +22,7 @@ public final class Patcher {
     public static final int ERR_TARGET = 7;
     public static final int ERR_TARGET_SIZE = 8;
     public static final int ERR_WRITE = 9;
+    public static final int ERR_PLAN = 10;
 
     private static final int HEADER_CRC_OFFSET = 0x15E;
     private static final int HEADER_CRC_SPAN = 0x15E;
@@ -54,6 +55,7 @@ public final class Patcher {
             case ERR_TARGET:        return "Target file is missing from this ROM's NitroFS.";
             case ERR_TARGET_SIZE:   return "Target file is not the expected record table.";
             case ERR_WRITE:         return "The copy could not be written.";
+            case ERR_PLAN:          return "That mod profile changes no field this launcher knows.";
             default:                return "Unknown error.";
         }
     }
@@ -132,6 +134,19 @@ public final class Patcher {
      * matching the C {@code --no-mods} path, so the data mod stays optional.
      */
     public static Result run(byte[] rom, byte[] out, boolean applyPlan, Listener listener) {
+        return run(rom, out, applyPlan, null, listener);
+    }
+
+    /**
+     * Runs the pipeline applying {@code profile} instead of the built-in plan.
+     * A null profile selects the built-in Hard Mode table, so the shipped path is
+     * unchanged. Transform names are resolved against PatchData.FIELD_NAMES at
+     * apply time: a profile that names a field the launcher does not own simply
+     * skips that transform, and a profile with no usable transform is refused
+     * rather than writing a copy that only looks patched.
+     */
+    public static Result run(byte[] rom, byte[] out, boolean applyPlan,
+                             ModProfile profile, Listener listener) {
         Result result = new Result();
 
         if (rom == null || out == null || out.length < rom.length) {
@@ -204,8 +219,58 @@ public final class Patcher {
                 PatchData.TARGET_PATH, targetOffset, PatchData.RECORD_COUNT,
                 PatchData.RECORD_SIZE), 0.58);
 
-        step(listener, 7, applyPlan ? "Applying plan to a copy..."
-                                    : "Copying ROM; plan is OFF...", 0.64);
+        /*
+         * Sized for the largest profile the reader accepts rather than for the
+         * built-in table, so resolving one cannot run out of room and silently
+         * drop the tail. In practice at most six can resolve: the reader refuses
+         * a repeated field and only six fields are known.
+         */
+        int capacity = profile == null ? PatchData.TRANSFORM_NUM.length
+                : ModProfile.MAX_TRANSFORMS;
+        int[] fieldOf = new int[capacity];
+        long[] numOf = new long[capacity];
+        long[] denOf = new long[capacity];
+        int[] minOf = new int[capacity];
+        int[] maxOf = new int[capacity];
+        int planCount = PatchData.TRANSFORM_NUM.length;
+
+        if (applyPlan) {
+            if (profile == null) {
+                for (int i = 0; i < planCount; i++) {
+                    fieldOf[i] = PatchData.TRANSFORM_FIELD[i];
+                    numOf[i] = PatchData.TRANSFORM_NUM[i];
+                    denOf[i] = PatchData.TRANSFORM_DEN[i];
+                    minOf[i] = PatchData.TRANSFORM_MIN[i];
+                    maxOf[i] = PatchData.TRANSFORM_MAX[i];
+                }
+            } else {
+                planCount = 0;
+                for (int i = 0; i < profile.transformCount; i++) {
+                    ModProfile.Transform t = profile.transforms[i];
+                    int field = ModProfile.fieldIndex(t.field);
+
+                    if (!t.enabled || field < 0) {
+                        continue;
+                    }
+                    fieldOf[planCount] = field;
+                    numOf[planCount] = t.num;
+                    denOf[planCount] = t.den;
+                    minOf[planCount] = t.minValue;
+                    maxOf[planCount] = t.maxValue;
+                    planCount++;
+                }
+                if (planCount == 0) {
+                    step(listener, 7, "No transform in this profile matches a known field...", 0.64);
+                    result.code = ERR_PLAN;
+                    return result;
+                }
+            }
+        }
+
+        step(listener, 7, applyPlan
+                ? "Applying " + (profile == null ? PatchData.PLAN_NAME : profile.name)
+                        + " to a copy..."
+                : "Copying ROM; plan is OFF...", 0.64);
         System.arraycopy(rom, 0, out, 0, rom.length);
 
         int written = 0;
@@ -214,14 +279,11 @@ public final class Patcher {
             for (int record = 0; record < PatchData.RECORD_COUNT; record++) {
                 int base = targetOffset + record * PatchData.RECORD_SIZE;
 
-                for (int t = 0; t < PatchData.TRANSFORM_NUM.length; t++) {
-                    int field = PatchData.TRANSFORM_FIELD[t];
-
-                    readU16(out, base + PatchData.FIELD_OFFSETS[field], value);
-                    int scaled = scaleValue(value[0],
-                            PatchData.TRANSFORM_NUM[t], PatchData.TRANSFORM_DEN[t],
-                            PatchData.TRANSFORM_MIN[t], PatchData.TRANSFORM_MAX[t]);
-                    writeU16(out, base + PatchData.FIELD_OFFSETS[field], scaled);
+                for (int t = 0; t < planCount; t++) {
+                    readU16(out, base + PatchData.FIELD_OFFSETS[fieldOf[t]], value);
+                    int scaled = scaleValue(value[0], (int) numOf[t], (int) denOf[t],
+                            minOf[t], maxOf[t]);
+                    writeU16(out, base + PatchData.FIELD_OFFSETS[fieldOf[t]], scaled);
                     written++;
                 }
 

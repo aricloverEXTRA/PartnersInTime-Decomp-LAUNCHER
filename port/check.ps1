@@ -159,7 +159,8 @@ if (-not $SkipJava) {
         # Only the Android-independent classes: MainActivity and PatcherView
         # need android.* and cannot run on a desktop JVM.
         $pkg = Join-Path $portRoot 'android/app/src/main/java/com/partnersintime/patcher'
-        $srcs = @('PatchData.java', 'Patcher.java', 'NitroFs.java', 'Sha1.java') |
+        $srcs = @('PatchData.java', 'Patcher.java', 'NitroFs.java', 'Sha1.java',
+                  'ModProfile.java') |
             ForEach-Object { Join-Path $pkg $_ }
         $srcs += Join-Path $portRoot 'tools/java/com/partnersintime/patcher/PitSelfTest.java'
         $srcs += Join-Path $portRoot 'tools/java/com/partnersintime/patcher/PitUnitTest.java'

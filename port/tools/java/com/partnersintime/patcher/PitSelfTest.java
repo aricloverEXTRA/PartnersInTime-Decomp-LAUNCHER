@@ -10,35 +10,79 @@ package com.partnersintime.patcher;
  * output as the C build, which is how a silent drift between the two would be
  * caught.
  *
- * <p>Usage: {@code PitSelfTest [--no-mods] <rom.nds> <out.nds>}
+ * <p>Usage: {@code PitSelfTest [--no-mods] [--mods-dir <dir>] [--mod <id>]
+ * <rom.nds> <out.nds>}
  */
 public final class PitSelfTest {
+
+    private static final String USAGE =
+            "usage: PitSelfTest [--no-mods] [--mods-dir <dir>] [--mod <id>] "
+                    + "<rom.nds> <out.nds>";
 
     private PitSelfTest() {
     }
 
     public static void main(String[] args) throws Exception {
         boolean applyPlan = true;
+        String modsDir = "mods";
+        String modId = null;
+        boolean listRequested = false;
         while (args.length > 0 && args[0].startsWith("--")) {
             if (args[0].equals("--no-mods")) {
                 applyPlan = false;
+            } else if (args[0].equals("--list-mods")) {
+                /*
+                 * Recorded rather than acted on, so "--mods-dir" is still
+                 * honoured when it follows this flag, as in the C launcher.
+                 */
+                listRequested = true;
+            } else if (args[0].equals("--mods-dir") && args.length > 1) {
+                modsDir = args[1];
+                args = drop(args, 2);
+                continue;
+            } else if (args[0].equals("--mod") && args.length > 1) {
+                modId = args[1];
+                args = drop(args, 2);
+                continue;
             } else {
-                System.err.println("usage: PitSelfTest [--no-mods] <rom.nds> <out.nds>");
+                System.err.println(USAGE);
                 System.exit(2);
             }
-            String[] rest = new String[args.length - 1];
-            System.arraycopy(args, 1, rest, 0, rest.length);
-            args = rest;
+            args = drop(args, 1);
+        }
+        if (listRequested) {
+            System.exit(listMods(new java.io.File(modsDir)));
         }
         if (args.length != 2) {
-            System.err.println("usage: PitSelfTest [--no-mods] <rom.nds> <out.nds>");
+            System.err.println(USAGE);
             System.exit(2);
+        }
+
+        ModProfile profile = null;
+        if (modId != null) {
+            ModProfile.Catalog catalog = ModProfile.Catalog.scan(new java.io.File(modsDir));
+
+            profile = catalog.find(modId);
+            if (profile == null) {
+                System.err.println("no usable mod with id '" + modId + "' under " + modsDir);
+                if (catalog.count() > 0) {
+                    StringBuilder available = new StringBuilder("available:");
+                    for (int i = 0; i < catalog.count(); i++) {
+                        available.append(' ').append(catalog.at(i).id);
+                    }
+                    System.err.println(available);
+                }
+                System.exit(2);
+            }
+            System.out.println("mod profile : " + profile + ", " + profile.transformCount
+                    + " transforms");
         }
 
         byte[] rom = readAll(args[0]);
         byte[] out = new byte[rom.length];
 
-        Patcher.Result result = Patcher.run(rom, out, applyPlan, new Patcher.Listener() {
+        Patcher.Result result = Patcher.run(rom, out, applyPlan, profile,
+                new Patcher.Listener() {
             @Override
             public void onStep(int step, String message, double fraction) {
                 System.out.printf("  [%d/%d] %5.1f%%  %s%n",
@@ -51,6 +95,8 @@ public final class PitSelfTest {
                 + " (code " + result.code + ")");
         System.out.println("sha1        : " + result.inputSha1);
         System.out.println("plan applied: " + applyPlan);
+        System.out.println("mod profile : "
+                + (profile == null ? "built-in " + PatchData.PLAN_ID : profile.id));
         if (result.targetOffset != 0 || result.targetSize != 0) {
             System.out.printf("target      : id %d at 0x%08X, %d bytes%n",
                     result.targetId, result.targetOffset, result.targetSize);
@@ -64,6 +110,34 @@ public final class PitSelfTest {
         }
         writeAll(args[1], out);
         System.out.println("wrote       : " + args[1] + " (" + out.length + " bytes)");
+    }
+
+    private static String[] drop(String[] args, int count) {
+        String[] rest = new String[args.length - count];
+        System.arraycopy(args, count, rest, 0, rest.length);
+        return rest;
+    }
+
+    private static int listMods(java.io.File root) {
+        ModProfile.Catalog catalog = ModProfile.Catalog.scan(root);
+
+        for (int i = 0; i < catalog.count(); i++) {
+            ModProfile profile = catalog.at(i);
+
+            System.out.println(profile.name + "  (" + profile.id
+                    + (profile.version.isEmpty() ? "" : ", v" + profile.version)
+                    + ", " + profile.transformCount + " transforms)");
+            for (int j = 0; j < profile.transformCount; j++) {
+                ModProfile.Transform t = profile.transforms[j];
+                System.out.printf("    %-12s %s [%d..%d]%n", t.field, t.scaleText(),
+                        t.minValue, t.maxValue);
+            }
+        }
+        if (catalog.skipped > 0) {
+            System.out.println(catalog.skipped + " profile(s) skipped; last reason: "
+                    + catalog.error);
+        }
+        return 0;
     }
 
     private static byte[] readAll(String path) throws Exception {

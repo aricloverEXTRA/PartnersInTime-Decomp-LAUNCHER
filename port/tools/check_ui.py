@@ -16,9 +16,10 @@ asserts things that a screenshot review would otherwise have to catch by eye:
 
 The screen is tabbed, so the frame that is checked decides what to look at. The
 mode is guessed from the filename: names containing ``mods-on`` render the mods
-tab with the toggle on, ``mods`` the toggle off, ``about`` the about tab, and
-anything else the PATCH tab. ``--expect-half`` additionally requires the
-progress fill to be near half the track, which is what ``--simulate`` paints.
+tab with the plan row selected, ``mods`` with NO MOD selected, ``about`` the
+about tab, and anything else the PATCH tab. ``--expect-half`` additionally
+requires the progress fill to be near half the track, which is what
+``--simulate`` paints.
 
 Usage from port/:
 
@@ -63,10 +64,18 @@ BAR = (MARGIN, 190, UI_W - 2 * MARGIN, 12)
 LOG = (MARGIN, 212, UI_W - 2 * MARGIN, 88)
 FOOTER_Y = 308
 
-MODS_CARD = (MARGIN, 84, UI_W - 2 * MARGIN, 160)
-TOGGLE = (MODS_CARD[0] + 16, 112, 32, 14)
-TOGGLE_KNOB_W = 12
-MODS_DIV_Y = 152
+MODS_CARD = (MARGIN, 84, UI_W - 2 * MARGIN, 196)
+LINE_H = 10
+MOD_ROW_X = MODS_CARD[0] + 12
+MOD_ROW_W = MODS_CARD[2] - 24
+MOD_ROW_H = 15
+MOD_ROW_GAP = 2
+MOD_ROWS_SHOWN = 4
+MOD_LIST_Y = MODS_CARD[1] + 26
+MOD_NAME_X = MOD_ROW_X + 20
+MODS_DESC_Y = MOD_LIST_Y + MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4
+MODS_HINT_Y = MODS_CARD[1] + MODS_CARD[3] + 10
+MODS_DIV_Y = MODS_DESC_Y + 2 * LINE_H + 2
 CHIP_W = (MODS_CARD[2] - 24 - (3 - 1) * 12) // 3
 CHIP_H = 24
 CHIP_GAP = 12
@@ -385,30 +394,44 @@ def check_log(rows):
             fail("log text contrast is %.2f, below the 4.5:1 minimum" % worst)
 
 
-def check_toggle(rows, on):
-    tx, ty, tw, th = TOGGLE
-    face = region(rows, tx, ty, tw, th)
-    if distinct(face) < 3:
-        fail("mods toggle is flat")
+def check_mod_list(rows, selected):
+    """One row per profile, with the selected row highlighted.
 
-    knob = TOGGLE_KNOB_W
-    if on:
-        kx = tx + tw - knob - 2
-        warm = [c for c in face if is_warm(c)]
-        if len(warm) < len(face) // 2:
-            fail("ON toggle is not gold: %d warm of %d pixels" % (len(warm), len(face)))
-    else:
-        kx = tx + 2
-        warm = [c for c in face if is_warm(c)]
-        if warm:
-            fail("OFF toggle is warm (%d px); it should be steel blue" % len(warm))
+    Replaces the old single-toggle check: the MODS tab is a list now, so the
+    thing worth pinning is that the list is drawn, that exactly one row carries
+    the selection fill and amber spine, and that no row runs past the card.
+    """
+    list_x = MOD_ROW_X - 4
+    list_y = MOD_LIST_Y - 2
+    list_h = MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4
+    for i in range(MOD_ROWS_SHOWN):
+        ry = MOD_LIST_Y + i * (MOD_ROW_H + MOD_ROW_GAP)
+        if ry + MOD_ROW_H > list_y + list_h:
+            fail("mods row %d overflows the list block" % i)
+        if ry + MOD_ROW_H > MODS_CARD[1] + MODS_CARD[3]:
+            fail("mods row %d overflows the mods card" % i)
 
-    # The knob is pale (white to grey), distinct from both fill states.
-    knob_region_x = range(kx, kx + knob)
-    knob_pxs = [px(rows, rx, ty + (th - knob) // 2) for rx in knob_region_x]
-    if sum(max(c) > 120 for c in knob_pxs) < knob // 2:
-        fail("toggle knob is not visibly pale: %d bright of %d px"
-             % (sum(max(c) > 120 for c in knob_pxs), knob))
+        name = region(rows, MOD_NAME_X, ry + 4, MOD_ROW_W - 34, 8)
+        lit = [c for c in name if luminance(c) > 0.15]
+        if selected == i:
+            # The selected row's name is the bright text colour; unselected rows
+            # sit one step down. Both must stay readable.
+            if len(lit) < 20:
+                fail("selected mods row %d name has %d visible pixels"
+                     % (i, len(lit)))
+            # Selection fill plus a 2px amber spine on the left edge.
+            spine = [px(rows, MOD_ROW_X + dx, ry + MOD_ROW_H // 2) for dx in range(2)]
+            if not all(is_warm(c) for c in spine):
+                fail("selected mods row %d has no amber spine: rgb%s" % (i, spine))
+            fill = region(rows, MOD_ROW_X + 4, ry + 1, MOD_ROW_W - 8, MOD_ROW_H - 2)
+            if distinct(fill) < 3:
+                fail("selected mods row %d fill is flat" % i)
+
+    # The count on the right of each drawn row, and the found-tag in the header.
+    header = region(rows, MODS_CARD[0] + 12, MODS_CARD[1] + 9, MODS_CARD[2] - 24, 8)
+    if len([c for c in header if luminance(c) > 0.05]) < 20:
+        fail("mods header (title and found count) has %d visible pixels"
+             % len([c for c in header if luminance(c) > 0.05]))
 
 
 def check_mods_card(rows, on):
@@ -418,13 +441,12 @@ def check_mods_card(rows, on):
         fail("mods card body is flat (%d colours); the gradient is missing" % distinct(body))
     card_corners_rounded(rows, x, y, w, h, "mods card")
 
-    # Toggle row: the name must be bright text and the state readable.
-    name = region(rows, TOGGLE[0] + TOGGLE[2] + 8, TOGGLE[1] - 4, 80, 8)
-    if len([c for c in name if luminance(c) > 0.15]) < 20:
-        fail("HARD MODE name has %d visible pixels" % len([c for c in name if luminance(c) > 0.15]))
+    # Row 0 is NO MOD and row 1 is the built-in plan, so "on" means the first
+    # selected row is 1. Both states draw the full list; only the chips differ.
+    check_mod_list(rows, 1 if on else 0)
 
     # The description block and the divider under it.
-    desc = region(rows, x + 12, TOGGLE[1] + 18, w - 24, 20)
+    desc = region(rows, x + 12, MODS_DESC_Y, w - 24, 2 * LINE_H)
     if len([c for c in desc if luminance(c) > 0.05]) < 40:
         fail("mods description has %d visible pixels" % len([c for c in desc if luminance(c) > 0.05]))
     # The divider is a solid 1px C_EDGE_SOFT line; it must differ from the card
@@ -436,13 +458,22 @@ def check_mods_card(rows, on):
     elif abs(div_row[0] - above[0]) + abs(div_row[1] - above[1]) + abs(div_row[2] - above[2]) < 10:
         fail("mods divider at y=%d is invisible against the card: rgb%s" % (MODS_DIV_Y, div_row))
 
+    # The hint sits below the card and must clear it rather than overlap.
+    hint = region(rows, MARGIN, MODS_HINT_Y, w, 8)
+    if len([c for c in hint if luminance(c) > 0.05]) < 20:
+        fail("mods hint has %d visible pixels"
+             % len([c for c in hint if luminance(c) > 0.05]))
+    if MODS_HINT_Y + 8 > FOOTER_Y - 4:
+        fail("mods hint at y=%d collides with the footer" % MODS_HINT_Y)
+
     if on:
         check_chips(rows)
     else:
-        # The OFF note explains that nothing is applied; three dim lines.
+        # The OFF note explains that nothing is applied; three dim lines where
+        # the chips would otherwise be.
         for row in range(3):
-            ly = CHIP_Y0 + row * 10
-            line = region(rows, x + 12, ly, w - 24, 10)
+            ly = CHIP_Y0 + row * LINE_H
+            line = region(rows, x + 12, ly, w - 24, LINE_H)
             if len([c for c in line if luminance(c) > 0.05]) < 20:
                 fail("mods OFF note line %d has %d visible pixels" % (row, len([c for c in line if luminance(c) > 0.05])))
 
@@ -506,24 +537,55 @@ def check_shadow(rows, mode):
 
 
 def check_no_overlap():
-    """Interactive regions must not overlap, or clicks land on the wrong one."""
+    """Interactive regions must not overlap, or clicks land on the wrong one.
+
+    The tab strip is present on every screen, so it is compared against
+    everything. The rest is grouped by tab, because the launcher keeps one
+    button array for all three screens and only the active tab's entries can be
+    pressed; a BROWSE well on PATCH and the MODS list may share pixels because
+    they are never drawn at the same time.
+    """
+    tabs = ("TAB_PATCH", "TAB_MODS", "TAB_ABOUT")
     boxes = {
         "TAB_PATCH": (TAB_X0, TAB_Y, TAB_W, TAB_H),
         "TAB_MODS": (TAB_X0 + TAB_W + TAB_GAP, TAB_Y, TAB_W, TAB_H),
         "TAB_ABOUT": (TAB_X0 + 2 * (TAB_W + TAB_GAP), TAB_Y, TAB_W, TAB_H),
-        "TOGGLE": TOGGLE,
+        "MOD_LIST": (MOD_ROW_X - 4, MOD_LIST_Y - 2,
+                     MOD_ROW_W + 8,
+                     MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4),
         "BROWSE_IN": (BROWSE[0], BROWSE[1], BROWSE[2], BROWSE[3]),
         "BROWSE_OUT": (BROWSE[0], BROWSE[1] + FIELD_DY, BROWSE[2], BROWSE[3]),
         "PATCH": PATCH,
     }
+    on_tab = {
+        "TAB_PATCH": ["TAB_PATCH", "BROWSE_IN", "BROWSE_OUT", "PATCH"],
+        "TAB_MODS": ["TAB_MODS", "MOD_LIST"],
+        "TAB_ABOUT": ["TAB_ABOUT"],
+    }
+
+    def overlaps(a, b):
+        return (a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and
+                a[1] < b[1] + b[3] and b[1] < a[1] + a[3])
+
     items = sorted(boxes.items())
     for i in range(len(items)):
         for j in range(i + 1, len(items)):
             (na, a) = items[i]
             (nb, b) = items[j]
-            if a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and \
-               a[1] < b[1] + b[3] and b[1] < a[1] + a[3]:
-                fail("%s and %s overlap" % (na, nb))
+            # A tab strip button never overlaps another, whatever the screen.
+            shared_tab = na in tabs or nb in tabs
+            same_screen = na in on_tab and nb in on_tab and \
+                on_tab[na] is on_tab[nb]
+            if shared_tab or same_screen:
+                if overlaps(a, b):
+                    fail("%s and %s overlap" % (na, nb))
+
+    # The MODS list must fit inside its card, or its last row leaves the frame.
+    list_box = boxes["MOD_LIST"]
+    if list_box[1] + list_box[3] > MODS_CARD[1] + MODS_CARD[3]:
+        fail("MOD_LIST overflows the mods card")
+    if list_box[1] < MODS_CARD[1]:
+        fail("MOD_LIST starts above the mods card")
 
     # The primary button must sit clear of the progress bar.
     if PATCH[1] + PATCH[3] > BAR[1]:
@@ -610,10 +672,8 @@ def main():
         check_log(rows)
     elif mode == "mods-off":
         check_mods_card(rows, on=False)
-        check_toggle(rows, on=False)
     elif mode == "mods-on":
         check_mods_card(rows, on=True)
-        check_toggle(rows, on=True)
     elif mode == "about":
         check_about(rows)
 

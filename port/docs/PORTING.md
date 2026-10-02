@@ -121,12 +121,24 @@ the decompilation needs — the cartridge banner as a PNG, the NitroFS file tree
 a probe of `sound_data.sdat`, and a manifest — next to the copy. The source ROM
 is never modified.
 
-The launcher has three tabs — **ROM**, **MODS**, **ABOUT** — and the Hard Mode
-mod is an option inside **MODS**, **off by default**. With the mod off, the
-launcher verifies the user's own EUR cartridge and prepares the copy without a
-mod; the output is suffixed `.prepared.nds`. With the mod on, the 98 stat
-records are scaled and the output is suffixed `.hardmode.nds`. The two prepared
-copies are named differently so they cannot be mistaken for each other.
+The launcher has three tabs — **ROM**, **MODS**, **ABOUT** — and **MODS** lists
+the mods that may be applied, **none by default**. Its first two rows are always
+`NO MOD` and the built-in Hard Mode plan; every folder under `mods/` holding a
+loadable `profile.json` is listed after them. With no mod selected, the launcher
+verifies the user's own EUR cartridge and prepares the copy without a mod; the
+output is suffixed `.prepared.nds`. With a mod selected, the 98 stat records are
+scaled and the output carries that mod's own suffix, `.hardmode.nds` for the
+built-in plan. The prepared copies are named differently so they cannot be
+mistaken for each other.
+
+The two launchers read profiles under the same rules, because the loader decides
+what a profile does to the ROM. An `id` over 32 characters is refused, since it
+identifies the profile for `--mod`, the list and the output name; one field may
+appear only once, since a repeated field would scale twice and make the written
+bytes depend on array order; and an over-long `name`, `version` or `description`
+is truncated, since those are only ever shown on one clipped line. A disabled
+transform is kept and displayed rather than dropped, and skipped when patching,
+so a field an author tuned and then switched off stays visible.
 
 ### One plan, two languages
 
@@ -180,14 +192,15 @@ Current results, against the supported EUR cartridge:
 | Patched ROM vs. the balanced Python profile export | exact match, 588 fields over 98 records |
 | C output vs. Java output, mod on | byte-identical |
 | C output vs. Java output, mod off (prepare-only) | byte-identical |
-| Java unit tests | 964 checks, 0 failed |
+| Profile loading, seven fixtures incl. limits | both readers load or refuse each one identically |
+| Java unit tests | 1073 checks, 0 failed |
 | UI layout | rendered headlessly to PNG and text on every Windows build |
 
 The last one matters more than it looks. `pit_patcher.exe --screenshot` draws
 through the same `render()` the window uses and `--dump-ascii` serialises the
 canvas to text, so a layout that cannot be drawn fails the build instead of
 shipping. The UI checks cover all three tabs — the ROM tab at rest and
-mid-patch, the MODS tab with the mod off and on, and the ABOUT tab — so a
+mid-patch, the MODS tab with no mod selected and with a mod selected, and the ABOUT tab — so a
 layout change to one screen cannot silently regress another.
 
 The prepared or patched ROM is **not** expected to boot. Nothing in this project
@@ -198,7 +211,7 @@ not a playable build.
 
 The Android app is plain Java against the platform APIs: no SDL, no NDK, no
 Gradle. `Patcher.java`, `NitroFs.java` and `Sha1.java` have no `android.*`
-dependency at all, which is what makes them testable on a desktop JVM — 964
+dependency at all, which is what makes them testable on a desktop JVM — 1073
 class-path checks run without a device. `MainActivity` adds Storage Access
 Framework file access and a worker thread; the app declares no storage
 permission, so it only ever touches the two documents the user picked.

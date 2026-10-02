@@ -94,17 +94,25 @@ public final class PatcherView extends View {
     private static final int MODS_CARD_X = MARGIN;
     private static final int MODS_CARD_Y = 84;
     private static final int MODS_CARD_W = UI_W - 2 * MARGIN;
-    private static final int MODS_CARD_H = 160;
-    private static final int MODS_HINT_Y = MODS_CARD_Y + MODS_CARD_H + 10;
-    private static final int TOGGLE_X = MODS_CARD_X + 16;
-    private static final int TOGGLE_Y = 112;
-    private static final int TOGGLE_W = 32;
-    private static final int TOGGLE_H = 14;
-    private static final int TOGGLE_KNOB_W = 12;
-    private static final int MODS_NAME_X = TOGGLE_X + TOGGLE_W + 8;
-    private static final int MODS_NAME_Y = TOGGLE_Y - 4;
-    private static final int MODS_DESC_Y = 130;
-    private static final int MODS_DIV_Y = 152;
+private static final int MODS_CARD_H = 196;
+private static final int MODS_HINT_Y = MODS_CARD_Y + MODS_CARD_H + 10;
+
+/*
+ * The MODS list, mirroring pit_patcher_ui.c: two built-in rows, then whatever
+ * mods/<id>/profile.json the scan found, in four fixed-height rows that scroll
+ * around the selection.
+ */
+private static final int MOD_ROW_H = 15;
+private static final int MOD_ROW_GAP = 2;
+private static final int MOD_ROW_X = MODS_CARD_X + 12;
+private static final int MOD_ROW_W = MODS_CARD_W - 24;
+private static final int MOD_ROWS_SHOWN = 4;
+private static final int MOD_LIST_Y = MODS_CARD_Y + 26;
+private static final int MOD_NAME_X = MOD_ROW_X + 20;
+private static final int MOD_COUNT_X = MOD_ROW_X + MOD_ROW_W - 6;
+private static final int MODS_DESC_Y =
+MOD_LIST_Y + MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4;
+private static final int MODS_DIV_Y = MODS_DESC_Y + 2 * LINE_H + 2;
 
     private static final int CHIP_H = 24;
     private static final int CHIP_GAP = 12;
@@ -208,7 +216,10 @@ public final class PatcherView extends View {
         public boolean failed;
         public int totalSteps = Patcher.STEPS;
         public int tab = TAB_PATCH;
-        public boolean hardMode;
+
+        /* Row 0 is "no mod", row 1 the built-in plan, row 2+ discovered profiles. */
+        public int modIndex;
+        public ModProfile.Catalog mods = ModProfile.Catalog.empty();
         public int focus = FOCUS_NONE;
     }
 
@@ -220,8 +231,6 @@ public final class PatcherView extends View {
         void onPatch();
 
         void onTab(int tab);
-
-        void onToggleMods();
     }
 
     private final Paint fill = new Paint();
@@ -315,8 +324,15 @@ public final class PatcherView extends View {
         invalidate();
     }
 
-    public void setHardMode(boolean hardMode) {
-        state.hardMode = hardMode;
+    /** Replaces the discovered profile list and clamps the current row to it. */
+    public void setMods(ModProfile.Catalog mods) {
+        state.mods = mods;
+        state.modIndex = clampModIndex(state.modIndex);
+        invalidate();
+    }
+
+    public void setModIndex(int index) {
+        state.modIndex = clampModIndex(index);
         invalidate();
     }
 
@@ -455,11 +471,16 @@ public final class PatcherView extends View {
         }
     }
 
-    private void textClipped(Canvas canvas, int x, int y, int limit, String s, int color) {
-        int max = Math.max(0, (limit - x) / FONT_W);
+    /** Truncates to fit maxWidth pixels with an ellipsis, like draw_text_clipped. */
+    private void textClipped(Canvas canvas, int x, int y, String s, int color,
+            int maxWidth) {
+        int room = maxWidth / FONT_W;
 
-        if (s.length() > max) {
-            s = s.substring(0, Math.max(0, max - 1)) + ".";
+        if (room <= 0) {
+            return;
+        }
+        if (s.length() > room) {
+            s = s.substring(0, room > 3 ? room - 3 : room) + "...";
         }
         text(canvas, x, y, s, color);
     }
@@ -589,26 +610,6 @@ public final class PatcherView extends View {
         }
     }
 
-    private void drawToggle(Canvas canvas, boolean on, boolean hot) {
-        if (on) {
-            roundGradient(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
-                    hot ? C_AMBER_HI : C_AMBER, C_ACCENT);
-            roundOutline(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
-                    C_AMBER_HI);
-        } else {
-            roundGradient(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
-                    C_PANEL_LO, C_WELL);
-            roundOutline(canvas, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H, TOGGLE_H / 2,
-                    hot ? C_AMBER_HI : C_EDGE_SOFT);
-        }
-        int knob = TOGGLE_KNOB_W;
-        int kx = on ? TOGGLE_X + TOGGLE_W - knob - 2 : TOGGLE_X + 2;
-        int ky = TOGGLE_Y + (TOGGLE_H - knob) / 2;
-
-        roundGradient(canvas, kx, ky, knob, knob, 3, C_TEXT_HI, C_TEXT);
-        roundOutline(canvas, kx, ky, knob, knob, 3, C_EDGE);
-    }
-
     private void drawFooter(Canvas canvas) {
         hline(canvas, 0, FOOTER_Y - 2, UI_W, C_EDGE_SOFT);
         text(canvas, MARGIN, FOOTER_Y, "FOR THE PARTNERS IN TIME DECOMPILATION", C_DIM);
@@ -618,62 +619,186 @@ public final class PatcherView extends View {
     /* ---------------------------------------------------------------- mods */
 
     private void drawChip(Canvas canvas, int x, int y, int w, int h, String label, String value,
-            boolean hot) {
+            boolean enabled) {
         dropShadow(canvas, x, y, w, h, 3);
-        roundGradient(canvas, x, y, w, h, 3, hot ? C_PANEL_HI : C_PANEL, C_PANEL_LO);
+        roundGradient(canvas, x, y, w, h, 3, enabled ? C_PANEL_HI : C_PANEL,
+                C_PANEL_LO);
         rect(canvas, x + 4, y + 1, w - 8, 1, C_EDGE);
         roundOutline(canvas, x, y, w, h, 3, C_EDGE_SOFT);
 
         /* Gold spine on the left edge marks it as a tuned stat. */
-        rect(canvas, x + 1, y + 4, 2, h - 8, hot ? C_AMBER : C_ACCENT);
+        rect(canvas, x + 1, y + 4, 2, h - 8, enabled ? C_AMBER : C_ACCENT);
         rect(canvas, x + 1, y + 3, 2, 1, 0xA0FFFFFF);
 
         text(canvas, x + 8, y + 3, label, C_DIM);
-        text(canvas, x + 8, y + 12, value, hot ? C_AMBER_HI : C_AMBER);
+        text(canvas, x + 8, y + 12, value, enabled ? C_AMBER_HI : C_AMBER);
+    }
+
+    /*
+     * MODS rows, mirroring pit_patcher_ui.c:
+     *   0  No Mod            no profile at all
+     *   1  Hard Mode         the compiled-in plan, also shipped as mods/hard_mode
+     *   2+ discovered        mods/<id>/profile.json
+     *
+     * Rows 0 and 1 need no profile.json: the patcher already knows the built-in
+     * plan, and a null profile selects exactly that plan.
+     */
+    private int modRowCount() {
+        return 2 + state.mods.count();
+    }
+
+    private static boolean modRowIsDiscovered(int row) {
+        return row >= 2;
+    }
+
+    private String modName(int row) {
+        if (row == 0) {
+            return "NO MOD";
+        }
+        if (row == 1) {
+            return PatchData.PLAN_NAME;
+        }
+        return state.mods.at(row - 2).name;
+    }
+
+    private String modId(int row) {
+        if (row == 0) {
+            return "";
+        }
+        if (row == 1) {
+            return PatchData.PLAN_ID;
+        }
+        return state.mods.at(row - 2).id;
+    }
+
+    /** Null means "use the built-in plan", which also covers the no-mod row. */
+    private ModProfile modProfile(int row) {
+        if (modRowIsDiscovered(row)) {
+            return state.mods.at(row - 2);
+        }
+        return null;
+    }
+
+    private int clampModIndex(int index) {
+        int last = modRowCount() - 1;
+
+        return index < 0 ? 0 : (index > last ? last : index);
+    }
+
+    private int modFirstRow() {
+        int first = state.modIndex - MOD_ROWS_SHOWN / 2;
+
+        return Math.max(0, Math.min(first, modRowCount() - MOD_ROWS_SHOWN));
+    }
+
+    /** Row under a view-space y coordinate, or -1 outside the list block. */
+    private int modRowAt(int my) {
+        int first = modFirstRow();
+
+        if (my < MOD_LIST_Y || my >= MOD_LIST_Y + MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP)) {
+            return -1;
+        }
+        {
+            int row = first + (my - MOD_LIST_Y) / (MOD_ROW_H + MOD_ROW_GAP);
+
+            return row < modRowCount() ? row : -1;
+        }
     }
 
     private void drawModsTab(Canvas canvas) {
-        boolean on = state.hardMode;
-        boolean toggleHot = hovered == BTN_TOGGLE || state.focus == FOCUS_TOGGLE;
+        boolean listHot = hovered == BTN_TOGGLE || state.focus == FOCUS_TOGGLE;
+        int rows = modRowCount();
+        int first = modFirstRow();
+        ModProfile profile = modProfile(state.modIndex);
 
         drawCard(canvas, MODS_CARD_X, MODS_CARD_Y, MODS_CARD_W, MODS_CARD_H, 4);
         text(canvas, MODS_CARD_X + 12, MODS_CARD_Y + 9, "MODS", C_ACCENT);
-        text(canvas, MODS_CARD_X + MODS_CARD_W - 12 - textWidth("OPTIONAL"),
-                MODS_CARD_Y + 9, "OPTIONAL", C_DIM);
+        {
+            String tag = state.mods.count() + " FOUND";
+
+            text(canvas, MODS_CARD_X + MODS_CARD_W - 12 - textWidth(tag),
+                    MODS_CARD_Y + 9, tag, C_DIM);
+        }
         hline(canvas, MODS_CARD_X + 12, MODS_CARD_Y + 20, MODS_CARD_W - 24, C_EDGE_SOFT);
 
-        drawToggle(canvas, on, toggleHot);
-        text(canvas, MODS_NAME_X, MODS_NAME_Y, "HARD MODE", C_TEXT_HI);
-        {
-            String stateText = on ? "ON" : "OFF";
-            int sw = textWidth(stateText);
+        int listH = MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4;
+        roundRect(canvas, MOD_ROW_X - 4, MOD_LIST_Y - 2, MOD_ROW_W + 8, listH, 3,
+                C_PANEL_LO);
+        roundOutline(canvas, MOD_ROW_X - 4, MOD_LIST_Y - 2, MOD_ROW_W + 8, listH, 3,
+                listHot ? C_AMBER_HI : C_EDGE_SOFT);
 
-            text(canvas, MODS_CARD_X + MODS_CARD_W - 12 - sw, TOGGLE_Y + TOGGLE_H / 2 - 4,
-                    stateText, on ? C_AMBER : C_DIM);
+        for (int i = 0; i < MOD_ROWS_SHOWN && first + i < rows; i++) {
+            int row = first + i;
+            int ry = MOD_LIST_Y + i * (MOD_ROW_H + MOD_ROW_GAP);
+            boolean selected = row == state.modIndex;
+            int fg = selected ? C_TEXT_HI : C_TEXT;
+
+            if (selected) {
+                roundRect(canvas, MOD_ROW_X - 2, ry, MOD_ROW_W, MOD_ROW_H, 2,
+                        C_PANEL_HI);
+                rect(canvas, MOD_ROW_X, ry + 3, 2, MOD_ROW_H - 6, C_AMBER);
+            }
+            if (row >= 2 && PatchData.PLAN_ID.equals(modId(row))) {
+                text(canvas, MOD_ROW_X + 2, ry + 4, "*", C_AMBER);
+            }
+            textClipped(canvas, MOD_NAME_X, ry + 4, modName(row), fg,
+                    MOD_ROW_W - 34);
+            {
+                String count = (row + 1) + "/" + rows;
+
+                text(canvas, MOD_COUNT_X - textWidth(count), ry + 4, count,
+                        selected ? C_AMBER : C_DIM);
+            }
         }
 
-        text(canvas, MODS_CARD_X + 12, MODS_DESC_Y,
-                "A DATA MOD THAT RAISES ENEMY STATS: HP, POW, DEF", C_DIM);
-        text(canvas, MODS_CARD_X + 12, MODS_DESC_Y + LINE_H,
-                "AND SPD UP, PLUS 75% MORE EXPERIENCE AND COINS.", C_DIM);
+        if (state.modIndex == 0) {
+            text(canvas, MOD_ROW_X, MODS_DESC_Y,
+                    "NO MOD: YOUR EUR ROM IS VERIFIED AND PASSED", C_DIM);
+            text(canvas, MOD_ROW_X, MODS_DESC_Y + LINE_H,
+                    "TO THE DECOMP UNCHANGED. THIS IS THE DEFAULT.", C_DIM);
+        } else if (profile != null && !profile.description.isEmpty()) {
+            textClipped(canvas, MOD_ROW_X, MODS_DESC_Y, profile.description, C_DIM,
+                    MOD_ROW_W);
+        } else {
+            text(canvas, MOD_ROW_X, MODS_DESC_Y,
+                    "A DATA MOD THAT RAISES ENEMY STATS AND PAYS", C_DIM);
+            text(canvas, MOD_ROW_X, MODS_DESC_Y + LINE_H,
+                    "IT BACK WITH MORE EXPERIENCE AND COINS.", C_DIM);
+        }
         hline(canvas, MODS_CARD_X + 12, MODS_DIV_Y, MODS_CARD_W - 24, C_EDGE_SOFT);
 
-        if (on) {
-            for (int i = 0; i < PatchData.TRANSFORM_LABEL.length; i++) {
-                int col = i % CHIP_COUNT;
-                int row = i / CHIP_COUNT;
-                int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
-                int cy = CHIP_Y0 + row * CHIP_DY;
+        if (state.modIndex != 0) {
+            if (profile != null) {
+                int count = Math.min(profile.transformCount, PatchData.TRANSFORM_LABEL.length);
 
-                drawChip(canvas, cx, cy, CHIP_W, CHIP_H, PatchData.TRANSFORM_LABEL[i],
-                        PatchData.TRANSFORM_SCALE[i], true);
+                for (int i = 0; i < count; i++) {
+                    ModProfile.Transform t = profile.transforms[i];
+                    int col = i % CHIP_COUNT;
+                    int row = i / CHIP_COUNT;
+                    int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
+                    int cy = CHIP_Y0 + row * CHIP_DY;
+
+                    drawChip(canvas, cx, cy, CHIP_W, CHIP_H, t.field,
+                            t.scaleText(), t.enabled);
+                }
+            } else {
+                for (int i = 0; i < PatchData.TRANSFORM_LABEL.length; i++) {
+                    int col = i % CHIP_COUNT;
+                    int row = i / CHIP_COUNT;
+                    int cx = CHIP_X0 + col * (CHIP_W + CHIP_GAP);
+                    int cy = CHIP_Y0 + row * CHIP_DY;
+
+                    drawChip(canvas, cx, cy, CHIP_W, CHIP_H,
+                            PatchData.TRANSFORM_LABEL[i], PatchData.TRANSFORM_SCALE[i],
+                            true);
+                }
             }
         } else {
-text(canvas, MODS_CARD_X + 12, CHIP_Y0,
-                "OFF: THE LAUNCHER VERIFIES YOUR EUR ROM AND", C_DIM);
-        text(canvas, MODS_CARD_X + 12, CHIP_Y0 + LINE_H,
-                "PASSES IT TO THE DECOMP - NO MOD IS APPLIED.", C_DIM);
-        text(canvas, MODS_CARD_X + 12, CHIP_Y0 + 2 * LINE_H,
+            text(canvas, MOD_ROW_X, CHIP_Y0,
+                    "OFF: THE LAUNCHER VERIFIES YOUR EUR ROM AND", C_DIM);
+            text(canvas, MOD_ROW_X, CHIP_Y0 + LINE_H,
+                    "PASSES IT TO THE DECOMP - NO MOD IS APPLIED.", C_DIM);
+            text(canvas, MOD_ROW_X, CHIP_Y0 + 2 * LINE_H,
                 "TAP THE TOGGLE FOR HARD MODE, THEN INGEST.", C_DIM);
         }
 
@@ -736,7 +861,7 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
 
             text(canvas, MARGIN, fy + 4, label, C_DIM);
             drawWell(canvas, FIELD_X, fy, FIELD_W, FIELD_H, false);
-            textClipped(canvas, FIELD_X + 4, fy + 4, FIELD_X + FIELD_W - 4, value, C_TEXT);
+            textClipped(canvas, FIELD_X + 4, fy + 4, value, C_TEXT, FIELD_W - 8);
         }
     }
 
@@ -863,7 +988,7 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
             if (line.color != C_TEXT) {
                 roundRect(canvas, LOG_X + 12, ly + 2, 3, 3, 1, line.color);
             }
-            textClipped(canvas, LOG_X + 20, ly, LOG_X + LOG_W - 12, line.message, line.color);
+            textClipped(canvas, LOG_X + 20, ly, line.message, line.color, LOG_W - 32);
         }
     }
 
@@ -871,8 +996,10 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
         drawFields(canvas);
 
         /* Plan status on the left, keyboard hints on the right. */
-        text(canvas, MARGIN, MODS_Y, state.hardMode ? "MODS: HARD MODE" : "MODS: NONE",
-                state.hardMode ? C_AMBER : C_DIM);
+        String mods = "MODS: "
+                + (state.modIndex == 0 ? "NONE" : modName(state.modIndex));
+
+        text(canvas, MARGIN, MODS_Y, mods, state.modIndex == 0 ? C_DIM : C_AMBER);
         text(canvas, UI_W - MARGIN - textWidth("TAB FOCUS  ENTER INGEST  ESC QUIT"),
                 MODS_Y, "TAB FOCUS  ENTER INGEST  ESC QUIT", C_DIM);
 
@@ -949,7 +1076,8 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
             }
         }
         if (state.tab == TAB_MODS
-                && inButton(x, y, TOGGLE_X, TOGGLE_Y, TOGGLE_W, TOGGLE_H)) {
+                && inButton(x, y, MOD_ROW_X - 4, MOD_LIST_Y - 2, MOD_ROW_W + 8,
+                        MOD_ROWS_SHOWN * (MOD_ROW_H + MOD_ROW_GAP) + 4)) {
             return BTN_TOGGLE;
         }
         if (state.tab == TAB_PATCH) {
@@ -970,6 +1098,8 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
         return x >= bx && x < bx + bw && y >= by && y < by + bh;
     }
 
+    private int pressedRow = -1;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = (event.getX() - offsetX) / scale;
@@ -978,19 +1108,25 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 hovered = buttonAt(x, y);
+                pressedRow = hovered == BTN_TOGGLE ? modRowAt((int) y) : -1;
                 invalidate();
                 return true;
             case MotionEvent.ACTION_UP: {
                 int hit = buttonAt(x, y);
-                if (hit == hovered) {
+                if (hit == hovered && hit == BTN_TOGGLE && pressedRow >= 0) {
+                    /* A tap picks a row instead of only taking focus. */
+                    selectMod(pressedRow);
+                } else if (hit == hovered) {
                     activate(hit);
                 }
                 hovered = BTN_NONE;
+                pressedRow = -1;
                 invalidate();
                 return true;
             }
             case MotionEvent.ACTION_CANCEL:
                 hovered = BTN_NONE;
+                pressedRow = -1;
                 invalidate();
                 return true;
             default:
@@ -1057,6 +1193,27 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
         }
     }
 
+    private void selectMod(int row) {
+        String previousId = modId(state.modIndex);
+
+        row = clampModIndex(row);
+        if (row == state.modIndex) {
+            return;
+        }
+        state.modIndex = row;
+        invalidate();
+
+        if (row == 0) {
+            addLog(LOG_INFO, "Mod OFF: the copy is prepared without mods.");
+        } else if (!previousId.equals(modId(row))) {
+            /*
+             * Row 1 is the compiled-in plan and a discovered hard_mode profile
+             * is the same data, so only a real change of id is worth reporting.
+             */
+            addLog(LOG_INFO, "Mod selected: " + modName(row) + ".");
+        }
+    }
+
     private void activate(int id) {
         switch (id) {
             case BTN_TAB_PATCH:
@@ -1066,11 +1223,7 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
                 break;
             case BTN_TOGGLE:
                 if (state.tab == TAB_MODS) {
-                    state.hardMode = !state.hardMode;
                     state.focus = FOCUS_TOGGLE;
-                    if (callback != null) {
-                        callback.onToggleMods();
-                    }
                     invalidate();
                 }
                 break;
@@ -1101,16 +1254,32 @@ text(canvas, MODS_CARD_X + 12, CHIP_Y0,
                 focusCycle(event.hasModifiers(KeyEvent.META_SHIFT_ON));
                 return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT:
-                switchTab(1);
+                if (state.tab == TAB_MODS && state.focus == FOCUS_TOGGLE) {
+                    selectMod(state.modIndex + 1);
+                } else {
+                    switchTab(1);
+                }
                 return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
-                switchTab(-1);
+                if (state.tab == TAB_MODS && state.focus == FOCUS_TOGGLE) {
+                    selectMod(state.modIndex - 1);
+                } else {
+                    switchTab(-1);
+                }
                 return true;
             case KeyEvent.KEYCODE_DPAD_UP:
-                focusMove(-1);
+                if (state.tab == TAB_MODS) {
+                    selectMod(state.modIndex - 1);
+                } else {
+                    focusMove(-1);
+                }
                 return true;
             case KeyEvent.KEYCODE_DPAD_DOWN:
-                focusMove(1);
+                if (state.tab == TAB_MODS) {
+                    selectMod(state.modIndex + 1);
+                } else {
+                    focusMove(1);
+                }
                 return true;
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_NUMPAD_ENTER:

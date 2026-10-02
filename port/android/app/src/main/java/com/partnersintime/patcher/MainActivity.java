@@ -11,6 +11,11 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Hosts the patcher screen and owns all of its state.
  *
@@ -26,6 +31,14 @@ public final class MainActivity extends Activity implements PatcherView.Callback
 
     private static final int REQ_OPEN_ROM = 1;
     private static final int REQ_CREATE_ROM = 2;
+
+    /*
+     * The shipped mod, bundled as an asset at mods/<id>/profile.json. It is
+     * copied into app-private storage on first run so the same mods/<id>
+     * directory layout works on Android and on the desktop launcher, and so a
+     * future import path only has to write another folder next to it.
+     */
+    private static final String[] BUNDLED_MODS = { "hard_mode" };
 
     /* Log levels, not colours: PatcherView maps them to the ROM palette so the
      * colour of a line cannot drift away from the Windows build. */
@@ -48,11 +61,89 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         view = new PatcherView(this);
         view.setCallback(this);
         setContentView(view);
+        loadMods();
         view.addLog(LOG_INFO, "Select your EUR ROM, then choose an output name.");
-        view.addLog(LOG_INFO, "HARD MODE is optional: MODS tab, off by default.");
+        view.addLog(LOG_INFO, "MODS are optional: pick one on the MODS tab.");
         view.addLog(LOG_INFO, "TIP: Tab / D-pad moves focus; Enter activates.");
         for (String line : CompatInfo.report(this)) {
             view.addLog(LOG_INFO, line);
+        }
+    }
+
+    /**
+     * Installs the bundled profiles, then scans the mods directory.
+     *
+     * <p>Each profile is rewritten every launch so a repaired or updated profile
+     * replaces an older copy, and a failed install is reported instead of being
+     * hidden: the built-in Hard Mode plan stays available either way.
+     */
+    private void loadMods() {
+        File root = new File(getFilesDir(), "mods");
+        int installed = 0;
+
+        for (String id : BUNDLED_MODS) {
+            try {
+                installBundledMod(root, id);
+                installed++;
+            } catch (IOException e) {
+                view.addLog(LOG_WARN, "Bundled mod " + id + " was not installed: "
+                        + e.getMessage());
+            }
+        }
+
+        ModProfile.Catalog mods = ModProfile.Catalog.scan(root);
+
+        view.setMods(mods);
+
+        if (mods.skipped > 0) {
+            view.addLog(LOG_WARN, "Skipped " + mods.skipped + " mod folder"
+                    + (mods.skipped == 1 ? "" : "s") + (mods.error == null ? "."
+                            : ": " + mods.error));
+        }
+        view.addLog(LOG_INFO, installed + " bundled mod"
+                + (installed == 1 ? "" : "s") + ", " + mods.count()
+                + " profile" + (mods.count() == 1 ? "" : "s") + " found.");
+    }
+
+    private void installBundledMod(File root, String id) throws IOException {
+        File dir = new File(root, id);
+        File out = new File(dir, "profile.json");
+        InputStream in = getAssets().open("mods/" + id + "/profile.json");
+
+        try {
+            if (!dir.isDirectory() && !dir.mkdirs()) {
+                throw new IOException("cannot create the " + id + " folder");
+            }
+            /*
+             * Write to a temporary name and move it into place, so a killed
+             * process cannot leave a half-written profile that the scan would
+             * then reject. The old copy is deleted first because
+             * File.renameTo only replaces an existing file on some platforms.
+             * A crash in that window leaves no profile rather than a partial
+             * one, and the next launch reinstalls it.
+             */
+            File temp = new File(dir, "profile.json.part");
+            OutputStream stream = new java.io.FileOutputStream(temp);
+
+            try {
+                byte[] chunk = new byte[8192];
+                int got;
+
+                while ((got = in.read(chunk)) > 0) {
+                    stream.write(chunk, 0, got);
+                }
+                stream.flush();
+            } finally {
+                stream.close();
+            }
+            if (out.exists() && !out.delete()) {
+                throw new IOException("cannot replace the existing " + id + " profile");
+            }
+            if (!temp.renameTo(out)) {
+                throw new IOException("cannot install the " + id + " profile");
+            }
+        } finally {
+            in.close();
         }
     }
 
@@ -63,12 +154,33 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                 : (tab == PatcherView.TAB_ABOUT ? "ABOUT tab." : "ROM tab."));
     }
 
-    @Override
-    public void onToggleMods() {
-        boolean on = view.state().hardMode;
-        view.addLog(LOG_INFO, on
-                ? "HARD MODE ON: the patch will raise enemy stats."
-                : "HARD MODE OFF: the copy is prepared without mods.");
+    private String modId(int index) {
+        return index == 0 ? "" : (index == 1 ? PatchData.PLAN_ID
+                : view.state().mods.at(index - 2).id);
+    }
+
+    /**
+     * Suggested output name for the selected mod.
+     *
+     * <p>A profile id is free-form text, so it is reduced to filename-safe
+     * characters before it reaches the system file picker; anything unusable
+     * falls back to a generic name rather than producing a name the user cannot
+     * type. The character set matches set_default_output in the C launcher, so
+     * the same profile suggests the same name on both platforms.
+     */
+    private String suggestedName() {
+        String id = modId(view.state().modIndex);
+        StringBuilder safe = new StringBuilder(id.length());
+
+        for (int i = 0; i < id.length() && safe.length() < 24; i++) {
+            char ch = id.charAt(i);
+
+            if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+                    || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-') {
+                safe.append(ch);
+            }
+        }
+        return safe.length() == 0 ? "PiT_prepared.nds" : "PiT_" + safe + ".nds";
     }
 
     @Override
@@ -96,8 +208,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/octet-stream");
-        intent.putExtra(Intent.EXTRA_TITLE,
-                view.state().hardMode ? "PiT_hard_mode.nds" : "PiT_prepared.nds");
+        intent.putExtra(Intent.EXTRA_TITLE, suggestedName());
         startActivityForResult(intent, REQ_CREATE_ROM);
     }
 
@@ -191,7 +302,14 @@ public final class MainActivity extends Activity implements PatcherView.Callback
         view.clearLog();
         view.setBusy(true);
 
-        final boolean applyPlan = view.state().hardMode;
+        /*
+         * Row 0 is no mod, row 1 the compiled-in plan (a null profile selects
+         * exactly that) and row 2+ the profile the user picked.
+         */
+        final int modIndex = view.state().modIndex;
+        final boolean applyPlan = modIndex != 0;
+        final ModProfile profile = modIndex >= 2 ? view.state().mods.at(modIndex - 2)
+                : null;
 
         new Thread(new Runnable() {
             @Override
@@ -214,7 +332,7 @@ public final class MainActivity extends Activity implements PatcherView.Callback
                                 progress(step, message, fraction);
                             }
                         };
-                        result = Patcher.run(rom, out, applyPlan, listener);
+                        result = Patcher.run(rom, out, applyPlan, profile, listener);
                         if (result.code != Patcher.OK) {
                             out = null;
                         }
