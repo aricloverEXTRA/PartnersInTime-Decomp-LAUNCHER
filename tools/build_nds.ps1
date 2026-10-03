@@ -90,12 +90,50 @@ if (-not (Test-Path -LiteralPath $baseRom -PathType Leaf)) {
     throw "Missing private base ROM: $baseRom`nCopy your matching ROM there before building."
 }
 
-$python = Get-Command python.exe -ErrorAction SilentlyContinue
-if ($null -eq $python) {
-    $python = Get-Command python -ErrorAction SilentlyContinue
+$minimumPython = [Version]'3.11'
+$pythonCandidates = [System.Collections.Generic.List[object]]::new()
+$pythonSeen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+foreach ($pythonName in @('python.exe', 'python')) {
+    $discovered = Get-Command $pythonName -ErrorAction SilentlyContinue
+    if ($null -ne $discovered -and $pythonSeen.Add($discovered.Source)) {
+        $pythonCandidates.Add($discovered)
+    }
+}
+if ($pythonCandidates.Count -eq 0) {
+    throw 'Python was not found on PATH.'
+}
+
+$python = $null
+$pythonDiagnostics = [System.Collections.Generic.List[string]]::new()
+foreach ($pythonCandidate in $pythonCandidates) {
+    $candidateVersion = $null
+    try {
+        $versionProbe = 'import sys;print(str(sys.version_info[0])+chr(46)+str(sys.version_info[1]))'
+        $versionOutput = & $pythonCandidate.Source -c $versionProbe 2>$null
+        if ($LASTEXITCODE -eq 0 -and $versionOutput) {
+            $candidateVersion = [Version](($versionOutput | Select-Object -First 1).Trim())
+        }
+    } catch {
+        $candidateVersion = $null
+    }
+    if ($null -eq $candidateVersion) {
+        $pythonDiagnostics.Add(('  {0}: version could not be determined' -f $pythonCandidate.Source))
+        continue
+    }
+    if ($candidateVersion -lt $minimumPython) {
+        $pythonDiagnostics.Add(('  {0}: {1} (below the {2} minimum)' -f $pythonCandidate.Source, $candidateVersion, $minimumPython))
+        continue
+    }
+    $pythonDiagnostics.Add(('  {0}: {1} (selected)' -f $pythonCandidate.Source, $candidateVersion))
+    $python = $pythonCandidate
+    break
 }
 if ($null -eq $python) {
-    throw 'Python was not found on PATH.'
+    $newLine = [Environment]::NewLine
+    $pythonError = 'Python {0} or newer is required. Inspected candidates:{1}{2}{1}' -f $minimumPython, $newLine, ($pythonDiagnostics -join $newLine)
+    $pythonError += $newLine
+    $pythonError += 'Put a suitable interpreter first on PATH, or run this script from a shell where `py -{0}` selects it.' -f $minimumPython.Major
+    throw $pythonError
 }
 
 $ninjaCandidates = [System.Collections.Generic.List[string]]::new()
