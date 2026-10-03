@@ -315,6 +315,14 @@ src/nitro/os/os_arena.c
 src/nitro/os/os_valarm.c
 src/nitro/os/os_vram_exclusive.c
 src/nitro/os/os_reset.c
+src/nitro/os/os_dcache.c
+src/nitro/os/os_cache_write_buffer.c
+src/nitro/os/os_icache.c
+src/nitro/os/os_protection_region.c
+src/nitro/os/os_proc_mode.c
+src/nitro/os/os_halt.c
+src/nitro/os/os_clz.c
+src/nitro/mi/mi_swap_word.c
 src/field/field_timer.c
 src/field/field_model_animation.c
 src/field/field_sprite_animation_lifecycle.c
