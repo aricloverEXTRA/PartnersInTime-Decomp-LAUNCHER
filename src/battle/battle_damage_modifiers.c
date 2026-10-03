@@ -2,6 +2,8 @@
  * Damage equipment modifiers (overlay 2, 0x0209BCCC-0x0209BF38).
  *
  * Applies the equipped items' modifiers to a damage figure.
+  *
+ * Exact-size match. BattleDamage_ApplyEquipmentModifiers (620 B). Twelve register-allocation differences. Gap documented per AGENTS.md: do not brute-force register allocation.
  */
 
 #include <game/battle_actor.h>

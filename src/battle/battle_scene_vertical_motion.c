@@ -2,6 +2,8 @@
  * Scene vertical motion (overlay 2, 0x020A4518-0x020A47EC).
  *
  * The vertical arc and the move-to-height an object plays.
+  *
+ * Exact-size match. BattleSceneObject_StartVerticalArc (332 B). Ten register-allocation differences. Gap documented per AGENTS.md: do not brute-force register allocation.
  */
 
 #include <game/battle_scene.h>
@@ -9,7 +11,9 @@
 
 extern s32 _s32_div_f(s32 numerator, s32 denominator);
 
-/* Functions in this translation unit are ordered for MWCC's reverse emission. */
+/* Functions in this translation unit are ordered for MWCC's reverse emission.  *
+ * Exact-size match. BattleSceneObject_StartVerticalArc (332 B). Ten register-allocation differences. Gap documented per AGENTS.md: do not brute-force register allocation.
+ */
 int BattleSceneObject_StartVerticalArc(
     BattleSceneObject *object, int channel_index,
     int duration_or_velocity, int curve_parameter, int target_z) {

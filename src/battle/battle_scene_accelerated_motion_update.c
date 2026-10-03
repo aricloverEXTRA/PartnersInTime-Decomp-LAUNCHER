@@ -3,6 +3,11 @@
  *
  * One frame of an accelerated motion.
  */
+ *
+ * Exact-size match (320 B). Six register-allocation differences remain:
+ * native uses r4/r12/r14/r5/r1/r6 where MWCC allocates r12/r14/r5/r4/r6.
+ * Gap documented per AGENTS.md: do not brute-force register allocation.
+
 
 #include <game/battle_scene.h>
 
