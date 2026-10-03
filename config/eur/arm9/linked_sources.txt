@@ -316,13 +316,17 @@ src/nitro/os/os_valarm.c
 src/nitro/os/os_vram_exclusive.c
 src/nitro/os/os_reset.c
 src/nitro/os/os_dcache.c
+src/nitro/os/os_dcache_invalidate_range.c
+src/nitro/os/os_dcache_store_range.c
 src/nitro/os/os_cache_write_buffer.c
 src/nitro/os/os_icache.c
+src/nitro/os/os_icache_invalidate_range.c
 src/nitro/os/os_protection_region.c
 src/nitro/os/os_proc_mode.c
 src/nitro/os/os_halt.c
 src/nitro/os/os_clz.c
 src/nitro/mi/mi_swap_word.c
+src/nitro/mi/mi_copy_48b.c
 src/nitro/os/os_protection_unit_enable.c
 src/nitro/os/os_protection_unit_disable.c
 src/nitro/os/os_protection_region2_set.c

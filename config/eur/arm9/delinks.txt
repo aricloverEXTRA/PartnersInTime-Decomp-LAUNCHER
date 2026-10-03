@@ -556,11 +556,20 @@ src/nitro/os/os_reset.c:
 src/nitro/os/os_dcache.c:
     .text       start:0x02039f6c end:0x02039f78
 
+src/nitro/os/os_dcache_invalidate_range.c:
+    .text       start:0x02039fd8 end:0x02039ff4
+
+src/nitro/os/os_dcache_store_range.c:
+    .text       start:0x02039ff4 end:0x0203a010
+
 src/nitro/os/os_cache_write_buffer.c:
     .text       start:0x0203a034 end:0x0203a040
 
 src/nitro/os/os_icache.c:
     .text       start:0x0203a040 end:0x0203a04c
+
+src/nitro/os/os_icache_invalidate_range.c:
+    .text       start:0x0203a04c end:0x0203a068
 
 src/nitro/os/os_protection_region.c:
     .text       start:0x0203a4d0 end:0x0203a4d8
@@ -576,6 +585,9 @@ src/nitro/os/os_clz.c:
 
 src/nitro/mi/mi_swap_word.c:
     .text       start:0x0203ba9c end:0x0203baa4
+
+src/nitro/mi/mi_copy_48b.c:
+    .text       start:0x0203b888 end:0x0203b8ac
 
 src/nitro/os/os_protection_unit_enable.c:
     .text       start:0x0203a4b0 end:0x0203a4c0
