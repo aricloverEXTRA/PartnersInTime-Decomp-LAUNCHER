@@ -1,7 +1,13 @@
 /*
  * PXI callback ready check (ARM9 resident, unlinked draft).
  *
- * Unlinked draft. Gap documented in source.
+ * Checks a bit in the PXI FIFO callback table. The table base is at
+ * 0x0207FC00; the index selects a word at offset +0x388, then a
+ * single-bit mask is tested.
+ *
+ * Unlinked draft. MWCC materialises the 0x0207FC00 table base as a
+ * series of adds instead of a literal pool load, adding 4 bytes.
+ * Revisit once the literal-pool form is understood.
  */
 
 #include <nitro.h>
