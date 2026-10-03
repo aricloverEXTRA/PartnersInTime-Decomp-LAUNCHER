@@ -5,9 +5,9 @@
  * held before the change, which lets nested callers detect whether they were
  * the ones that actually disabled interrupts.
  *
- * The CPSR round trip is kept in one assembly fragment because splitting it
- * across statements changes which registers MWCC allocates. r0 still carries
- * the incoming state, which the fragment folds into the value written to CPSR.
+ * MWCC rejects a C variable as the operand of "msr CPSR_c"; the entire round
+ * trip is one explicit-register assembly fragment. The result is captured in
+ * a C variable so MWCC knows r0 holds the final value.
  */
 
 #include <nitro.h>

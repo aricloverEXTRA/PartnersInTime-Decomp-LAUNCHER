@@ -5,10 +5,9 @@
  * caller can pass the result straight back to OS_RestoreInterrupts without
  * shifting it.
  *
- * The CPSR round trip is kept in one assembly fragment because splitting it
- * across statements changes which registers MWCC allocates. Only the read and
- * the final mask touch C variables; r1 is a scratch register for the value
- * handed to CPSR.
+ * MWCC rejects a C variable as the operand of "msr CPSR_c"; the entire round
+ * trip is one explicit-register assembly fragment. The result is captured in
+ * a C variable so MWCC knows r0 holds the final value.
  */
 
 #include <nitro.h>
