@@ -50,3 +50,9 @@ src/attack_bro_flower_ov014/projectile_impact.cpp:
 
 src/attack_bro_flower_ov014/enemy_finish.cpp:
     .text start:0x020c2d24 end:0x020c30a0
+
+src/attack_bro_flower_ov014/ov14_entry_variant_one.cpp:
+    .text start:0x020c60e4 end:0x020c60f4
+
+src/attack_bro_flower_ov014/ov14_entry_variant_zero.cpp:
+    .text start:0x020c60f4 end:0x020c6104

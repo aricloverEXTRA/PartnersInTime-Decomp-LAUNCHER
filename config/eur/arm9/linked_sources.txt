@@ -323,6 +323,10 @@ src/nitro/os/os_proc_mode.c
 src/nitro/os/os_halt.c
 src/nitro/os/os_clz.c
 src/nitro/mi/mi_swap_word.c
+src/nitro/os/os_protection_unit_enable.c
+src/nitro/os/os_protection_unit_disable.c
+src/nitro/os/os_protection_region2_set.c
+src/nitro/os/os_protection_region2_get.c
 src/field/field_timer.c
 src/field/field_model_animation.c
 src/field/field_sprite_animation_lifecycle.c
@@ -424,6 +428,8 @@ src/attack_bro_flower_ov014/projectile_state.cpp
 src/attack_bro_flower_ov014/participant_throw.cpp
 src/attack_bro_flower_ov014/participant_position.cpp
 src/attack_bro_flower_ov014/attack_sequence.cpp
+src/attack_bro_flower_ov014/ov14_entry_variant_one.cpp
+src/attack_bro_flower_ov014/ov14_entry_variant_zero.cpp
 src/attack_common_ov010/bounce_height.c
 src/attack_common_ov010/attack_entry_presentation.cpp
 src/attack_common_ov010/enemy_projection_distance.c
