@@ -8,6 +8,9 @@
 src/nitro/math/fx_coprocessor.c:
     .text       start:0x0203476c end:0x02034a14
 
+src/nitro/math/mtx_identity44_.c:
+    .text       start:0x020341e8 end:0x02034214
+
 src/nitro/gx/gx_vramcnt.c:
     .text start:0x02035444 end:0x020364ac
 

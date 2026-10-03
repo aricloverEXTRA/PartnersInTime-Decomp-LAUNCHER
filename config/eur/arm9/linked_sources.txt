@@ -1,6 +1,7 @@
 # Only translation units that match the original ROM, including function order,
 # belong here. Delinked reference objects remain linked for all other C files.
 src/nitro/math/fx_coprocessor.c
+src/nitro/math/mtx_identity44_.c
 src/nitro/gx/gx_vramcnt.c
 src/battle/battle_actor_queries.c
 src/battle/battle_object_lookup.c
