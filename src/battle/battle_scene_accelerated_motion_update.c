@@ -2,12 +2,11 @@
  * Accelerated motion update (overlay 2, 0x020A43D8-0x020A4518).
  *
  * One frame of an accelerated motion.
- */
  *
  * Exact-size match (320 B). Six register-allocation differences remain:
  * native uses r4/r12/r14/r5/r1/r6 where MWCC allocates r12/r14/r5/r4/r6.
  * Gap documented per AGENTS.md: do not brute-force register allocation.
-
+ */
 
 #include <game/battle_scene.h>
 
@@ -36,12 +35,9 @@ void BattleSceneObject_UpdateAcceleratedMotion(
 
     if (elapsed_q8 / 256 == channel->duration) {
         remaining_distance = parameters->distance;
-        object->x += parameters->direction_x_q14 * remaining_distance /
-                     0x4000;
-        object->y += parameters->direction_y_q14 * remaining_distance /
-                     0x4000;
-        object->z += parameters->direction_z_q14 * remaining_distance /
-                     0x4000;
+        object->x += parameters->direction_x_q14 * remaining_distance / 0x4000;
+        object->y += parameters->direction_y_q14 * remaining_distance / 0x4000;
+        object->z += parameters->direction_z_q14 * remaining_distance / 0x4000;
     } else {
         elapsed_q4 = elapsed_q8 / 16;
         velocity = parameters->doubled_initial_velocity +
