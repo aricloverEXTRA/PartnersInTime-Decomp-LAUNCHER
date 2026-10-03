@@ -153,6 +153,7 @@ src/nitro/tp/tp.c
 src/nitro/pm/pm_control.c
 src/nitro/pm/pm_fifo.c
 src/nitro/rtc/rtc.c
+src/nitro/rtc/rtc_wait_busy.c
 src/nitro/rtc/rtc_convert.c
 src/nitro/card/card_common.c
 src/nitro/card/card_backup.c
@@ -313,8 +314,11 @@ src/nitro/os/os_owner.c
 src/game/system_vblank.c
 src/nitro/os/os_arena.c
 src/nitro/os/os_valarm.c
+src/nitro/os/os_disable_interrupts.c
+src/nitro/os/os_restore_interrupts.c
 src/nitro/os/os_vram_exclusive.c
 src/nitro/os/os_reset.c
+src/nitro/os/os_get_owner_value68.c
 src/nitro/os/os_dcache.c
 src/nitro/os/os_dcache_invalidate_range.c
 src/nitro/os/os_dcache_store_range.c
