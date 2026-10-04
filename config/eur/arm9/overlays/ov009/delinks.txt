@@ -174,3 +174,6 @@ src/shop_ov009/shop_sell_bonus.c:
 
 src/shop_ov009/shop_hblank.cpp:
     .text start:0x0207ce1c end:0x0207ceb0
+
+src/shop_ov009/func_ov009_02074b7c.c:
+    .text start:0x02074b7c end:0x02074b80

@@ -14,7 +14,7 @@
 
 #include <game/battle_ai.h>
 
-extern void func_ov002_020698cc(ScriptVm *vm, ScriptVmState *state);
+extern u32 func_ov002_020698cc(ScriptVm *vm, ScriptVmState *state);
 
 void BattleAI_TaskPoolsInit(void) {
     BattleTaskPool_Init(&gBattleAIActionTaskPool, 8, 8);

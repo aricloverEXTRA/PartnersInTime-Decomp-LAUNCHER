@@ -474,6 +474,9 @@ src/game/field_background_controls.cpp:
 src/game/field_background_palettes.cpp:
     .text       start:0x02012548 end:0x02012ea4
 
+src/game/func_0201319c.c:
+    .text start:0x0201319c end:0x020131b0
+
 src/game/palette_animation.c:
     .text start:0x0202d158 end:0x0202dafc
 
@@ -678,3 +681,18 @@ src/nitro/os/os_exception.c:
 
 src/msl/array_delete.c:
     .text start:0x02048874 end:0x020488bc
+
+src/game/func_0200a4c4.c:
+    .text start:0x0200a4c4 end:0x0200a4cc
+
+src/nitro/os/func_02039bac.c:
+    .text start:0x02039bac end:0x02039bb4
+
+src/nitro/pxi/func_0203d730.c:
+    .text start:0x0203d730 end:0x0203d738
+
+src/msl/func_02046dc0.c:
+    .text start:0x02046dc0 end:0x02046dd4
+
+src/msl/func_02046ff8.c:
+    .text start:0x02046ff8 end:0x02047000

@@ -56,3 +56,6 @@ src/attack_copy_flower_ov017/copy_attack_update.cpp:
 
 src/attack_copy_flower_ov017/hit_resolution.cpp:
     .text       start:0x020c4994 end:0x020c4c54
+
+src/attack_copy_flower_ov017/func_ov017_020c3748.c:
+    .text start:0x020c3748 end:0x020c374c

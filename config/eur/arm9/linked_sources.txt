@@ -113,6 +113,7 @@ src/attack_copy_flower_ov017/attack_tuning.c
 src/attack_copy_flower_ov017/object_setup.cpp
 src/attack_copy_flower_ov017/startup_display.c
 src/attack_copy_flower_ov017/attack_object.cpp
+src/attack_copy_flower_ov017/func_ov017_020c3748.c
 src/attack_pocket_chomp_ov018/threshold_tables.c
 src/attack_pocket_chomp_ov018/object_controller.c
 src/attack_jump_ov020/target_arc_state.c
@@ -143,6 +144,7 @@ src/nitro/snd/snd_shared.c
 src/nitro/snd/snd_bank.c
 src/nitro/pxi/pxi_fifo.c
 src/nitro/pxi/pxi_init.c
+src/nitro/pxi/func_0203d730.c
 src/nitro/fs/fs_archive.c
 src/nitro/fs/fs_command.c
 src/nitro/fs/fs_file.c
@@ -287,6 +289,7 @@ src/game/model_animation_pool.c
 src/game/field_background_transfers.c
 src/game/field_background_tilemap.c
 src/game/field_background_palettes.cpp
+src/game/func_0201319c.c
 src/game/palette_animation.c
 src/game/field_background_controls.cpp
 src/game/field_background_transfer_task.cpp
@@ -424,6 +427,7 @@ src/shop_ov009/shop_stock_panel.c
 src/shop_ov009/shop_stock_panel_lifecycle.c
 src/shop_ov009/shop_icons.cpp
 src/shop_ov009/shop_text_lookup.cpp
+src/shop_ov009/func_ov009_02074b7c.c
 src/scene_menu_ov007/scene_object_animation.cpp
 src/scene_menu_ov007/scene_object_resources.cpp
 src/scene_menu_ov007/scene_window_close.cpp
@@ -629,6 +633,7 @@ src/field/field_party_resource_override.cpp
 src/field/field_party_action_reset.cpp
 
 src/game/graphics_screen_offsets.c
+src/game/func_0200a4c4.c
 
 src/save_menu_ov008/erase_confirmation.cpp
 src/save_menu_ov008/game_over_models.cpp
@@ -744,6 +749,7 @@ src/battle/battle_sprite_grid_capture.c
 src/battle/battle_scene_render_control.c
 src/battle/battle_model_stop_primary.cpp
 src/battle/battle_model_descriptor.cpp
+src/battle/func_ov002_0206f564.c
 src/battle/battle_model_start_animation.cpp
 src/battle/battle_common_resources.cpp
 src/battle/battle_transition_prepare.c
@@ -771,6 +777,7 @@ src/save_menu_ov008/save_menu_textured_quad.c
 
 src/nitro/mi/mi_card_dma.c
 src/nitro/os/os_console_type.c
+src/nitro/os/func_02039bac.c
 src/nitro/os/os_arena_low.c
 
 src/field/field_party_manager_input.c
@@ -1033,6 +1040,7 @@ src/field/field_surface_maximum.c
 src/field/field_planar_animation.cpp
 src/battle/battle_model_aux_properties.cpp
 src/battle/battle_attached_properties.cpp
+src/battle/func_ov002_020698cc.c
 
 src/field/field_battle_transition.cpp
 src/field/field_time_hole_arrival.cpp
@@ -1042,6 +1050,8 @@ src/battle/battle_oam_transform_init.c
 src/battle/battle_impact_saved_primary.c
 src/battle/battle_attack_callback.c
 src/msl/unwind.c
+src/msl/func_02046ff8.c
+src/msl/func_02046dc0.c
 src/msl/type_info.c
 src/msl/catch_record.c
 src/msl/exception_spec.c
