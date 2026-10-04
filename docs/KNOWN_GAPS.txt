@@ -31,7 +31,7 @@ PER-MODULE STATUS
 
   module  role                                match / mapped     %     remaining  fns left
   ov021   Hammer attack                            5280 /   5280  100.00%         0        0   DONE
-  ov005   Shared scene/resource/display support   14384 /  16760   85.82%      2376        6
+  ov005   Shared scene/resource/display support   14496 /  16760   86.49%      2264        5
   ov014   Bro Flowers / Ice Flowers               11116 /  13860   80.20%      2744        6
   ov006   Title screen and credits                52284 /  66492   78.63%     14208       31
   ov008   Save / load / erase / game over         35188 /  54068   65.08%     18880       31
@@ -66,9 +66,12 @@ BEST CANDIDATES TO FINISH NEXT
 Ranked by how close a module is to 100%, then by how much of the game it
 unlocks. Function counts and sizes are measured, not estimated.
 
-1. ov005  shared scene, resource and display support - 6 functions / 2376 bytes
-          Used by field, every menu and battle. Small functions
-          (112, 252, 348, 536, 536, 592 bytes). Highest leverage per byte.
+1. ov005  shared scene, resource and display support - 5 functions / 2264 bytes
+          Used by field, every menu and battle. All five remaining ranges sit
+          exactly between two already-linked units, so each is a contiguous
+          extension of a neighbouring file. Sizes 252, 348, 536, 536, 592.
+          func_ov005_020686cc (112 bytes) is done; see the notes below for the
+          one candidate that is currently blocked and why.
 
 2. ov014  Bro Flowers and Ice Flowers - 6 functions / 2744 bytes
           Completing this finishes a whole attack, the way ov021 finished the
@@ -134,13 +137,37 @@ Named data blocking a code range
   0x0207AF38-0x0207B088 data blob has to be reconstructed as a linked data unit
   first. Same pattern may block other functions that sit next to named data.
 
+ov005 register-allocation wall
+  func_ov005_02066128 (252 bytes) compiles to exactly the native size and
+  instruction count, with the same instruction sequence and dataflow, but four
+  physical registers are permuted. Native assigns the two loaded bytes to r8/r7
+  and the constants to r6 (0) / r5 (1); the candidate assigns the bytes to r7/r6
+  and the constants to r8 (1) / r5 (0). Three source formulations (byte-array
+  indexing, the typed GameDisplayWork fields, and explicit temporaries) all
+  produced the same permutation, so this is an allocator preference rather than
+  a dataflow error. Per the reconstruction guidance this is recorded and deferred
+  instead of being brute-forced.
+
+  Note when auditing overlay 5 globals: symbols.txt stores code symbols as
+  "name kind:type(size) addr:0x..." but bss symbols as "name kind:bss addr:0x..."
+  with no parentheses. A parser that requires the parenthesised form silently
+  drops every bss symbol and makes fully reconstructable functions look blocked
+  by unnamed globals.
+
 Tooling
   tools/relink_native.py --require-matching reports 0 differing bytes for all 41
   ARM9, overlay and ARM7 modules it completes, then fails on arm7_autoload_000
   with "linked module differs in 2 bytes". That path reads only config/eur/arm7
   and the base ROM and never touches the ARM9 build, so it is very likely a
   pre-existing workstation discrepancy. Not yet confirmed against a clean
-  baseline.
+  baseline. The most recent batch could not re-run this check at all because
+  llvm-mc is not on PATH in the current shell, so it is recorded as not run
+  rather than as a pass.
+
+  This shell also has no pwsh, so tools/build_nds.ps1 must be invoked through
+  "powershell -NoProfile -ExecutionPolicy Bypass -File". Hash the ROM from a
+  separate command afterwards, because a stale PiT_eur.nds can otherwise report
+  the expected SHA-1 without any rebuild having happened.
 
   Roughly 40 stray *.d probe artifacts sit untracked in the repository root.
 

@@ -1,5 +1,5 @@
 /*
- * Overlay 5 touch panel input (overlay 5, 0x0206873C-0x02068908).
+ * Overlay 5 touch panel input (overlay 5, 0x020686CC-0x02068908).
  *
  * Reads the auto-sampling buffer the touch driver fills and turns it into the
  * frame's touch state. Also holds the texture-object helpers that share this
@@ -97,4 +97,30 @@ void func_ov005_02068758(void) {
 void func_ov005_0206873c(int first, int second) {
     data_ov005_0206a318 = first;
     data_ov005_0206a31c = second;
+}
+
+/* Calibrates the four sampling slots around the latest auto-sampling index into
+ * this overlay's own sample array, keeping only slots whose raw reading is
+ * empty. The write cursor lives in data_ov005_0206a36c[0x50] and steps in
+ * TpData-sized strides. */
+void func_ov005_020686cc(void) {
+    int index = TP_GetLatestIndexInAuto();
+    u8 *out = data_ov005_0206a36c;
+    int i;
+
+    data_ov005_0206a36c[0x50] = 0;
+
+    for (i = 0; i < 4; i++) {
+        int slot = index - 3 + i;
+
+        if (slot < 0) {
+            slot += 9;
+        }
+
+        if (data_ov005_0206a324[slot].validity == 0) {
+            TP_GetCalibratedPoint((TpData *)(out + data_ov005_0206a36c[0x50] * 8),
+                                  (const TpData *)&data_ov005_0206a324[slot]);
+            data_ov005_0206a36c[0x50]++;
+        }
+    }
 }
