@@ -1,0 +1,159 @@
+Partners in Time (EUR) - reconstruction status
+===============================================
+
+TEMPORARY WORKING DOCUMENT. Not a publication artifact. Regenerate the numbers
+from docs/progress.json; the table below was copied from the build at commit
+b81e53a2.
+
+WHAT "NOT MATCHING YET" ACTUALLY MEANS
+--------------------------------------
+
+The build already produces a byte-identical European ROM
+(SHA-1 ba4ec2f99b4f2e0047601552bccf00aa73e28701). The game therefore already
+boots and plays exactly like the retail cartridge, including the parts listed
+here.
+
+For every range that has not been reconstructed yet, the linker substitutes the
+*original native bytes* from the extracted ROM. That is why the output still
+matches. So an entry below does NOT mean "this feature is broken" or "this
+cannot be played". It means:
+
+  * the code is not yet readable or editable as C, and
+  * you cannot yet change its behaviour by editing source.
+
+A module reaches 100% when every one of its code bytes comes from C/C++ instead
+of original bytes. Overlay 21 (Hammer attack) is the only module at 100% today,
+which proves the target is reachable.
+
+
+PER-MODULE STATUS
+-----------------
+
+  module  role                                match / mapped     %     remaining  fns left
+  ov021   Hammer attack                            5280 /   5280  100.00%         0        0   DONE
+  ov005   Shared scene/resource/display support   14384 /  16760   85.82%      2376        6
+  ov014   Bro Flowers / Ice Flowers               11116 /  13860   80.20%      2744        6
+  ov006   Title screen and credits                52284 /  66492   78.63%     14208       31
+  ov008   Save / load / erase / game over         35188 /  54068   65.08%     18880       31
+  ov018   Pocket Chomps                           11356 /  18036   62.96%      6680       18
+  ov010   Shared battle-attack helpers            4268 /   6820   62.58%      2552        2
+  ov007   Scene VM / pause menu / minigame        84540 / 142264   59.42%     57724       92
+  ov025   Elder Princess Shroob fight             21336 /  38024   56.11%     16688       17
+  ov000   Field and world                        198632 / 366712   54.17%    168080      117
+  ov002   Battle engine                          191964 / 362436   52.96%    166432      137
+  ov011   Green and Red Shells                     6444 /  13372   48.19%      6928       10
+  ov009   Shops                                   36040 /  78984   45.63%     42944       67
+  ov016   Mix Flowers                              8228 /  18324   44.90%     10096       11
+  ov012   Cannonballers                            4668 /  12032   38.80%      7364        6
+  ov017   Copy Flowers                             6480 /  16784   38.61%     10304       13
+  ov013   Trampolines                              4272 /  12316   34.69%      8044        4
+  ov020   Jump attack                              2764 /   9204   30.03%      6440        7
+  ov026   Battle item use                          3716 /  14452   25.71%     10736        4
+  arm9    Resident code                           179924 / 282376   63.74%    102452      280
+  itcm    Resident ITCM                            1112 /   1940   57.32%       740        (13 total)
+
+  Overlays 1, 3, 4, 19, 22, 23, 24 and 27-36 are 32-byte placeholders with no
+  code. They are excluded from the totals.
+
+  "fns left" counts only whole function symbols that no source unit owns. A
+  module's "remaining" byte figure is larger, because it also includes interior
+  basic blocks, thunks and other code with no function symbol.
+
+
+BEST CANDIDATES TO FINISH NEXT
+------------------------------
+
+Ranked by how close a module is to 100%, then by how much of the game it
+unlocks. Function counts and sizes are measured, not estimated.
+
+1. ov005  shared scene, resource and display support - 6 functions / 2376 bytes
+          Used by field, every menu and battle. Small functions
+          (112, 252, 348, 536, 536, 592 bytes). Highest leverage per byte.
+
+2. ov014  Bro Flowers and Ice Flowers - 6 functions / 2744 bytes
+          Completing this finishes a whole attack, the way ov021 finished the
+          Hammer. Sizes 128, 252, 300, 600, 696, 768.
+
+3. ov018  Pocket Chomps - 18 functions / 6680 bytes, mostly small
+          (84, 120, 144, 160, 164, 200, 200, 224, 292, 340, 360, 376, 416, 512,
+          668, 672, 744, 1004). A whole attack with no oversized outlier.
+
+4. ov011  Green and Red Shells - 10 functions / 6928 bytes
+          Sizes 40, 104, 240, 260, 304, 756, 792, 792, 1764, 1876.
+
+5. ov006  Title screen and credits - 31 functions / 14208 bytes
+          The boot path into the game and its most visual module. Many small
+          entries: 4, 12, 88, 88, 116, 176, 176, 180, 240, 244, 292, 292, 292,
+          304, 324, 368, 372, 396 and 13 more.
+
+6. ov008  Save / load / erase / game over - 31 functions / 18880 bytes
+          Menu code the player sees constantly. 12, 108, 144, 148, 168, 220,
+          296, 300, 312, 320, 340, 408, 420, 444, 524, 540, 540, 540 and 13
+          more.
+
+7. ov016  Mix Flowers - 11 functions / 10096 bytes
+8. ov017  Copy Flowers - 13 functions / 10304 bytes
+9. ov025  Elder Princess Shroob boss fight - 17 functions / 16688 bytes
+
+Deceptively small: ov010, ov013, ov015, ov020 and ov026 each show only 2 to 7
+unlinked functions, but one function dominates the remainder - ov010 has a
+single 2164-byte function, ov026 has one over 4096 bytes. Low function count
+there does not mean low difficulty.
+
+
+KNOWN BLOCKERS
+--------------
+
+Compiler register allocation
+  MWCC 2.0 build 72 at -O4,p picks different registers than the original build
+  for a handful of functions. Six separate source shapes for GameColor_Invert
+  all produced the same 14 instructions in the correct order, differing only in
+  9 register assignments. Affected and still deferred: GameColor_Invert,
+  MI_CpuFill8, PXI_IsCallbackReady, the OS lock helpers, several battle
+  candidates. Per AGENTS.md these are recorded and left alone rather than
+  brute-forced.
+
+Frame-less 512-byte fill
+  func_02036cdc zeroes 512 bytes with repeated stm. memset compiles to a veneer
+  call and struct assignment creates a stack temporary. The exact aggregate
+  layout is unknown.
+
+memmove pair
+  func_0202cc58 and func_0202cd2c are an unlinked forward/backward pair used by
+  roughly 30 linked files. Their dispatch uses "sub pc, pc, r2, lsl #2" and a
+  trailing "sub pc, pc, #8" pad, which no C construct produces. Hand assembly
+  would not count as matching C.
+
+Named data blocking a code range
+  func_ov006_0207b088 is a verified-exact 4-byte stub that cannot be linked yet.
+  Nine named data symbols (data_ov006_0207af38 .. data_ov006_0207b038) occupy
+  the unlinked gap directly below it and are declared extern by linked ov006
+  units. Claiming the function splits that gap, so two generated reference
+  objects both define those symbols and the link fails with 9 Multiply-defined
+  errors. Deleting the reference objects and regenerating does not help. The
+  0x0207AF38-0x0207B088 data blob has to be reconstructed as a linked data unit
+  first. Same pattern may block other functions that sit next to named data.
+
+Tooling
+  tools/relink_native.py --require-matching reports 0 differing bytes for all 41
+  ARM9, overlay and ARM7 modules it completes, then fails on arm7_autoload_000
+  with "linked module differs in 2 bytes". That path reads only config/eur/arm7
+  and the base ROM and never touches the ARM9 build, so it is very likely a
+  pre-existing workstation discrepancy. Not yet confirmed against a clean
+  baseline.
+
+  Roughly 40 stray *.d probe artifacts sit untracked in the repository root.
+
+
+HOW TO UPDATE THIS FILE
+-----------------------
+
+  python tools/configure.py eur
+  ninja objects
+  ninja check
+  pwsh -NoProfile -ExecutionPolicy Bypass -File .\tools\build_nds.ps1 -DisableDataMods
+  Get-FileHash -Algorithm SHA1 .\PiT_eur.nds
+  python tools/generate_progress.py
+
+python build/analysis/overlay_remaining.py [ovNNN ...] recomputes the per-module
+function counts, sizes and histograms above from the current metadata.
