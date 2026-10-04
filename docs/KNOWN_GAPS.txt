@@ -154,7 +154,87 @@ ov005 register-allocation wall
   drops every bss symbol and makes fully reconstructable functions look blocked
   by unnamed globals.
 
+ov005 0x02066920: not a duplicate of 0x02066a7c
+  func_ov005_02066920 (348 bytes) looked at first like a byte-identical twin of
+  the already-linked func_ov005_02066a7c: same globals, same vtables, same four
+  helper calls in the same order. It is not. The two differ in the row stride.
+  0x02066A7C indexes its rows with "add r0, r4, r7, lsl #3" (stride 8) and
+  0x02066920 with "mov r0, #0x14" plus "mla" (stride 20), so the local row
+  record here needs twelve further unknown bytes and the existing 8-byte
+  Overlay5AssetRow does not apply. 0x02066920 also walks the trailing alternate
+  block with an 8-byte stride ("lsl r2, r2, #3") while striding the primary rows
+  by 20, so the alternate block is a distinct 8-byte record. Using the 8-byte
+  row for both reproduces the prologue defect too - native pushes nine
+  registers and reserves 0xc, the 8-byte version pushes eight and reserves 8.
+
+  With the corrected 20-byte/8-byte layout the candidate matches the native size
+  (348/348) and instruction count (87/87) exactly, and the operand shape of 78
+  instructions is identical. The entire remaining 23-byte difference is one
+  register transposition: native copies the table parameter to r4 and keeps the
+  allocated asset in r5, the candidate uses r5 for table and r4 for asset, which
+  cascades through the 23 stores and reloads that use those two registers.
+  sweep.py reports REGPERM with the mapping r4->r5 r5->r4. Three structural
+  reformulations - declaring asset before the lookup call, taking the table
+  through an extra local pointer, and naming the table parameter directly - all
+  produced the identical 23-byte result, so the choice is stable and is recorded
+  and deferred rather than brute-forced.
+
+  Unresolved: the meaning of the twelve padding bytes in the 20-byte row, and
+  why the trailing block is indexed at a different stride.
+
+ov005 0x02065f10: scene resource teardown, one 3-register cycle short
+  func_ov005_02065f10 (536 bytes, 0x02065F10..0x02066128) releases the overlay-5
+  scene resource block. It pushes the input delays from data_ov005_0206a160/164
+  into GameDisplayWork (data_0206032c) offsets 8 and 9, zeroes
+  data_ov005_0206a168/170/178, unlinks two sprite allocations and four palettes,
+  frees data_ov005_0206a180 fields 0x20/0x24 with GameHeap_Delete and 0x28 plus
+  the 2x4 slot array with GameHeap_DeleteArray, calls vtable slot +4 on field
+  0x2c and on data_ov005_0206a17c and data_ov005_0206a16c, and calls
+  func_ov005_02068790 under data_ov005_0206a174.
+
+  Two source-level facts were needed to reach the native size. Native tests each
+  destroy target for null twice: the first test skips the whole block and the
+  second skips only the indirect call, so the "clear the pointer" store happens
+  whenever the outer test passed. That is reproduced by a nested guard,
+  "if (x) { if (x) { x->vtable->destroy(x); } x = 0; }", which is worth six
+  instructions and the last 24 bytes of the function. Separately, native
+  reloads the resource address from the literal pool for every field access, so
+  the source must reference the global directly; caching it in a local pointer
+  makes the compiler hold a base register instead and costs 24 bytes.
+
+  The candidate now matches native size (536/536) and instruction count
+  (134/134) with 102 relocation differences. Only six bytes differ, one per
+  instruction, and they form a three-register cycle ip->r3->r2->ip rather than a
+  bijection, so sweep.py reports ALLOC. Eight formulations were tried - both
+  declaration orders, both read orders, moving each of the two zero-stores to
+  the front and to the back, dropping the delay locals, and swapping the loop
+  counters - and every one produced the same six bytes; the three variants that
+  moved a zero-store were worse at 9, 13 and 19 bytes, which confirms that the
+  native store order is already the one reproduced here. Recorded and deferred.
+
 Tooling
+  build/analysis/brief.py and build/analysis/sweep.py (private, gitignored under
+  build/) summarise a target and classify candidate sources. probe.py reports
+  unresolved "bl" targets and literal pools as ordinary differences, so a truly
+  exact function still prints RESULT: DIFFERENT; sweep.py instead reads the
+  candidate's relocation table and ignores every offset the linker fills in,
+  which reports the already-verified func_ov005_020686cc as EXACT with 0 hard
+  differences and 14 relocation differences. Labels are EXACT, REGPERM, ALLOC,
+  SHAPE, OTHER and SIZE; ALLOC means identical operand shape with only physical
+  registers or constant slots reassigned, and is the signal to record and defer.
+  Both were checked against a deliberate mutation of a known-exact function,
+  which was correctly reported as SHAPE with one differing byte, so EXACT is not
+  being produced vacuously. Two classifier details matter. The REGPERM and ALLOC
+  comparisons skip relocation-covered instructions, because the candidate's "bl"
+  targets and its whole literal pool are unresolved linker placeholders whose
+  decoded operands would otherwise poison the register bijection; before that
+  exclusion 0x02066920 was misreported as ALLOC instead of REGPERM. And MWCC
+  leaves st_value at 0 for every function in a multi-function object, so when a
+  spec has several functions sweep.py selects the target by matching st_size
+  against the native size rather than reporting AMBIG.
+  probe.py also removes the "<source basename>.d" dependency file that MWCC
+  writes into its working directory, so probe runs no longer leave untracked
+  debris in the repository root.
   tools/relink_native.py --require-matching reports 0 differing bytes for all 41
   ARM9, overlay and ARM7 modules it completes, then fails on arm7_autoload_000
   with "linked module differs in 2 bytes". That path reads only config/eur/arm7
