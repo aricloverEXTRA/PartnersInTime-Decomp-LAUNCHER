@@ -15,7 +15,7 @@ SVC_WaitIntr:
     movs r2, #0
     svc #4
     bx lr
-    .balign 4, 0
+    .short 0x0000
 .L_register_base:
     .word 0x04000000
 .size SVC_WaitIntr, . - SVC_WaitIntr
