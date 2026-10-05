@@ -532,6 +532,12 @@ src/game/field_background_origin.cpp:
 src/game/sprite_image_decode_wide.c:
     .text       start:0x02022db0 end:0x02022e34
 
+src/game/sprite_image_decode_wide0.c:
+    .text       start:0x02023000 end:0x0202314c
+
+src/game/sprite_image_decode_tall.c:
+    .text       start:0x020233e4 end:0x020235fc
+
 src/game/session_init.c:
     .text       start:0x02004d40 end:0x02004f9c
 

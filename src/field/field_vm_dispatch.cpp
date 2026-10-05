@@ -68,8 +68,6 @@ extern void func_ov000_020b26ac(
     int duration, int plane, int direction, int secondary_axis_scale,
     int stop_on_contact_mask, int stop_on_state_mask,
     int snap_to_final_angle, int reserved);
-extern void func_ov000_020b1a24(FieldEntity *entity, const void *path,
-                                int path_size_halfwords);
 extern int func_ov000_0207133c(u8 *field_context, FieldEntity *entity);
 extern void func_ov000_02071a38(u8 *field_context, int layout_mode,
                                 int instant);
@@ -2471,9 +2469,9 @@ int FieldVm_DispatchCommand(ScriptVm *vm, ScriptVmState *base_state,
                 path_payload_size =
                     *(const s32 *)(script + path_offset) - 4;
 
-                func_ov000_020b1a24(
-                    entity, script + path_offset + 2,
-                    path_payload_size / 2);
+                FieldPath_Setup((FieldRuntimeEntity *)entity,
+                                (const FieldPathPoint *)(script + path_offset + 2),
+                                path_payload_size / 2);
             }
             break;
 

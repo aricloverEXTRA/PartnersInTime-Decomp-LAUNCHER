@@ -310,6 +310,8 @@ src/game/model_layer_controls.cpp
 src/game/model_primary_controls.cpp
 src/game/field_background_origin.cpp
 src/game/sprite_image_decode_wide.c
+src/game/sprite_image_decode_wide0.c
+src/game/sprite_image_decode_tall.c
 src/game/session_init.c
 src/game/session_save_context.cpp
 src/game/session_task.c
@@ -580,6 +582,7 @@ src/save_menu_ov008/save_menu_scroll.cpp
 src/field/field_party_baby_spin.cpp
 src/field/field_body_collision.c
 src/field/field_roaming_path.cpp
+src/field/field_path_setup.c
 src/shop_ov009/shop_panel_navigation.cpp
 src/shop_ov009/shop_navigation_cursors.cpp
 src/scene_menu_ov007/scene_accelerated_motion.c

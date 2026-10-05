@@ -26,6 +26,7 @@ static inline u16 GameSpriteImage_WidthBlocks(const u32 *image) { return (image[
 void GameSpriteImage_Decode8x8(const u32 *source, u8 *destination);
 void GameSpriteImage_Decode8x12(const u32 *source, u8 *destination);
 void GameSpriteImage_Decode8x16(const u32 *source, u8 *destination);
+void func_02023000(const u32 *source, u8 *destination);
 void GameSpriteImage_Decode8x20(const u32 *source, u8 *destination);
 void GameSpriteImage_Decode8x24(const u32 *source, u8 *destination);
 void GameSpriteImage_Decode16x16(const u32 *source, u8 *destination);

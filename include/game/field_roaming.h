@@ -34,6 +34,11 @@ void FieldRoaming_Stop(FieldRuntimeEntity *entity);
 void FieldPath_Advance(FieldRuntimeEntity *entity);
 void FieldPath_Start(FieldRuntimeEntity *entity);
 void FieldPath_Clear(FieldRuntimeEntity *entity);
+/* Builds the path point table from a script list whose first two entries are
+ * flags (entry 0 X = bounce, entry 1 X = random direction, entry 1 Y = delay).
+ * A nonzero entry 0 Y accumulates the remaining Q12 offsets from the entity's
+ * current position. */
+void FieldPath_Setup(FieldRuntimeEntity *entity, const FieldPathPoint *list, int count);
 #ifdef __cplusplus
 }
 #endif
