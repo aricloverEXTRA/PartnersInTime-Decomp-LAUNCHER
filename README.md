@@ -4,7 +4,7 @@
 
 > If, however, you're interested in how the project works, why this approach was chosen, and what human direction and verification are involved, read on.
 
-> [More information here.](https://github.com/juliangrtz/PartnersInTime-Decomp/blob/main/docs/AI_USAGE.md)
+> [More information here.](https://github.com/aricloverEXTRA/PartnersInTime-Decomp/blob/main/docs/AI_USAGE.md)
 
 # Mario & Luigi: Partners in Time
 
