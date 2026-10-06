@@ -1126,3 +1126,7 @@ src/attack_cannonball_ov012/badge_tuning.cpp
 src/field/field_extended_save_flags.cpp
 
 src/battle/battle_menu_vertical.c
+
+src/battle/func_ov002_020724b0.c
+
+src/battle/func_ov002_0206a008.c
