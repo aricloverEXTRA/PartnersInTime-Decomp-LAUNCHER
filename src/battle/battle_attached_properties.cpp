@@ -5,25 +5,10 @@
  */
 #include <game/battle_callback_model.h>
 #include <game/battle_text.h>
-#include "battle_oam_internal.h"
+#include "battle_attached_properties_internal.h"
 
-/* Kinds 2 and 5 share this allocation. The original getter intentionally
- * reads the clipped-text offsets for both, unlike their setters. */
-struct AttachedTextDisplay {
-    u32 kind : 4, unknown_kind : 28;
-    BattleOamTransform transforms[2];
-    union { BattleClippedText clipped; BattleTiledText tiled; } text;
-    u16 unknown_78;
-    u8 archive_id, unknown_7b;
-    u16 resource_id, unknown_7e;
-    s32 position_q8;
-    s16 property_84;
-    u16 property_86, property_88;
-    u8 unknown_8a;
-    u8 mode : 2, unknown_mode : 6;
-    u16 unknown_8c;
-    s16 property_8e, property_90, property_92;
-};
+/* Kinds 2 and 5 share this allocation, and the getter intentionally reads the
+ * clipped-text offsets for both, unlike their setters. */
 struct TextPropertyFlags { u8 requested : 1, pending : 1, uploaded : 1, inhibited : 1, unknown : 4; };
 /* A bounded view at payload + 12 * index preserves the native base-first
  * addressing; its transform starts four bytes into the view. */
@@ -34,7 +19,6 @@ struct TransformPropertyView {
     s8 offset_x, offset_y;
     u32 mode : 2, unknown_mode : 30;
 };
-typedef char DisplaySize[sizeof(AttachedTextDisplay) == 148 ? 1 : -1];
 extern "C" int BattleSceneObject_GetAttachedModelProperty(BattleSceneObject *object, int property, int element)
 {
     AttachedTextDisplay *display = (AttachedTextDisplay *)((BattleCallbackModelView *)object->alternate_model)->owned_buffer;

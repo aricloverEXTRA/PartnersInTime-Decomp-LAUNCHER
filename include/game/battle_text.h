@@ -13,9 +13,24 @@ typedef union BattleTextUploadFlags {
         u8 requested : 1, pending : 1, uploaded : 1, unknown : 5;
     } bits;
 } BattleTextUploadFlags;
+/* The upload word at +0x30 that the text views share with
+   BattleInterfaceLayer: row_bytes holds the pending transfer size and
+   resource_ready says the transfer finished. The layer record itself stays in
+   battle_context.h, which includes this header. */
+typedef union BattleInterfaceLayerFlags {
+    u16 raw;
+    struct {
+        u16 row_bytes : 12;
+        u16 resource_ready : 1;
+        u16 notify_on_complete : 1;
+        u16 clear_before_upload : 1;
+        u16 state_15 : 1;
+    } bits;
+} BattleInterfaceLayerFlags;
 typedef struct BattleTiledText {
     GameText text;
-    u16 text_flags, allocation_size;
+    BattleInterfaceLayerFlags text_flags;
+    u16 allocation_size;
     u8 *buffer;
     u8 width, height, horizontal_mode, vertical_mode;
     BattleTextUploadFlags flags;
@@ -24,10 +39,12 @@ typedef struct BattleTiledText {
 } BattleTiledText;
 typedef struct BattleClippedText {
     GameText text;
-    u16 text_flags, allocation_size;
+    BattleInterfaceLayerFlags text_flags;
+    u16 allocation_size;
     u8 width, height;
     s8 horizontal_mode, vertical_mode;
-    u8 unknown_38[4];
+    u8 unknown_38[2];
+    u16 unknown_3a;
     s16 unknown_3c, clip_left, clip_right;
     u8 unknown_42[14];
     u32 destination, palette;

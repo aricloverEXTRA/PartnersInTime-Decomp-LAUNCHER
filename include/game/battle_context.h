@@ -4,6 +4,7 @@
 #include <game/battle_ai.h>
 #include <game/battle_enemy_data.h>
 #include <game/battle_object.h>
+#include <game/battle_text.h>
 #include <game/graphics_resource.h>
 
 struct BattleActor;
@@ -111,17 +112,6 @@ typedef union BattleInterfaceRenderParameters {
         u32 mode_c : 4;
     } bits;
 } BattleInterfaceRenderParameters;
-
-typedef union BattleInterfaceLayerFlags {
-    u16 raw;
-    struct {
-        u16 row_bytes : 12;
-        u16 resource_ready : 1;
-        u16 notify_on_complete : 1;
-        u16 clear_before_upload : 1;
-        u16 state_15 : 1;
-    } bits;
-} BattleInterfaceLayerFlags;
 
 /* One layer of the battle interface: its pixel buffer, the resource it is being
    filled from, where it lands in VRAM and how much of it is ready. The four

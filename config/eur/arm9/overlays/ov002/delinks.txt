@@ -632,3 +632,6 @@ src/battle/func_ov002_0206f164.c:
 
 src/battle/func_ov002_0206f0bc.c:
     .text start:0x0206f0bc end:0x0206f164
+
+src/battle/func_ov002_0206ac34.c:
+    .text start:0x0206ac34 end:0x0206acbc

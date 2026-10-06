@@ -83,6 +83,9 @@ typedef struct GameTextControl {
 typedef char GameTextSizeCheck[sizeof(GameText) == 48 ? 1 : -1];
 typedef char GameTextTokenSizeCheck[sizeof(GameTextToken) == 8 ? 1 : -1];
 typedef char GameTextBoundsSizeCheck[sizeof(GameTextBounds) == 8 ? 1 : -1];
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern GameTextControl data_0205a934[];
 /* Init prepares a walk; Next advances it one glyph. The Measure* functions run
    the same walk without drawing. */
@@ -99,4 +102,7 @@ void GameText_MeasureBounds(const GameText *text, GameTextBounds *bounds);
 void GameText_SetControl(int index, s8 length, GameTextCallback callback, void *argument);
 void GameTextResources_LoadAll(void);
 const void *GameTextResources_GetEntry(int table, int entry);
+#ifdef __cplusplus
+}
+#endif
 #endif
