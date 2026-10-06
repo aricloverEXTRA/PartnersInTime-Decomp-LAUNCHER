@@ -477,7 +477,7 @@ src/battle/battle_object_link_segments.c:
     .text start:0x020ba210 end:0x020ba3b4
 
 src/battle/battle_flexible_link_reset.c:
-    .text start:0x020bae44 end:0x020baf18
+    .text start:0x020badd8 end:0x020baf18
 
 src/battle/battle_flexible_link_actor.c:
     .text start:0x020baf18 end:0x020baf38
