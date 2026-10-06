@@ -294,7 +294,7 @@ src/battle/battle_follow_motion.cpp:
     .text start:0x0206eb78 end:0x0206ecfc
 
 src/battle/battle_scale_effects.cpp:
-    .text start:0x0206edb8 end:0x0206efa0
+    .text start:0x0206edb8 end:0x0206f0bc
 
 src/battle/battle_actor_queries.c:
     .text start:0x02076ac8 end:0x02076c38
@@ -629,3 +629,6 @@ src/battle/func_ov002_0207197c.c:
 
 src/battle/func_ov002_0206f164.c:
     .text start:0x0206f164 end:0x0206f1b8
+
+src/battle/func_ov002_0206f0bc.c:
+    .text start:0x0206f0bc end:0x0206f164

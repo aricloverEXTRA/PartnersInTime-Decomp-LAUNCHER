@@ -1135,3 +1135,5 @@ src/battle/func_ov002_0207197c.c
 
 
 src/battle/func_ov002_0206f164.c
+
+src/battle/func_ov002_0206f0bc.c
