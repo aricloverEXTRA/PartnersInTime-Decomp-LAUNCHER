@@ -912,6 +912,8 @@ src/battle/battle_object_sprites.c
 
 src/battle/battle_number_oam.c
 src/battle/battle_oam_callbacks.c
+src/battle/func_ov002_0206a7a4.s
+src/battle/func_ov002_0206a9a4.s
 
 src/field/field_camera_update.cpp
 
