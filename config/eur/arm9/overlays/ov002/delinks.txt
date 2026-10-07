@@ -533,6 +533,12 @@ src/battle/func_ov002_0206a7a4.s:
 src/battle/func_ov002_0206a9a4.s:
     .text start:0x0206a9a4 end:0x0206a9b8
 
+src/battle/func_ov002_020baf38.s:
+    .text start:0x020baf38 end:0x020baf64
+
+src/battle/func_ov002_020baf64.s:
+    .text start:0x020baf64 end:0x020baf90
+
 src/battle/battle_reward_item_entries.c:
     .text start:0x0206de30 end:0x0206dfd0
 

@@ -19,11 +19,11 @@
 <text x="1172.0" y="88.0" class="subtitle" text-anchor="end">1.49 MiB mapped ARM9 code</text>
 <rect x="28" y="130" width="1144" height="22" rx="5" fill="#263244"/>
 <rect x="28" y="130" width="653.665" height="22" rx="5" fill="#2dd4a0"/>
-<rect x="681.665" y="130" width="3.049" height="22" fill="#38bdf8"/>
+<rect x="681.665" y="130" width="3.114" height="22" fill="#38bdf8"/>
 <rect x="28" y="170" width="12" height="12" rx="2" fill="#2dd4a0"/>
 <text x="47.0" y="181.0" class="legend">Matching C/C++  872.5 KiB</text>
 <rect x="248" y="170" width="12" height="12" rx="2" fill="#38bdf8"/>
-<text x="267.0" y="181.0" class="legend">Symbolic ASM  4.1 KiB</text>
+<text x="267.0" y="181.0" class="legend">Symbolic ASM  4.2 KiB</text>
 <rect x="468" y="170" width="12" height="12" rx="2" fill="#263244"/>
 <text x="487.0" y="181.0" class="legend">Remaining  650.4 KiB</text>
 <text x="1172.0" y="181.0" class="legend" text-anchor="end">Rectangle area = code bytes</text>
@@ -1497,8 +1497,8 @@
 <rect class="cell" x="526.83" y="681.52" width="4.12" height="3.62" fill="#2dd4a0"><title>Overlay 02 · battle_ai_system · 44 B · matching C/C++</title></rect>
 <rect class="cell" x="526.83" y="685.14" width="4.12" height="3.62" fill="#2dd4a0"><title>Overlay 02 · battle_interface_render · 44 B · matching C/C++</title></rect>
 <rect class="cell" x="526.83" y="688.76" width="4.12" height="3.62" fill="#2dd4a0"><title>Overlay 02 · battle_transition_prepare · 44 B · matching C/C++</title></rect>
-<rect class="cell" x="526.83" y="692.38" width="4.12" height="3.62" fill="#263244"><title>Overlay 02 · func_ov002_020baf38 · 44 B · remaining</title></rect>
-<rect class="cell" x="530.95" y="667.04" width="3.87" height="3.85" fill="#263244"><title>Overlay 02 · func_ov002_020baf64 · 44 B · remaining</title></rect>
+<rect class="cell" x="526.83" y="692.38" width="4.12" height="3.62" fill="#38bdf8"><title>Overlay 02 · func_ov002_020baf38 · 44 B · symbolic ASM</title></rect>
+<rect class="cell" x="530.95" y="667.04" width="3.87" height="3.85" fill="#38bdf8"><title>Overlay 02 · func_ov002_020baf64 · 44 B · symbolic ASM</title></rect>
 <rect class="cell" x="534.82" y="667.04" width="3.52" height="3.85" fill="#2dd4a0"><title>Overlay 02 · battle_common_resources · 40 B · matching C/C++</title></rect>
 <rect class="cell" x="538.34" y="667.04" width="3.52" height="3.85" fill="#2dd4a0"><title>Overlay 02 · battle_window_upload · 40 B · matching C/C++</title></rect>
 <rect class="cell" x="541.86" y="667.04" width="3.52" height="3.85" fill="#2dd4a0"><title>Overlay 02 · func_ov002_0207197c · 40 B · matching C/C++</title></rect>
