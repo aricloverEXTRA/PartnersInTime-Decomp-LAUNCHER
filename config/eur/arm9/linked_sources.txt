@@ -275,6 +275,7 @@ src/scene_support_ov005/archive_assets.c
 src/scene_support_ov005/holders.c
 src/scene_support_ov005/touch_state.c
 src/scene_support_ov005/scene_system.cpp
+src/scene_support_ov005/static_initializers.cpp
 src/scene_menu_ov007/party_list.c
 src/scene_menu_ov007/pause_item_row_draw.cpp
 src/scene_menu_ov007/pause_party_lifecycle.cpp
