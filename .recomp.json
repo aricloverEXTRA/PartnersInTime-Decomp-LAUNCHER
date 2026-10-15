@@ -1,0 +1,8 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Mario & Luigi: Partners in Time",
+  "wikidata": "Q1797666",
+  "system": "NDS",
+  "type": "decomp",
+  "status": "in-progress"
+}
